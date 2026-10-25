@@ -1,0 +1,47 @@
+[
+  {
+    "key": "introduccion",
+    "label": "Introducción",
+    "text": "FTrade Web es una plataforma de señales y análisis para futuros de Binance (USDT-M). No ofrece asesoría financiera ni garantía de resultados. Todo contenido es informativo. Usamos análisis técnico y datos de mercado en tiempo real para identificar oportunidades."
+  },
+  {
+    "key": "riesgo",
+    "label": "Gestión de riesgo",
+    "text": "Nunca arriesgues más del 1-3% de tu capital por operación. Usa siempre Stop Loss. La calculadora integrada te ayuda a calcular el tamaño exacto de posición según tu capital y tu riesgo aceptado."
+  },
+  {
+    "key": "estados",
+    "label": "Estados de señal",
+    "text": "PENDING = la zona aún no se tocó; tienes 15 min desde la creación. TOUCHED = la entrada se tocó; la señal está activa 30 min. CANCELLED = la señal se canceló (no cuenta como pérdida)."
+  },
+  {
+    "key": "r_r",
+    "label": "Relación R:R",
+    "text": "El R es la unidad de riesgo (distancia al Stop Loss). TP1, TP2 y TP3 muestran el multiplicador. Una señal con R:R = 2.5 significa que puedes ganar 2.5 veces lo que arriesgas."
+  },
+  {
+    "key": "derivados",
+    "label": "Lectura de derivados",
+    "text": "Funding positivo = los largos pagan; indica mercado cargado al alza. Funding negativo = los cortos pagan. Un funding alto con cuentas cortas puede indicar un squeeze. El OI en alza indica acumulación; en baja, desinterés."
+  },
+  {
+    "key": "liquidaciones",
+    "label": "Liquidaciones",
+    "text": "Las liquidaciones forzadas crean cascadas. Un barrido de longs (liquidaciones de compras) suele marcar un piso local. Un squeeze de shorts (liquidaciones de ventas) puede impulsar el precio al alza. Binance reporta solo el último evento por símbolo cada segundo: las cifras son mínimos."
+  },
+  {
+    "key": "mercado",
+    "label": "Sesión y régimen",
+    "text": "El régimen clasifica BTCUSDT: ALCISTA, BAJISTA, RANGO, TRANSICIÓN o ALTA VOLATILIDAD. Usa ADX, ATR, volumen y amplitud del mercado. Revisa la sesión actual para entender dónde está el volumen institucional."
+  },
+  {
+    "key": "calendario",
+    "label": "Eventos macro",
+    "text": "FOMC, CPI, NFP y vencimientos de opciones (viernes 08:00 UTC) son eventos de alto impacto. Planifica tus operaciones: evita abrir justo antes o cierra posiciones si el riesgo no compensa."
+  },
+  {
+    "key": "referidos",
+    "label": "Programa de referidos",
+    "text": "Comparte tu enlace personal. Cada referido que activa PREMIUM cuenta. 5 referidos = PREMIUM gratis (si eres FREE) o +30 días (si ya eres PREMIUM)."
+  }
+]

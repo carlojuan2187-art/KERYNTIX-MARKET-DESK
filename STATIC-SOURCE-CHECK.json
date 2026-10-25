@@ -1,0 +1,8 @@
+{
+  "files": 40,
+  "syntax_diagnostics": 0,
+  "unresolved_local_imports": 0,
+  "syntax": [],
+  "missing": [],
+  "scope": "Syntax transpilation and local-import-path audit only; no semantic TypeScript type-check, production build, or browser E2E run."
+}

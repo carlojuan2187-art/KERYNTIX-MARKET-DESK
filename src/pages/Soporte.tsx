@@ -1,0 +1,137 @@
+import { useState } from "react";
+import { ArrowUpRight, CheckCircle2, MessageCircle, Send } from "lucide-react";
+import { appConfig } from "@/api/config";
+import { createTicket, getTickets } from "@/api/terminal";
+import { useApi } from "@/hooks/useApi";
+import { useApp } from "@/context/AppContext";
+import { dateTime } from "@/utils/format";
+import { PageHeader, ResourceState, SectionHeader, Tag } from "@/components/ui";
+
+export default function SoportePage() {
+  const { user, toast } = useApp();
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const tickets = useApi(getTickets);
+  async function send(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      const ticket = await createTicket(subject, message);
+      setSubject("");
+      setMessage("");
+      void tickets.refresh();
+      toast(`Ticket ${ticket.id} creado y enviado al backend.`);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div>
+      <PageHeader
+        eyebrow="ESTAMOS PARA AYUDARTE"
+        title="Una respuesta empieza por escucharte."
+        description="Habla con un administrador o deja tu consulta en un ticket."
+      />
+      <div className="two-col">
+        <section className="panel panel-pad">
+          <SectionHeader title="Cuéntanos qué ocurre" />
+          <form className="form-stack" onSubmit={send}>
+            <label className="input-field">
+              <span>Asunto</span>
+              <input
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="Por ejemplo: consulta sobre mi plan"
+                required
+                minLength={5}
+              />
+            </label>
+            <label className="input-field">
+              <span>Tu consulta</span>
+              <textarea
+                rows={6}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Describe qué necesitas y qué ocurrió. No incluyas claves privadas ni códigos de acceso."
+                required
+                minLength={10}
+              />
+            </label>
+            {error && (
+              <p className="form-error" role="alert">
+                {error}
+              </p>
+            )}
+            <button className="btn btn-primary" disabled={busy} type="submit">
+              <Send size={13} />
+              {busy ? "Guardando consulta..." : "Crear ticket de soporte"}
+            </button>
+            <p className="slim-note" style={{ padding: 0 }}>
+              El ticket se guarda en el servicio de soporte de FTrade. No incluyas claves privadas ni códigos de acceso.
+            </p>
+          </form>
+        </section>
+        <section className="support-contact">
+          <MessageCircle size={32} strokeWidth={1.2} />
+          <h2>Una conversación directa.</h2>
+          <p>
+            Para ayuda con pagos o acceso, puedes contactar por WhatsApp con el
+            equipo administrador.
+          </p>
+          {appConfig.whatsapp.map((phone, index) => (
+            <a
+              className="support-admin"
+              key={phone}
+              href={`https://wa.me/${phone.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <div>
+                <strong>Administrador {index + 1}</strong>
+                <span>+{phone.replace(/^\+/, "")}</span>
+              </div>
+              <ArrowUpRight size={16} />
+            </a>
+          ))}
+          <div className="support-safety">
+            <CheckCircle2 size={15} />
+            <span>
+              Nunca te pediremos tu frase semilla, claves privadas ni acceso a
+              tu exchange.
+            </span>
+          </div>
+        </section>
+      </div>
+      <section style={{ marginTop: 30 }}>
+        <SectionHeader title="Tus consultas" />
+        <ResourceState
+          loading={tickets.loading}
+          error={tickets.error}
+          retry={tickets.refresh}
+          empty={!tickets.loading && !tickets.error && !tickets.data?.length}
+          emptyText="Todavía no has creado tickets. Cuando lo hagas, podrás consultarlos aquí."
+        />
+        {tickets.data?.map((ticket) => (
+          <div className="ticket-row" key={ticket.id}>
+            <div>
+              <span className="mono muted small">{ticket.id}</span>
+              <h3>{ticket.subject}</h3>
+              <p>{ticket.message}</p>
+            </div>
+            <div>
+              <Tag tone="blue" dot>
+                {ticket.status}
+              </Tag>
+              <time>{dateTime(ticket.created_at, user?.tz)}</time>
+            </div>
+          </div>
+        ))}
+      </section>
+    </div>
+  );
+}
