@@ -54,3 +54,11 @@
 - El frontend refresca el análisis de Watchlist en segundo plano cada 30 segundos y conserva las cotizaciones en vivo disponibles en el contexto global. La lista conserva los pares aunque no exista una cotización actual para alguno de ellos.
 - Revisión del backend: `api/services/user_features.py` ya devolvía `trend`, `analyses`, `score_detail`, `liquidity_sweep` y `active_signal`; no fue necesario modificar el backend para este arreglo.
 - Verificación: 37 archivos TypeScript/TSX no declarativos pasaron el parser de TypeScript sin diagnósticos. La instalación de dependencias (`npm ci`) agotó el tiempo disponible; por ello, la compilación completa de Vite, el chequeo semántico de tipos y las pruebas de navegador siguen pendientes de CI.
+
+
+## Hotfix — error de build en Watchlist (26 de octubre de 2026)
+
+- Restaurada la exportación `resendCode` en `src/api/index.ts`. La pantalla `src/pages/Login.tsx` la importa para permitir reenviar el código; al desaparecer accidentalmente del barrel de API, el empaquetador no podía resolver esa exportación durante `vite build`.
+- No se cambió la lógica de login ni el comportamiento de Watchlist; se corrigió únicamente la exportación pública que faltaba.
+- Comprobación local de imports: todos los nombres usados desde `@/api` corresponden a funciones/tipos exportados, incluidas las reexportaciones de `account`, `terminal` y `events`.
+- Limitación: no se pudo ejecutar `npm run build` en este entorno porque `npm ci` no pudo descargar paquetes del registro npm (fallos de resolución DNS `EAI_AGAIN`). Debe confirmarse el build con el siguiente despliegue.
