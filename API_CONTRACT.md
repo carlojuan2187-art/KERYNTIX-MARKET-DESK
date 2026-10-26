@@ -61,6 +61,9 @@ Los campos de mercado pueden ser `null` cuando el proveedor no aporta una lectur
 | Leer watchlist | `GET /watchlist` |
 | Añadir símbolo | `POST /watchlist` |
 | Quitar símbolo | `DELETE /watchlist/{symbol}` |
+
+`GET /watchlist` devuelve por símbolo las cotizaciones disponibles, tendencia multi-temporal (`trend` 15M/1H/4H), análisis detallado de cada marco (`analyses`: régimen, ADX, DI, EMA20/50/200, ATR%, pendiente EMA50, percentil de volatilidad, volumen relativo y evolución del ancho de bandas), score combinado (`score_detail`), barrido de liquidez (`liquidity_sweep`) y señal activa (`active_signal`). Los campos de mercado o análisis pueden ser `null` si el proveedor no cuenta con datos suficientes.
+
 | Leer preferencias de avisos | `GET /account/alert-preferences` |
 | Actualizar preferencias | `PATCH /account/alert-preferences` |
 | Crear/listar alertas de precio | `POST/GET /alerts/price` |

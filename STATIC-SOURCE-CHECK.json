@@ -1,8 +1,8 @@
 {
-  "files": 40,
+  "files": 39,
   "syntax_diagnostics": 0,
   "unresolved_local_imports": 0,
   "syntax": [],
   "missing": [],
-  "scope": "TypeScript/TSX syntax transpilation and local-import-path audit only. Full semantic type-check, Vite production build and browser E2E remain unverified because npm dependency installation timed out."
+  "scope": "TypeScript syntax transpilation and local import path audit only; semantic type-check, Vite production build and browser E2E are unverified because npm ci timed out during dependency installation."
 }

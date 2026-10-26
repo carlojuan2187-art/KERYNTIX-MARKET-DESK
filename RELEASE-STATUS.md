@@ -43,3 +43,14 @@
 4. Esperar a que la CI finalice y probar el flujo autenticado completo en staging antes de abrir el servicio al público.
 
 **Conclusión:** el código fuente se puede subir al repositorio como candidato API-only; la compilación y el despliegue final permanecen pendientes de CI y staging, no de una simulación del cliente.
+
+
+## Actualización — Watchlist con análisis multi-temporal (26 de octubre de 2026)
+
+- Corregida la adaptación del endpoint `/watchlist`: el frontend ya no descarta los análisis y el score combinado al reducir cada fila a símbolo y nombre.
+- Normalizados los estados del backend (`UP`, `DOWN`, `RANGE`, `TRANSITION`, `VOLATILE`) a etiquetas visibles en 15M, 1H y 4H; cuando no existen datos se muestra “Sin datos” en vez de asumir una dirección.
+- La tabla muestra precio y variación 24h, tendencias multi-temporales, score/sesgo, volumen 24h, volumen relativo 1H, ADX/ATR 1H, funding y contexto de señales y barridos de liquidez.
+- La ficha de cada par incluye interés abierto, agresión compradora, máximo/mínimo 24h, score combinado, disponibilidad y desglose técnico de 15M/1H/4H (ADX, ATR, EMA20/50, relación con EMA200, pendiente EMA50, percentil de volatilidad y ancho de bandas).
+- El frontend refresca el análisis de Watchlist en segundo plano cada 30 segundos y conserva las cotizaciones en vivo disponibles en el contexto global. La lista conserva los pares aunque no exista una cotización actual para alguno de ellos.
+- Revisión del backend: `api/services/user_features.py` ya devolvía `trend`, `analyses`, `score_detail`, `liquidity_sweep` y `active_signal`; no fue necesario modificar el backend para este arreglo.
+- Verificación: 37 archivos TypeScript/TSX no declarativos pasaron el parser de TypeScript sin diagnósticos. La instalación de dependencias (`npm ci`) agotó el tiempo disponible; por ello, la compilación completa de Vite, el chequeo semántico de tipos y las pruebas de navegador siguen pendientes de CI.
