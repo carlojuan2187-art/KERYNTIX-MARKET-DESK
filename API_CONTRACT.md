@@ -95,6 +95,8 @@ El precio, el destino y la red deben proceder del backend. La UI no permite inic
 1. El cliente solicita un ticket con `POST /events/ticket` usando la sesión autenticada.
 2. Se conecta al `websocket_path` devuelto (normalmente `/ws/events`) con el ticket de un solo uso.
 3. Los mensajes válidos se envían al bus UI; los datos persistentes se vuelven a consultar por REST.
-4. Si el canal no está disponible, se reintenta y la interfaz conserva el refresco REST.
+4. Los ticks actualizan precio, cambio, volumen y extremos de 24h sin esperar una nueva consulta REST.
+5. Si no llega ningún tick de precio al navegador durante 2,5 segundos, la interfaz consulta `/market/quotes` cada 2 segundos como respaldo condicional; una respuesta REST iniciada antes de un tick nuevo no puede sobrescribir la cotización en vivo más reciente.
+6. Los eventos `funding.tick` actualizan la tasa de funding por símbolo.
 
 En producción utiliza WSS y comprueba que el backend publique los eventos de mercado, señales, notificaciones y cuenta requeridos.

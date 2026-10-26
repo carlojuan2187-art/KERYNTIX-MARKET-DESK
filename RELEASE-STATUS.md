@@ -62,3 +62,11 @@
 - No se cambió la lógica de login ni el comportamiento de Watchlist; se corrigió únicamente la exportación pública que faltaba.
 - Comprobación local de imports: todos los nombres usados desde `@/api` corresponden a funciones/tipos exportados, incluidas las reexportaciones de `account`, `terminal` y `events`.
 - Limitación: no se pudo ejecutar `npm run build` en este entorno porque `npm ci` no pudo descargar paquetes del registro npm (fallos de resolución DNS `EAI_AGAIN`). Debe confirmarse el build con el siguiente despliegue.
+
+
+## Actualización — precios en vivo de toda la interfaz (26 de octubre de 2026)
+
+- El cliente aplica los ticks WebSocket a precio, cambio 24h, volumen 24h, máximo/mínimo y sparkline de cada símbolo.
+- Se añadió un fallback REST condicional cada 2 segundos solo cuando no ha llegado un tick de precio en 2,5 segundos; se evita que una respuesta REST más antigua sobrescriba un tick posterior.
+- El dashboard combina el snapshot REST del resumen con cotizaciones vivas del contexto para que tablas y mapa no se queden congelados.
+- Verificación estática: 37 archivos TypeScript/TSX analizados, 0 errores sintácticos y 0 imports locales sin resolver. El build de Vite queda sin certificar porque no hay dependencias instaladas en este entorno.
