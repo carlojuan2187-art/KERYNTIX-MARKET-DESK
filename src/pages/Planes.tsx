@@ -36,6 +36,8 @@ const statusLabels = {
 };
 export default function PlanesPage() {
   const { user, toast } = useApp();
+  // WhatsApp contact variables are optional; never let a missing contact crash the whole page.
+  const adminWhatsapp = appConfig.whatsapp[0]?.replace(/\D/g, "") ?? "";
   const [payment, setPayment] = useState<PaymentSession | null>(null);
   const [wallet, setWallet] = useState("");
   const [busy, setBusy] = useState(false);
@@ -344,16 +346,22 @@ export default function PlanesPage() {
             Contacta con un administrador para coordinar la alternativa manual.
             Nunca compartas claves privadas ni frases semilla.
           </p>
-          <a
-            className="btn btn-secondary"
-            target="_blank"
-            rel="noreferrer"
-            href={`https://wa.me/${appConfig.whatsapp[0].replace(/\D/g, "")}`}
-          >
-            <MessageCircle size={14} />
-            Contactar por WhatsApp
-            <ArrowRight size={13} />
-          </a>
+          {adminWhatsapp ? (
+            <a
+              className="btn btn-secondary"
+              target="_blank"
+              rel="noreferrer"
+              href={`https://wa.me/${adminWhatsapp}`}
+            >
+              <MessageCircle size={14} />
+              Contactar por WhatsApp
+              <ArrowRight size={13} />
+            </a>
+          ) : (
+            <p className="slim-note" role="status">
+              El contacto de WhatsApp del administrador todavía no está configurado.
+            </p>
+          )}
         </section>
       </div>
     </div>
