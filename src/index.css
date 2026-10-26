@@ -5528,3 +5528,202 @@ html[data-theme="light"][data-variant="panorama"] .btn-primary {
     min-width: 1160px;
   }
 }
+
+/* ==========================================================================
+   MÓVIL: pantalla estática, sin desplazamiento lateral ni información oculta
+   ========================================================================== */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+@media (max-width: 800px) {
+  /* Nada puede ensanchar la página más allá de la pantalla */
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+  }
+  body {
+    min-width: 0; /* antes 360px: forzaba scroll lateral en pantallas más angostas */
+  }
+  .app-shell,
+  .main-shell,
+  .page-content,
+  .page-enter {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .page-content img,
+  .page-content svg,
+  .page-content video {
+    max-width: 100%;
+  }
+  .panel,
+  .chart-panel,
+  .signal-detail,
+  .context-panel {
+    min-width: 0;
+    max-width: 100%;
+  }
+  /* iOS hace zoom (y desplaza la página) al enfocar campos con letra < 16px */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  .otp-inputs > input {
+    font-size: 22px;
+  }
+  /* Textos largos (direcciones, IDs, enlaces) se parten en vez de empujar el ancho */
+  .page-content,
+  .modal {
+    overflow-wrap: anywhere;
+  }
+  .btn {
+    white-space: normal;
+    text-align: center;
+  }
+  .page-actions,
+  .topbar-actions {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .tabs {
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    overflow-x: visible;
+  }
+  .tab {
+    padding-bottom: 9px;
+  }
+  .indicator-controls {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+  .chart-toolbar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .watchlist-full .data-table,
+  .data-table {
+    min-width: 0 !important;
+  }
+
+  /* Barra superior: cabe en 320px */
+  .topbar {
+    min-width: 0;
+  }
+  .variant-switch {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  /* Tablas -> tarjetas: se ve toda la información, sin deslizar de lado */
+  .table-scroll {
+    overflow-x: visible;
+  }
+  .data-table,
+  .data-table tbody,
+  .data-table tr {
+    display: block;
+    width: 100%;
+    white-space: normal;
+  }
+  .data-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .data-table tbody tr {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+  .data-table td {
+    display: flex !important; /* anula las columnas ocultas por breakpoint */
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    padding: 7px 0 !important;
+    border-bottom: 0;
+    text-align: right;
+    white-space: normal;
+    min-width: 0;
+  }
+  .data-table td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    max-width: 48%;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 400;
+    text-align: left;
+  }
+  .data-table td:not([data-label])::before,
+  .data-table td:first-child::before {
+    display: none;
+  }
+  .data-table td:first-child {
+    justify-content: flex-start;
+    text-align: left;
+    padding-top: 10px !important;
+  }
+  .data-table td:last-child:not(:first-child) {
+    justify-content: flex-end;
+  }
+  .data-table .trend-directions,
+  .data-table .watchlist-context,
+  .data-table .watchlist-score-block,
+  .data-table .watchlist-table-metric {
+    align-items: flex-end;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  /* Cinta de cotizaciones: 3 pares que caben completos, sin scroll interno */
+  .ticker-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: hidden;
+    padding: 0 12px;
+  }
+  .ticker-item {
+    min-width: 0;
+    padding: 0 8px;
+    gap: 6px;
+  }
+  .ticker-item:nth-child(n + 4) {
+    display: none;
+  }
+  .ticker-item .asset-icon {
+    display: none;
+  }
+  .ticker-values {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+  }
+  .legal-footer {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+@media (max-width: 420px) {
+  /* En pantallas muy angostas el selector Terminal/Panorama queda solo con iconos */
+  .variant-label {
+    display: none;
+  }
+  .variant-switch button {
+    padding: 6px 9px;
+  }
+  .page-content {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
