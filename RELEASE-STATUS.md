@@ -6,6 +6,8 @@
 - Los módulos de la interfaz usan adaptadores HTTP para el backend FTrade; los campos ausentes se mantienen como desconocidos en vez de convertirse en cifras inventadas.
 - Añadida la conexión WebSocket mediante ticket autenticado en `/events/ticket` y `/ws/events`, con reintentos y refresco REST de respaldo.
 - Corregido el manejo de preferencias de avisos, estados de pago, la dirección de liquidaciones, el progreso de confirmación y lecturas desconocidas de radar/flujo/derivados.
+- Corregido el fallo de renderizado de “Mi Plan” cuando `VITE_ADMIN_WHATSAPP_1` no está configurado: el contacto es opcional y la página muestra un aviso en su lugar. También se protege el enlace equivalente del aviso de cuenta bloqueada.
+- Añadida una prueba Playwright de regresión para verificar que “Mi Plan” se renderiza con el contacto de WhatsApp vacío.
 - Actualizadas las instrucciones de configuración, el contrato del front-end y las pruebas para que no esperen un modo de demostración.
 - La CI de GitHub valida tipos, build y pruebas Playwright al subir cambios.
 
