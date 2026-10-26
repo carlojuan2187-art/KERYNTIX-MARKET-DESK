@@ -38,7 +38,7 @@ La interfaz no puede marcar Telegram como vinculado por sí sola; espera la conf
 | Cotizaciones | `GET /market/quotes` |
 | Catálogo/búsqueda de símbolos | `GET /symbols?query=...&limit=...` |
 | Detalle de símbolo | `GET /symbols/{symbol}` |
-| Velas | `GET /market/candles?symbol=...&timeframe=...&limit=...&tz=...` |
+| Velas | `GET /market/candles?symbol=...&timeframe=1m|5m|15m|1h|4h|1D&limit=...&tz=...` |
 | Régimen de mercado | `GET /market/regime` |
 | Derivados | `GET /derivatives?symbol=...` |
 | Flujo agresivo | `GET /market/flow?symbol=...` |
