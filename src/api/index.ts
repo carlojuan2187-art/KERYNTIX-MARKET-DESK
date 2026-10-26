@@ -59,7 +59,7 @@ export async function getCalendarEvents(view: 7 | 30 = 7): Promise<CalendarEvent
     return { id: String(row.id ?? `${row.category ?? "event"}-${row.date ?? ""}`), title: String(row.title ?? ""), date: String(row.date ?? ""), impact: normalizedImpact, category: String(row.category ?? "EVENTO"), countdown: typeof row.countdown === "number" ? row.countdown : undefined };
   }).filter((row) => row.title.trim() && row.date.trim());
 }
-export interface TickData { symbol: string; price: number; change_pct: number | null }
+export interface TickData { symbol: string; price?: number; change_pct?: number | null; volume_24h?: number | null; high_24h?: number | null; low_24h?: number | null; funding_rate?: number | null; mark_price?: number | null; index_price?: number | null; next_funding_time?: number | null }
 export async function getTicks(symbols: string[]): Promise<TickData[]> {
   const rows = await getQuotes();
   return rows.filter((row) => symbols.includes(row.symbol)).map(({ symbol, price, change_pct }) => ({ symbol, price, change_pct }));
