@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
@@ -231,6 +231,25 @@ function IndicatorPane({ data, mode }: { data: TechnicalCandle[]; mode: "rsi" | 
   </div>;
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+type ChartGesture = {
+  mode: "pan" | "scale" | "scale-pan" | "resize" | "pinch";
+  pointerId: number;
+  startX: number;
+  startY: number;
+  start: number;
+  startCount: number;
+  startPan: number;
+  startHeight: number;
+  startZoom: number;
+  startDistance?: number;
+  anchorFraction?: number;
+  anchorIndex?: number;
+};
+
 function Candles({ data, livePrice, timeframe, view, indicators, tradeLevels }: {
   data: TechnicalCandle[]; livePrice?: number; timeframe: string; view: "candles" | "line"; indicators: IndicatorOptions;
   tradeLevels?: { entry: number; stop: number; target: number; direction: "LONG" | "SHORT" };
@@ -238,36 +257,197 @@ function Candles({ data, livePrice, timeframe, view, indicators, tradeLevels }: 
   const [hover, setHover] = useState<number | null>(null);
   const container = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(700);
+  const [height, setHeight] = useState(320);
+  const [visibleCount, setVisibleCount] = useState(60);
+  const [requestedStart, setRequestedStart] = useState<number | null>(null);
+  const [verticalZoom, setVerticalZoom] = useState(1);
+  const [verticalPan, setVerticalPan] = useState(0);
+  const gestureRef = useRef<ChartGesture | null>(null);
+  const pointersRef = useRef(new Map<number, { x: number; y: number }>());
+
   useEffect(() => {
-    const element = container.current; if (!element) return;
+    const element = container.current;
+    if (!element) return;
     const observer = new ResizeObserver(([entry]) => setWidth(Math.max(270, entry.contentRect.width)));
-    observer.observe(element); return () => observer.disconnect();
+    observer.observe(element);
+    return () => observer.disconnect();
   }, []);
+
   if (!data.length) return null;
-  const chartWidth = width - 94, height = 258;
+  const count = clamp(visibleCount, Math.min(12, data.length), data.length);
+  const maxStart = Math.max(0, data.length - count);
+  const viewStart = requestedStart == null ? maxStart : clamp(requestedStart, 0, maxStart);
+  const visibleData = data.slice(viewStart, viewStart + count);
+  const chartWidth = width - 94;
   const duration = TIMEFRAME_MS[timeframe] ?? TIMEFRAME_MS["1h"];
   const activeStart = Math.floor(Date.now() / duration) * duration;
-  const last = data[data.length - 1];
+  const latest = data[data.length - 1];
   const liveValue = typeof livePrice === "number" && Number.isFinite(livePrice) && livePrice > 0 ? livePrice : null;
-  const lows = data.map((item) => item.low), highs = data.map((item) => item.high);
-  if (liveValue != null) { lows.push(liveValue); highs.push(liveValue); }
-  if (tradeLevels) { lows.push(tradeLevels.entry, tradeLevels.stop, tradeLevels.target); highs.push(tradeLevels.entry, tradeLevels.stop, tradeLevels.target); }
-  const priceKeys: (keyof TechnicalCandle)[] = [];
-  if (indicators.ema9) priceKeys.push("ema9"); if (indicators.ema21) priceKeys.push("ema21"); if (indicators.ema50) priceKeys.push("ema50"); if (indicators.ema200) priceKeys.push("ema200"); if (indicators.vwap) priceKeys.push("vwap");
-  if (indicators.bollinger) priceKeys.push("bbUpper", "bbLower");
-  for (const key of priceKeys) for (const item of data) { const value = item[key]; if (typeof value === "number") { lows.push(value); highs.push(value); } }
+  const showLiveLine = liveValue != null && viewStart + visibleData.length >= data.length;
+  const lows = visibleData.map((item) => item.low), highs = visibleData.map((item) => item.high);
+  if (showLiveLine && liveValue != null) { lows.push(liveValue); highs.push(liveValue); }
+  const visibleKeys: (keyof TechnicalCandle)[] = [];
+  if (indicators.ema9) visibleKeys.push("ema9");
+  if (indicators.ema21) visibleKeys.push("ema21");
+  if (indicators.ema50) visibleKeys.push("ema50");
+  if (indicators.ema200) visibleKeys.push("ema200");
+  if (indicators.vwap) visibleKeys.push("vwap");
+  if (indicators.bollinger) visibleKeys.push("bbUpper", "bbLower");
+  for (const key of visibleKeys) for (const item of visibleData) {
+    const value = item[key];
+    if (typeof value === "number" && Number.isFinite(value)) { lows.push(value); highs.push(value); }
+  }
+  // Include trade levels in the visible scale only when they are near the price action,
+  // so a typo in an input cannot flatten the entire market chart.
+  const baseLow = Math.min(...lows), baseHigh = Math.max(...highs);
+  const baseSpan = Math.max(baseHigh - baseLow, Math.abs(baseHigh) * 0.0002, 1e-8);
+  if (tradeLevels && [tradeLevels.entry, tradeLevels.stop, tradeLevels.target].every(Number.isFinite)) {
+    for (const value of [tradeLevels.entry, tradeLevels.stop, tradeLevels.target]) {
+      if (value >= baseLow - baseSpan * 2 && value <= baseHigh + baseSpan * 2) { lows.push(value); highs.push(value); }
+    }
+  }
   const rawMin = Math.min(...lows), rawMax = Math.max(...highs);
-  const pad = Math.max((rawMax - rawMin) * .055, rawMax * .0002), min = rawMin - pad, max = rawMax + pad;
-  const y = (value: number) => 14 + (1 - (value - min) / (max - min || 1)) * 181;
-  const step = (chartWidth - 18) / data.length;
-  const xFor = (index: number) => 9 + step * index + step * .275;
-  const volumeMax = Math.max(1, ...data.map((item) => item.volume));
-  const selected = data[hover ?? data.length - 1];
-  const tickPositions = width < 450 ? [0, Math.floor((data.length - 1) / 2), data.length - 1] : [0, Math.floor((data.length - 1) / 4), Math.floor((data.length - 1) / 2), Math.floor(3 * (data.length - 1) / 4), data.length - 1];
+  const baseRange = Math.max(rawMax - rawMin, Math.abs(rawMax) * 0.0002, 1e-8);
+  const center = (rawMin + rawMax) / 2 + verticalPan * baseRange;
+  const span = baseRange / verticalZoom;
+  const pad = Math.max(span * 0.055, Math.abs(center) * 0.00005);
+  const min = center - span / 2 - pad, max = center + span / 2 + pad;
+  const plotTop = 14;
+  const plotBottom = height - 70;
+  const volumeBottom = height - 23;
+  const volumeTop = plotBottom + 10;
+  const volumeHeight = Math.max(12, volumeBottom - volumeTop);
+  const y = (value: number) => plotTop + (1 - (value - min) / (max - min || 1)) * (plotBottom - plotTop);
+  const step = (chartWidth - 18) / visibleData.length;
+  const xFor = (index: number) => 9 + step * index + step * 0.275;
+  const volumeMax = Math.max(1, ...visibleData.map((item) => item.volume));
+  const hoverIndex = hover == null ? visibleData.length - 1 : clamp(hover, 0, visibleData.length - 1);
+  const selected = visibleData[hoverIndex];
+  const tickPositions = width < 450
+    ? [0, Math.floor((visibleData.length - 1) / 2), visibleData.length - 1]
+    : [0, Math.floor((visibleData.length - 1) / 4), Math.floor((visibleData.length - 1) / 2), Math.floor(3 * (visibleData.length - 1) / 4), visibleData.length - 1];
   const ticks = [...new Set(tickPositions)];
-  const path = (key: keyof TechnicalCandle) => lineSegments(data, key, xFor, y);
-  const linePoints = data.map((item, index) => `${xFor(index)},${y(item.close)}`).join(" ") + (liveValue != null ? ` ${chartWidth - 2},${y(liveValue)}` : "");
-  const activeCandle = last.timestamp === activeStart;
+  const path = (key: keyof TechnicalCandle) => lineSegments(visibleData, key, xFor, y);
+  const linePoints = visibleData.map((item, index) => `${xFor(index)},${y(item.close)}`).join(" ");
+  const activeCandle = latest.timestamp === activeStart;
+  const resetView = () => {
+    setVisibleCount(Math.min(60, data.length));
+    setRequestedStart(null);
+    setVerticalZoom(1);
+    setVerticalPan(0);
+    setHover(null);
+  };
+  const beginChartPointer = (event: ReactPointerEvent<SVGSVGElement>) => {
+    if (event.button !== 0 && event.pointerType === "mouse") return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pointersRef.current.size >= 2) {
+      const points = [...pointersRef.current.values()].slice(0, 2);
+      const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+      const centerX = ((points[0].x + points[1].x) / 2 - rect.left) / rect.width * width;
+      const fraction = clamp((centerX - 9) / Math.max(1, chartWidth - 18), 0, 1);
+      gestureRef.current = {
+        mode: "pinch", pointerId: event.pointerId, startX: event.clientX, startY: event.clientY,
+        start: viewStart, startCount: count, startPan: verticalPan, startHeight: height, startZoom: verticalZoom,
+        startDistance: Math.max(1, distance), anchorFraction: fraction, anchorIndex: viewStart + fraction * count,
+      };
+    } else {
+      const localX = (event.clientX - rect.left) / rect.width * width;
+      const mode: ChartGesture["mode"] = localX >= chartWidth ? event.shiftKey ? "scale-pan" : "scale" : "pan";
+      gestureRef.current = {
+        mode, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY,
+        start: viewStart, startCount: count, startPan: verticalPan, startHeight: height, startZoom: verticalZoom,
+      };
+    }
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setHover(null);
+  };
+  const moveChartPointer = (event: ReactPointerEvent<SVGSVGElement>) => {
+    const gesture = gestureRef.current;
+    if (gesture?.mode === "pinch") {
+      pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      const points = [...pointersRef.current.values()].slice(0, 2);
+      if (points.length === 2) {
+        const distance = Math.max(1, Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y));
+        const nextCount = clamp(Math.round(gesture.startCount * (gesture.startDistance ?? distance) / distance), Math.min(12, data.length), data.length);
+        const fraction = gesture.anchorFraction ?? 0.5;
+        const anchor = gesture.anchorIndex ?? viewStart + fraction * count;
+        setVisibleCount(nextCount);
+        setRequestedStart(clamp(Math.round(anchor - fraction * nextCount), 0, Math.max(0, data.length - nextCount)));
+      }
+      event.preventDefault();
+      return;
+    }
+    if (gesture && gesture.pointerId === event.pointerId) {
+      pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      const dx = event.clientX - gesture.startX;
+      const dy = event.clientY - gesture.startY;
+      if (gesture.mode === "pan") {
+        const rect = event.currentTarget.getBoundingClientRect();
+        const barsMoved = Math.round(-dx / rect.width * width / Math.max(step, 0.25));
+        setRequestedStart(clamp(gesture.start + barsMoved, 0, Math.max(0, data.length - gesture.startCount)));
+      } else if (gesture.mode === "scale") {
+        setVerticalZoom(clamp(gesture.startZoom * Math.exp(-dy / 150), 0.25, 12));
+      } else if (gesture.mode === "scale-pan") {
+        setVerticalPan(clamp(gesture.startPan + dy / Math.max(100, plotBottom - plotTop), -10, 10));
+      }
+      event.preventDefault();
+      return;
+    }
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width * width;
+    const index = Math.floor((x - 9) / Math.max(step, 0.1));
+    setHover(clamp(index, 0, visibleData.length - 1));
+  };
+  const endChartPointer = (event: ReactPointerEvent<SVGSVGElement>) => {
+    pointersRef.current.delete(event.pointerId);
+    if (gestureRef.current?.mode === "pinch") {
+      const remaining = [...pointersRef.current.entries()][0];
+      if (remaining) {
+        gestureRef.current = { mode: "pan", pointerId: remaining[0], startX: remaining[1].x, startY: remaining[1].y, start: viewStart, startCount: count, startPan: verticalPan, startHeight: height, startZoom: verticalZoom };
+      } else gestureRef.current = null;
+    } else if (gestureRef.current?.pointerId === event.pointerId) gestureRef.current = null;
+    try { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); } catch { /* pointer already released */ }
+  };
+  const zoomAtPointer = (event: ReactWheelEvent<SVGSVGElement>) => {
+    event.preventDefault();
+    const rect = event.currentTarget.getBoundingClientRect();
+    const localX = (event.clientX - rect.left) / rect.width * width;
+    if (event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+      const delta = event.shiftKey ? event.deltaY : event.deltaX;
+      const barsMoved = Math.round(delta / 22);
+      setRequestedStart(clamp(viewStart + barsMoved, 0, Math.max(0, data.length - count)));
+      return;
+    }
+    if (localX >= chartWidth) {
+      setVerticalZoom((zoom) => clamp(zoom * (event.deltaY > 0 ? 0.9 : 1.11), 0.25, 12));
+      return;
+    }
+    const fraction = clamp((localX - 9) / Math.max(1, chartWidth - 18), 0, 1);
+    const anchor = viewStart + fraction * count;
+    const nextCount = clamp(Math.round(count * (event.deltaY > 0 ? 1.18 : 0.85)), Math.min(12, data.length), data.length);
+    const nextStart = clamp(Math.round(anchor - fraction * nextCount), 0, Math.max(0, data.length - nextCount));
+    setVisibleCount(nextCount);
+    setRequestedStart(nextStart);
+    setHover(null);
+  };
+  const beginResize = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0 && event.pointerType === "mouse") return;
+    gestureRef.current = { mode: "resize", pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, start: viewStart, startCount: count, startPan: verticalPan, startHeight: height, startZoom: verticalZoom };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  };
+  const moveResize = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const gesture = gestureRef.current;
+    if (!gesture || gesture.mode !== "resize" || gesture.pointerId !== event.pointerId) return;
+    setHeight(clamp(gesture.startHeight + event.clientY - gesture.startY, 220, 720));
+    event.preventDefault();
+  };
+  const endResize = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (gestureRef.current?.mode === "resize" && gestureRef.current.pointerId === event.pointerId) gestureRef.current = null;
+    try { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); } catch { /* pointer already released */ }
+  };
+
   return <div className="candles-wrap" ref={container}>
     <div className="ohlc-line">
       <span>O <b>{price(selected.open)}</b></span><span>H <b>{price(selected.high)}</b></span><span>L <b>{price(selected.low)}</b></span>
@@ -275,14 +455,26 @@ function Candles({ data, livePrice, timeframe, view, indicators, tradeLevels }: 
       {indicators.volume && <span className="chart-volume">Vol <b>{compact(selected.volume)}</b></span>}
       {liveValue != null && <span className="chart-live-reading"><span className="live-dot" /> LIVE <b>{price(liveValue)}</b></span>}
     </div>
-    <svg className="candle-chart" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" role="img" aria-label={`${view === "candles" ? "Velas" : "Línea de precio"}; último precio vivo del backend`} tabIndex={0}
-      onKeyDown={(event) => { if (event.key === "ArrowLeft") { event.preventDefault(); setHover((index) => Math.max(0, (index ?? data.length - 1) - 1)); } if (event.key === "ArrowRight") { event.preventDefault(); setHover((index) => Math.min(data.length - 1, (index ?? 0) + 1)); } }}
-      onMouseMove={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const x = (event.clientX - rect.left) / rect.width * width; setHover(Math.max(0, Math.min(data.length - 1, Math.floor((x - 9) / Math.max(step, .1))))); }} onMouseLeave={() => setHover(null)}>
+    <div className="chart-interaction-hint">Arrastra para desplazarte · rueda/pellizco para zoom · arrastra la escala de precios a la derecha · usa la agarradera inferior para cambiar la altura</div>
+    <svg className="candle-chart" style={{ height }} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" role="img" aria-label={`${view === "candles" ? "Velas" : "Línea de precio"}; gráfico interactivo con zoom y desplazamiento`} tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === "ArrowLeft") { event.preventDefault(); setRequestedStart(clamp(viewStart - 3, 0, maxStart)); }
+        if (event.key === "ArrowRight") { event.preventDefault(); setRequestedStart(clamp(viewStart + 3, 0, maxStart)); }
+        if (event.key === "+" || event.key === "=") { event.preventDefault(); setVisibleCount((n) => Math.max(Math.min(12, data.length), Math.round(n * 0.85))); }
+        if (event.key === "-") { event.preventDefault(); setVisibleCount((n) => Math.min(data.length, Math.round(n * 1.18))); }
+        if (event.key === "Home") { event.preventDefault(); resetView(); }
+      }}
+      onPointerDown={beginChartPointer}
+      onPointerMove={moveChartPointer}
+      onPointerUp={endChartPointer}
+      onPointerCancel={endChartPointer}
+      onPointerLeave={() => { if (!gestureRef.current) setHover(null); }}
+      onWheel={zoomAtPointer}>
       {[0, 1, 2, 3, 4].map((tick) => { const value = min + (max - min) * tick / 4; return <g key={tick}><line x1="0" x2={chartWidth} y1={y(value)} y2={y(value)} className="chart-grid" /><text x={chartWidth + 13} y={y(value) + 3} className="chart-axis">{price(value)}</text></g>; })}
-      {ticks.map((index) => <g key={index}><line x1={xFor(index)} x2={xFor(index)} y1="8" y2="237" className="chart-grid chart-grid-vertical" /><text x={xFor(index)} y="254" textAnchor={index === 0 ? "start" : index === data.length - 1 ? "end" : "middle"} className="chart-axis">{timeframe === "1D" ? data[index]?.time.slice(5, 10) : data[index]?.time.slice(-5)}</text></g>)}
-      <text x={chartWidth * .27} y="118" className="chart-watermark" style={{ fontSize: width < 450 ? 25 : 41 }}>FTRADE</text>
-      {indicators.volume && data.map((candle, index) => { const barHeight = candle.volume / volumeMax * 30, x = 9 + step * index; return <rect key={`vol-${candle.timestamp}`} x={x} y={237 - barHeight} width={Math.max(.45, step * .55)} height={barHeight} fill={candle.close >= candle.open ? "var(--green)" : "var(--red)"} opacity=".34" rx=".5" />; })}
-      {view === "candles" ? data.map((candle, index) => { const x = 9 + step * index, up = candle.close >= candle.open; return <g key={candle.timestamp} className={up ? "candle-up" : "candle-down"}><line x1={x + step * .275} x2={x + step * .275} y1={y(candle.high)} y2={y(candle.low)} stroke="currentColor" strokeWidth="1" /><rect x={x} y={Math.min(y(candle.open), y(candle.close))} width={Math.max(.45, step * .55)} height={Math.max(1.2, Math.abs(y(candle.open) - y(candle.close)))} fill="currentColor" rx=".7" /></g>; }) : <polyline points={linePoints} fill="none" stroke="var(--accent)" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round" />}
+      {ticks.map((index) => <g key={index}><line x1={xFor(index)} x2={xFor(index)} y1="8" y2={height - 22} className="chart-grid chart-grid-vertical" /><text x={xFor(index)} y={height - 4} textAnchor={index === 0 ? "start" : index === visibleData.length - 1 ? "end" : "middle"} className="chart-axis">{timeframe === "1D" ? visibleData[index]?.time.slice(5, 10) : visibleData[index]?.time.slice(-5)}</text></g>)}
+      <text x={chartWidth * 0.27} y={(plotTop + plotBottom) / 2} className="chart-watermark" style={{ fontSize: width < 450 ? 25 : 41 }}>FTRADE</text>
+      {indicators.volume && visibleData.map((candle, index) => { const barHeight = candle.volume / volumeMax * Math.min(30, volumeHeight); const x = 9 + step * index; return <rect key={`vol-${candle.timestamp}`} x={x} y={volumeBottom - barHeight} width={Math.max(0.45, step * 0.55)} height={barHeight} fill={candle.close >= candle.open ? "var(--green)" : "var(--red)"} opacity=".34" rx=".5" />; })}
+      {view === "candles" ? visibleData.map((candle, index) => { const x = 9 + step * index, up = candle.close >= candle.open; return <g key={candle.timestamp} className={up ? "candle-up" : "candle-down"}><line x1={x + step * 0.275} x2={x + step * 0.275} y1={y(candle.high)} y2={y(candle.low)} stroke="currentColor" strokeWidth="1" /><rect x={x} y={Math.min(y(candle.open), y(candle.close))} width={Math.max(0.45, step * 0.55)} height={Math.max(1.2, Math.abs(y(candle.open) - y(candle.close)))} fill="currentColor" rx=".7" /></g>; }) : <polyline points={linePoints} fill="none" stroke="var(--accent)" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round" />}
       {indicators.ema9 && path("ema9").map((points, i) => <polyline key={`ema9-${i}`} points={points} fill="none" stroke="var(--accent)" strokeWidth="1.25" />)}
       {indicators.ema21 && path("ema21").map((points, i) => <polyline key={`ema21-${i}`} points={points} fill="none" stroke="var(--blue)" strokeWidth="1.25" />)}
       {indicators.ema50 && path("ema50").map((points, i) => <polyline key={`ema50-${i}`} points={points} fill="none" stroke="var(--amber)" strokeWidth="1.25" />)}
@@ -297,16 +489,28 @@ function Candles({ data, livePrice, timeframe, view, indicators, tradeLevels }: 
         <line x1="0" x2={chartWidth} y1={y(tradeLevels.target)} y2={y(tradeLevels.target)} stroke="var(--green)" strokeWidth="1" strokeDasharray="5 3" opacity=".8" />
         <text x="5" y={Math.max(10, y(tradeLevels.target) - 4)} fill="var(--green)" fontSize="8">OBJETIVO {price(tradeLevels.target)}</text>
       </>}
-      {liveValue != null && <><line x1="0" x2={chartWidth} y1={y(liveValue)} y2={y(liveValue)} stroke="var(--accent)" strokeWidth="1" strokeDasharray="3 3" opacity=".95" /><rect x={chartWidth + 4} y={Math.max(3, Math.min(232, y(liveValue) - 10))} width="88" height="20" rx="3" fill="var(--accent)" /><text x={chartWidth + 48} y={Math.max(3, Math.min(232, y(liveValue) - 10)) + 8} textAnchor="middle" fill="var(--accent-ink)" fontSize="9" fontFamily="var(--font-mono)" fontWeight="600">{price(liveValue)}</text></>}
-      {hover !== null && <><line x1={xFor(hover)} x2={xFor(hover)} y1="8" y2="237" stroke="var(--text-secondary)" strokeDasharray="3 3" opacity=".65" /><circle cx={xFor(hover)} cy={y(selected.close)} r="3" fill="var(--accent)" /></>}
+      {showLiveLine && liveValue != null && <><line x1="0" x2={chartWidth} y1={y(liveValue)} y2={y(liveValue)} stroke="var(--accent)" strokeWidth="1" strokeDasharray="3 3" opacity=".95" /><rect x={chartWidth + 4} y={clamp(y(liveValue) - 10, 3, height - 27)} width="88" height="20" rx="3" fill="var(--accent)" /><text x={chartWidth + 48} y={clamp(y(liveValue) - 10, 3, height - 27) + 8} textAnchor="middle" fill="var(--accent-ink)" fontSize="9" fontFamily="var(--font-mono)" fontWeight="600">{price(liveValue)}</text></>}
+      {hover !== null && <><line x1={xFor(hoverIndex)} x2={xFor(hoverIndex)} y1="8" y2={height - 22} stroke="var(--text-secondary)" strokeDasharray="3 3" opacity=".65" /><circle cx={xFor(hoverIndex)} cy={y(selected.close)} r="3" fill="var(--accent)" /></>}
     </svg>
-    {indicators.rsi && <IndicatorPane data={data} mode="rsi" />}
-    {indicators.macd && <IndicatorPane data={data} mode="macd" />}
-    {indicators.atr && <IndicatorPane data={data} mode="atr" />}
-    {!activeCandle && liveValue != null && <p className="chart-data-note">La línea LIVE refleja el precio WebSocket; la vela histórica está cerrada.</p>}
+    <div className="chart-resize-handle" role="separator" aria-orientation="horizontal" aria-label="Cambiar altura del gráfico" tabIndex={0}
+      onPointerDown={beginResize} onPointerMove={moveResize} onPointerUp={endResize} onPointerCancel={endResize}
+      onKeyDown={(event) => { if (event.key === "ArrowUp") { event.preventDefault(); setHeight((value) => clamp(value - 20, 220, 720)); } if (event.key === "ArrowDown") { event.preventDefault(); setHeight((value) => clamp(value + 20, 220, 720)); } }}>
+      <span /><small>Arrastra para cambiar la altura</small><span />
+    </div>
+    {indicators.rsi && <IndicatorPane data={visibleData} mode="rsi" />}
+    {indicators.macd && <IndicatorPane data={visibleData} mode="macd" />}
+    {indicators.atr && <IndicatorPane data={visibleData} mode="atr" />}
+    {!activeCandle && showLiveLine && liveValue != null && <p className="chart-data-note">La línea LIVE refleja el precio WebSocket; la última vela del mercado está cerrada.</p>}
+    <div className="chart-interaction-footer">
+      <span>Mostrando {visibleData.length} de {data.length} velas</span>
+      <div className="chart-zoom-buttons">
+        <button type="button" aria-label="Alejar gráfico" title="Mostrar más velas" onClick={() => { const next = clamp(Math.round(count * 1.2), Math.min(12, data.length), data.length); setVisibleCount(next); setRequestedStart(clamp(viewStart + count - next, 0, Math.max(0, data.length - next))); setHover(null); }}>−</button>
+        <button type="button" aria-label="Acercar gráfico" title="Mostrar menos velas" onClick={() => { const next = clamp(Math.round(count * 0.8), Math.min(12, data.length), data.length); setVisibleCount(next); setRequestedStart(clamp(viewStart + count - next, 0, Math.max(0, data.length - next))); setHover(null); }}>+</button>
+        <button type="button" onClick={resetView}>Restablecer vista</button>
+      </div>
+    </div>
   </div>;
 }
-
 export function HistoryChart({
   data,
   dataKey = "r",
@@ -424,8 +628,8 @@ export function MarketChart({
   );
   const quote = quotes.find((item) => item.symbol === symbol);
   const calculated = useMemo(() => technicalSeries(mergeLivePrice(data ?? [], quote?.price, timeframe)), [data, quote?.price, timeframe]);
-  // EMA200 needs warm-up history. Draw only the newest 120 bars for legibility on mobile.
-  const chartData = useMemo(() => calculated.slice(-120), [calculated]);
+  // Keep the full candle history available to chart pan/zoom; visible bars are windowed interactively.
+  const chartData = useMemo(() => calculated, [calculated]);
   const positiveInput = (raw: string): number | null => { const value = Number(raw); return raw.trim() !== "" && Number.isFinite(value) && value > 0 ? value : null; };
   const entry = positiveInput(entryInput) ?? quote?.price ?? null;
   const defaultStop = entry == null ? null : entry * (tradeDirection === "LONG" ? 0.99 : 1.01);
@@ -536,7 +740,7 @@ export function MarketChart({
           return <span key={control.key}><i style={{ background: control.color }} />{control.label}{typeof value === "number" ? ` ${price(value)}` : ""}</span>;
         })}
       </div>
-      {loading || error || !data ? <div className="chart-loading"><ResourceState loading={loading} error={error} retry={refresh} /></div> : chartData.length ? <Candles data={chartData} livePrice={quote?.price} timeframe={timeframe} view={view} indicators={indicators} tradeLevels={tradeLevels} /> : <div className="chart-loading slim-note">No hay velas disponibles para este par.</div>}
+      {loading || error || !data ? <div className="chart-loading"><ResourceState loading={loading} error={error} retry={refresh} /></div> : chartData.length ? <Candles key={`${symbol}-${timeframe}`} data={chartData} livePrice={quote?.price} timeframe={timeframe} view={view} indicators={indicators} tradeLevels={tradeLevels} /> : <div className="chart-loading slim-note">No hay velas disponibles para este par.</div>}
       <div className="chart-footer">
         <span><span className="live-dot" />{view === "candles" ? "Velas OHLC" : "Precio de cierre"}{indicators.volume ? " y volumen" : ""}</span>
         <span>Binance Futures <span className="separator-dot">·</span> {timeframe} <span className="separator-dot">·</span> EMA/RSI/MACD locales</span>
