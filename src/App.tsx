@@ -5,6 +5,7 @@ import {
   Navigate,
   Outlet,
   Link,
+  useParams,
 } from "react-router-dom";
 import { ShieldAlert } from "lucide-react";
 import Layout from "@/components/Layout";
@@ -95,7 +96,9 @@ function AdminGuard() {
   return user?.is_admin ? <AdminPage /> : <Navigate to="/" replace />;
 }
 function ReferralLink() {
-  const code = window.location.pathname.split("/").pop();
+  const { ref_code: code } = useParams<{ ref_code: string }>();
+  // Preserve attribution through the login flow; the API consumes it when the
+  // user starts registration. The referral URL itself always stays on the web app.
   if (code?.startsWith("ref_")) sessionStorage.setItem("ftrade.referrer", code);
   return <Navigate to="/login" replace />;
 }
