@@ -9,7 +9,7 @@ import {
 } from "./terminal";
 
 export {
-  loginPhone, verifyTelegramLink, verifyCode, startPayment, verifyPayment, getPaymentHistory,
+  loginPhone, verifyTelegramLink, verifyCode, resendCode, startPayment, verifyPayment, getPaymentHistory,
   getAccountRestriction, startTelegramLink, unlinkTelegramAccount, logout,
 } from "./account";
 export {
