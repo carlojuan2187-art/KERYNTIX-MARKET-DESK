@@ -607,6 +607,11 @@ export function MarketChart({
   panorama?: boolean;
 }) {
   const { quotes, user } = useApp();
+  const [clockNow, setClockNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setClockNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
   const [symbol, setSymbol] = useState(initialSymbol);
   const [timeframe, setTimeframe] = useState("1h");
   const [view, setView] = useState<"candles" | "line">(panorama ? "line" : "candles");
@@ -627,6 +632,8 @@ export function MarketChart({
     [symbol, timeframe, user?.tz],
   );
   const quote = quotes.find((item) => item.symbol === symbol);
+  const quoteAgeMs = quote?.price_tick_at == null ? null : Math.max(0, clockNow - quote.price_tick_at);
+  const quoteIsLive = quoteAgeMs != null && quoteAgeMs <= 2500;
   const calculated = useMemo(() => technicalSeries(mergeLivePrice(data ?? [], quote?.price, timeframe)), [data, quote?.price, timeframe]);
   // Keep the full candle history available to chart pan/zoom; visible bars are windowed interactively.
   const chartData = useMemo(() => calculated, [calculated]);
@@ -682,11 +689,11 @@ export function MarketChart({
         </Link>
       </div>
       <div className="chart-price-row">
-        <div className="chart-price">{quote ? price(quote.price) : "—"}<span>USDT</span></div>
+        <div className={`chart-price ${quote?.price_direction === "up" ? "price-up" : quote?.price_direction === "down" ? "price-down" : ""}`}>{quote ? price(quote.price) : "—"}<span>USDT</span></div>
         {quote && <span className={`chart-change ${quote.change_pct == null ? "muted" : quote.change_pct >= 0 ? "positive" : "negative"}`}>
           <ArrowUpRight size={13} />{percent(quote.change_pct)}<span>24h</span>
         </span>}
-        <span className="chart-live-status"><span className="live-dot" /> Precio en vivo</span>
+        <span className={`chart-live-status ${quoteIsLive ? "is-live" : "is-stale"}`} title={quoteAgeMs == null ? "Todavía no se ha recibido un tick WebSocket para este símbolo" : `Último tick recibido hace ${(quoteAgeMs / 1000).toFixed(1)} s`}><span className="live-dot" />{quoteIsLive ? "Precio en vivo" : quoteAgeMs == null ? "Esperando tick" : "Datos retrasados"}</span>
       </div>
       <div className="chart-toolbar">
         <div className="timeframes" aria-label="Temporalidad del gráfico">

@@ -354,7 +354,7 @@ export default function Layout() {
                   <span>/ USDT</span>
                 </div>
                 <div className="ticker-values">
-                  <span className="mono">{price(quote.price)}</span>
+                  <span className={`mono ${quote.price_direction === "up" ? "price-up" : quote.price_direction === "down" ? "price-down" : ""}`}>{price(quote.price)}</span>
                   <span
                     className={quote.change_pct == null ? "muted" : quote.change_pct >= 0 ? "positive" : "negative"}
                   >
@@ -457,7 +457,7 @@ export default function Layout() {
                       <small>{q.name}</small>
                     </div>
                   </div>
-                  <div className="search-result-price mono">
+                  <div className={`search-result-price mono ${q.price_direction === "up" ? "price-up" : q.price_direction === "down" ? "price-down" : ""}`}>
                     {price(q.price)}
                     <span
                       className={q.change_pct == null ? "muted" : q.change_pct >= 0 ? "positive" : "negative"}
