@@ -57,9 +57,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.getItem("ftrade.theme") === "light" ? "light" : "dark",
   );
   const [quotes, setQuotes] = useState<AssetQuote[]>([]);
+  const quotesRef = useRef<AssetQuote[]>([]);
+  useEffect(() => { quotesRef.current = quotes; }, [quotes]);
   // Timestamp of the last actual price tick received over the real-time channel.
   // It activates the short REST fallback only when the WebSocket is quiet/broken.
   const lastPriceWsTickAt = useRef(0);
+  // Freshness is tracked per symbol: BTC activity must not mask a stalled ETH feed.
+  const lastPriceWsTickAtBySymbol = useRef<Record<string, number>>({});
+  const lastPriceWsValueBySymbol = useRef<Record<string, number>>({});
   const [signalCount, setSignalCount] = useState(0);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -96,13 +101,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // Normal market activity delivers price ticks at roughly one-second cadence.
       // If no tick reaches the browser for 2.5s, read the shared backend cache as a
       // fallback (the endpoint itself avoids REST calls while the feed is fresh).
-      if (Date.now() - lastPriceWsTickAt.current < 2500) return;
-      const startedAt = Date.now();
+      const now = Date.now();
+      const staleSymbols = quotesRef.current
+        .filter((quote) => now - (lastPriceWsTickAtBySymbol.current[quote.symbol] ?? 0) >= 2500)
+        .map((quote) => quote.symbol);
+      if (staleSymbols.length === 0) return;
+      const startedAt = now;
       inFlight = true;
       void getQuotes()
         .then((latest) => {
-          if (disposed || lastPriceWsTickAt.current > startedAt) return;
-          setQuotes(latest);
+          if (disposed) return;
+          setQuotes((current) => {
+            const currentBySymbol = new Map(current.map((quote) => [quote.symbol, quote]));
+            const latestBySymbol = new Map(latest.map((quote) => [quote.symbol, quote]));
+            const merged = current.map((currentQuote) => {
+              const fallback = latestBySymbol.get(currentQuote.symbol);
+              if (!fallback) return currentQuote;
+              const lastWsAt = lastPriceWsTickAtBySymbol.current[currentQuote.symbol] ?? 0;
+              // Never let a REST response started before a newer WebSocket tick overwrite it.
+              if (lastWsAt > startedAt) return currentQuote;
+              // REST may refresh a stalled symbol, but it must not erase the last tick
+              // direction or pretend that the browser received a new live tick.
+              return { ...fallback, price_direction: currentQuote.price_direction, price_tick_at: currentQuote.price_tick_at };
+            });
+            for (const fallback of latest) {
+              if (!currentBySymbol.has(fallback.symbol)) merged.push(fallback);
+            }
+            return merged;
+          });
         })
         .catch(() => undefined)
         .finally(() => { inFlight = false; });
@@ -118,10 +144,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .then((me) => setUser(me))
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
-    const quotesRequestStartedAt = Date.now();
     void getQuotes()
       .then((latest) => {
-        if (lastPriceWsTickAt.current <= quotesRequestStartedAt) setQuotes(latest);
+        setQuotes((current) => {
+          const currentBySymbol = new Map(current.map((quote) => [quote.symbol, quote]));
+          const latestSymbols = new Set(latest.map((quote) => quote.symbol));
+          const merged = latest.map((fallback) => {
+            const previous = currentBySymbol.get(fallback.symbol);
+            if (!previous || !(lastPriceWsTickAtBySymbol.current[fallback.symbol] > 0)) return fallback;
+            return { ...fallback, price: previous.price, price_direction: previous.price_direction, price_tick_at: previous.price_tick_at, sparkline: previous.sparkline };
+          });
+          return [...merged, ...current.filter((quote) => !latestSymbols.has(quote.symbol))];
+        });
       })
       .catch(() => undefined);
     void getNotifications()
@@ -135,10 +169,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
   useEffect(() => {
     if (!user) return;
-    const quotesRequestStartedAt = Date.now();
     void getQuotes()
       .then((latest) => {
-        if (lastPriceWsTickAt.current <= quotesRequestStartedAt) setQuotes(latest);
+        setQuotes((current) => {
+          const currentBySymbol = new Map(current.map((quote) => [quote.symbol, quote]));
+          const latestSymbols = new Set(latest.map((quote) => quote.symbol));
+          const merged = latest.map((fallback) => {
+            const previous = currentBySymbol.get(fallback.symbol);
+            if (!previous || !(lastPriceWsTickAtBySymbol.current[fallback.symbol] > 0)) return fallback;
+            return { ...fallback, price: previous.price, price_direction: previous.price_direction, price_tick_at: previous.price_tick_at, sparkline: previous.sparkline };
+          });
+          return [...merged, ...current.filter((quote) => !latestSymbols.has(quote.symbol))];
+        });
       })
       .catch(() => undefined);
     void getSignals()
@@ -227,21 +269,49 @@ export function AppProvider({ children }: { children: ReactNode }) {
           if (event.event === "tick") {
             const livePrice = tick.price;
             if (typeof livePrice !== "number" || !Number.isFinite(livePrice) || livePrice <= 0) return;
-            lastPriceWsTickAt.current = Date.now();
-            setQuotes((items) => items.map((q) => {
-              if (q.symbol !== tick.symbol) return q;
-              const sparkline = [...(Array.isArray(q.sparkline) ? q.sparkline : [])];
-              if (sparkline[sparkline.length - 1] !== livePrice) sparkline.push(livePrice);
-              return {
-                ...q,
+            const receivedAt = Date.now();
+            lastPriceWsTickAt.current = receivedAt;
+            lastPriceWsTickAtBySymbol.current[tick.symbol] = receivedAt;
+            const previousLivePrice = lastPriceWsValueBySymbol.current[tick.symbol];
+            lastPriceWsValueBySymbol.current[tick.symbol] = livePrice;
+            setQuotes((items) => {
+              let found = false;
+              const updated = items.map((q) => {
+                if (q.symbol !== tick.symbol) return q;
+                found = true;
+                const previousPrice = previousLivePrice ?? q.price;
+                const direction = livePrice > previousPrice ? "up" : livePrice < previousPrice ? "down" : q.price_direction ?? "unchanged";
+                const sparkline = [...(Array.isArray(q.sparkline) ? q.sparkline : [])];
+                if (sparkline[sparkline.length - 1] !== livePrice) sparkline.push(livePrice);
+                return {
+                  ...q,
+                  price: livePrice,
+                  price_direction: direction,
+                  price_tick_at: receivedAt,
+                  change_pct: typeof tick.change_pct === "number" && Number.isFinite(tick.change_pct) ? tick.change_pct : q.change_pct,
+                  volume_24h: typeof tick.volume_24h === "number" && Number.isFinite(tick.volume_24h) ? tick.volume_24h : q.volume_24h,
+                  high_24h: typeof tick.high_24h === "number" && Number.isFinite(tick.high_24h) ? tick.high_24h : q.high_24h,
+                  low_24h: typeof tick.low_24h === "number" && Number.isFinite(tick.low_24h) ? tick.low_24h : q.low_24h,
+                  sparkline: sparkline.slice(-60),
+                };
+              });
+              if (found) return updated;
+              // A tick can arrive before the initial REST quote list. Keep it instead of
+              // silently dropping it because the symbol is not in the current state yet.
+              return [...updated, {
+                symbol: tick.symbol,
+                name: tick.symbol.replace(/USDT$/, ""),
                 price: livePrice,
-                change_pct: typeof tick.change_pct === "number" && Number.isFinite(tick.change_pct) ? tick.change_pct : q.change_pct,
-                volume_24h: typeof tick.volume_24h === "number" && Number.isFinite(tick.volume_24h) ? tick.volume_24h : q.volume_24h,
-                high_24h: typeof tick.high_24h === "number" && Number.isFinite(tick.high_24h) ? tick.high_24h : q.high_24h,
-                low_24h: typeof tick.low_24h === "number" && Number.isFinite(tick.low_24h) ? tick.low_24h : q.low_24h,
-                sparkline: sparkline.slice(-60),
-              };
-            }));
+                price_direction: "unchanged",
+                price_tick_at: receivedAt,
+                change_pct: typeof tick.change_pct === "number" && Number.isFinite(tick.change_pct) ? tick.change_pct : null,
+                volume_24h: typeof tick.volume_24h === "number" && Number.isFinite(tick.volume_24h) ? tick.volume_24h : null,
+                high_24h: typeof tick.high_24h === "number" && Number.isFinite(tick.high_24h) ? tick.high_24h : null,
+                low_24h: typeof tick.low_24h === "number" && Number.isFinite(tick.low_24h) ? tick.low_24h : null,
+                funding_rate: null, open_interest: null, buy_pct: null, volume_ratio: null, score: null,
+                trend: { "15M": null, "1H": null, "4H": null }, sparkline: [livePrice], liquidity_sweep: null,
+              }];
+            });
             return;
           }
           const fundingRate = tick.funding_rate;
@@ -251,7 +321,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return;
         }
         if (event.channel === "market.liquidations" || event.channel === "market.movers") {
-          void getQuotes().then(setQuotes).catch(() => undefined);
+          const quotesRequestStartedAt = Date.now();
+          void getQuotes().then((latest) => {
+            setQuotes((current) => {
+              const currentBySymbol = new Map(current.map((quote) => [quote.symbol, quote]));
+              return latest.map((fallback) => {
+                const previous = currentBySymbol.get(fallback.symbol);
+                if (!previous) return fallback;
+                const lastWsAt = lastPriceWsTickAtBySymbol.current[fallback.symbol] ?? 0;
+                if (lastWsAt > quotesRequestStartedAt) return previous;
+                return { ...fallback, price_direction: previous.price_direction, price_tick_at: previous.price_tick_at };
+              });
+            });
+          }).catch(() => undefined);
           return;
         }
         if (event.channel === "account" && event.event === "plan.changed") {
