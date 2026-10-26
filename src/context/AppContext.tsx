@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useRef,
   type ReactNode,
 } from "react";
 import { Check, Info, X } from "lucide-react";
@@ -56,6 +57,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.getItem("ftrade.theme") === "light" ? "light" : "dark",
   );
   const [quotes, setQuotes] = useState<AssetQuote[]>([]);
+  // Timestamp of the last actual price tick received over the real-time channel.
+  // It activates the short REST fallback only when the WebSocket is quiet/broken.
+  const lastPriceWsTickAt = useRef(0);
   const [signalCount, setSignalCount] = useState(0);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -72,9 +76,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
   useEffect(() => {
     if (!user?.user_id) return;
-    // Keep a bounded REST refresh as a fallback if the real-time channel is unavailable.
+    // Keep slower, non-price account counters refreshed independently. Price data
+    // is handled by WebSocket; the conditional fallback below only polls when ticks
+    // stop arriving, so a stale REST response cannot overwrite a newer live tick.
     const timer = window.setInterval(() => {
-      void getQuotes().then(setQuotes).catch(() => undefined);
       void getSignals()
         .then((signals) => setSignalCount(signals.filter((s) => s.status !== "CANCELLED").length))
         .catch(() => undefined);
@@ -83,12 +88,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [user?.user_id]);
 
   useEffect(() => {
+    if (!user?.user_id) return;
+    let disposed = false;
+    let inFlight = false;
+    const timer = window.setInterval(() => {
+      if (disposed || document.visibilityState === "hidden" || inFlight) return;
+      // Normal market activity delivers price ticks at roughly one-second cadence.
+      // If no tick reaches the browser for 2.5s, read the shared backend cache as a
+      // fallback (the endpoint itself avoids REST calls while the feed is fresh).
+      if (Date.now() - lastPriceWsTickAt.current < 2500) return;
+      const startedAt = Date.now();
+      inFlight = true;
+      void getQuotes()
+        .then((latest) => {
+          if (disposed || lastPriceWsTickAt.current > startedAt) return;
+          setQuotes(latest);
+        })
+        .catch(() => undefined)
+        .finally(() => { inFlight = false; });
+    }, 2000);
+    return () => {
+      disposed = true;
+      window.clearInterval(timer);
+    };
+  }, [user?.user_id]);
+
+  useEffect(() => {
     void restoreAuthSession()
       .then((me) => setUser(me))
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
+    const quotesRequestStartedAt = Date.now();
     void getQuotes()
-      .then(setQuotes)
+      .then((latest) => {
+        if (lastPriceWsTickAt.current <= quotesRequestStartedAt) setQuotes(latest);
+      })
       .catch(() => undefined);
     void getNotifications()
       .then(setNotifications)
@@ -101,7 +135,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
   useEffect(() => {
     if (!user) return;
-    void getQuotes().then(setQuotes).catch(() => undefined);
+    const quotesRequestStartedAt = Date.now();
+    void getQuotes()
+      .then((latest) => {
+        if (lastPriceWsTickAt.current <= quotesRequestStartedAt) setQuotes(latest);
+      })
+      .catch(() => undefined);
     void getSignals()
       .then((signals) => setSignalCount(signals.filter((s) => s.status !== "CANCELLED").length))
       .catch(() => undefined);
@@ -184,8 +223,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
         if (event.channel === "prices") {
           const tick = event.payload as TickData;
-          if (!tick || !tick.symbol || typeof tick.price !== "number") return;
-          setQuotes((items) => items.map((q) => q.symbol === tick.symbol ? { ...q, price: tick.price, change_pct: tick.change_pct } : q));
+          if (!tick || !tick.symbol) return;
+          if (event.event === "tick") {
+            const livePrice = tick.price;
+            if (typeof livePrice !== "number" || !Number.isFinite(livePrice) || livePrice <= 0) return;
+            lastPriceWsTickAt.current = Date.now();
+            setQuotes((items) => items.map((q) => {
+              if (q.symbol !== tick.symbol) return q;
+              const sparkline = [...(Array.isArray(q.sparkline) ? q.sparkline : [])];
+              if (sparkline[sparkline.length - 1] !== livePrice) sparkline.push(livePrice);
+              return {
+                ...q,
+                price: livePrice,
+                change_pct: typeof tick.change_pct === "number" && Number.isFinite(tick.change_pct) ? tick.change_pct : q.change_pct,
+                volume_24h: typeof tick.volume_24h === "number" && Number.isFinite(tick.volume_24h) ? tick.volume_24h : q.volume_24h,
+                high_24h: typeof tick.high_24h === "number" && Number.isFinite(tick.high_24h) ? tick.high_24h : q.high_24h,
+                low_24h: typeof tick.low_24h === "number" && Number.isFinite(tick.low_24h) ? tick.low_24h : q.low_24h,
+                sparkline: sparkline.slice(-60),
+              };
+            }));
+            return;
+          }
+          const fundingRate = tick.funding_rate;
+          if (event.event === "funding.tick" && typeof fundingRate === "number" && Number.isFinite(fundingRate)) {
+            setQuotes((items) => items.map((q) => q.symbol === tick.symbol ? { ...q, funding_rate: fundingRate } : q));
+          }
           return;
         }
         if (event.channel === "market.liquidations" || event.channel === "market.movers") {
