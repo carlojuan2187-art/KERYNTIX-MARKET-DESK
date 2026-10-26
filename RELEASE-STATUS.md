@@ -1,9 +1,17 @@
+## Actualización — gráfico interactivo adaptable (26 de octubre de 2026)
+
+- El gráfico permite zoom horizontal con la rueda, zoom por pellizco en dispositivos táctiles y desplazamiento por arrastre; también se puede recorrer el historial con Shift+rueda o la rueda horizontal.
+- La escala de precios derecha permite zoom vertical con arrastre y desplazar la escala con Shift+arrastre; los botones +/− y el control inferior permiten cambiar o restablecer el zoom.
+- Se añadió una agarradera para ajustar la altura del gráfico entre 220 y 720 píxeles, con soporte de teclado.
+- La navegación tiene acceso a hasta 300 velas, manteniendo el cálculo previo de indicadores; el gráfico enseña inicialmente las 60 más recientes y permite desplazarse por el historial sin cambiar de temporalidad.
+- Al recorrer velas antiguas, la línea de precio en vivo deja de forzar la escala y no aplasta la vista histórica.
+
 # Estado de entrega del front-end FTrade
 
 ## Actualización — gráfico de mercado y herramientas técnicas (26 de octubre de 2026)
 
 - El gráfico conserva la fuente de velas OHLC de Binance Futures, pero sigue el precio vivo del contexto de cotizaciones; actualiza la vela abierta con el tick más reciente y dibuja una línea de referencia exacta cuando la vela histórica ya está cerrada.
-- Se añadieron las temporalidades `1m` y `5m` a la interfaz y al contrato de la API. La carga ahora obtiene hasta 300 velas para dar período de calentamiento a EMA 200 y dibuja las 120 más recientes.
+- Se añadieron las temporalidades `1m` y `5m` a la interfaz y al contrato de la API. La carga obtiene hasta 300 velas para dar período de calentamiento a EMA 200; el gráfico interactivo muestra inicialmente las 60 más recientes y permite recorrer el resto del historial.
 - Se añadieron controles para EMA 9/21/50/200, VWAP de las velas cargadas, Bandas de Bollinger, volumen, RSI 14, MACD 12/26/9 y ATR 14.
 - Se añadió una calculadora de escenarios LONG/SHORT que estima cantidad, exposición, margen y riesgo/beneficio, marca entrada, stop y objetivo en el gráfico, y no envía órdenes reales.
 - La interfaz advierte que VWAP se calcula sobre las velas cargadas y que los indicadores no garantizan resultados.

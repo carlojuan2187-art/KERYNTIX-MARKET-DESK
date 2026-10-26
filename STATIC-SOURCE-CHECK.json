@@ -4,5 +4,5 @@
   "unresolved_local_imports": 0,
   "syntax": [],
   "missing": [],
-  "scope": "TypeScript syntax parsing and transpilation (excluding declaration-file emit), plus local-import-path audit only. Semantic type-check, Vite production build, and browser E2E remain unverified because npm dependency installation timed out and the offline cache is incomplete."
+  "scope": "TypeScript/TSX syntax transpilation and local-import-path audit only. Full semantic type-check, Vite production build and browser E2E remain unverified because npm dependency installation timed out."
 }
