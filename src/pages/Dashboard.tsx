@@ -605,8 +605,28 @@ function PanoramaView({ data }: { data: OverviewData }) {
   );
 }
 export default function DashboardPage() {
-  const { variant } = useApp();
+  const { variant, quotes: liveQuotes } = useApp();
   const { data, loading, error, refresh } = useApi(getOverview);
+  // Overview statistics are REST snapshots. Merge the global live quote stream
+  // into every price-backed dashboard view so these values don't freeze until
+  // the user manually refreshes the page.
+  const liveQuoteMap = new Map(liveQuotes.map((quote) => [quote.symbol, quote]));
+  const displayData = data ? {
+    ...data,
+    quotes: data.quotes.map((snapshot) => {
+      const live = liveQuoteMap.get(snapshot.symbol);
+      return live ? {
+        ...snapshot,
+        price: live.price,
+        change_pct: live.change_pct,
+        volume_24h: live.volume_24h,
+        high_24h: live.high_24h,
+        low_24h: live.low_24h,
+        funding_rate: live.funding_rate,
+        sparkline: live.sparkline,
+      } : snapshot;
+    }),
+  } : null;
   useEffect(
     () =>
       subscribeWs((event) => {
@@ -640,26 +660,26 @@ export default function DashboardPage() {
         </Link>
       </PageHeader>
       <ResourceState loading={loading} error={error} retry={refresh} />
-      {data && !loading && !error && (
+      {displayData && !loading && !error && (
         <>
           {variant === "terminal" ? (
             <>
-              <Metrics data={data} />
+              <Metrics data={displayData} />
               <div className="dashboard-main-grid">
                 <MarketChart />
-                <RegimePanel regime={data.regime} />
+                <RegimePanel regime={displayData.regime} />
               </div>
               <div className="dashboard-bottom-grid">
-                <SignalsPreview data={data} />
-                <ActivityPreview data={data} />
+                <SignalsPreview data={displayData} />
+                <ActivityPreview data={displayData} />
               </div>
               <div className="dashboard-extra-grid">
-                <WatchlistPreview data={data} />
+                <WatchlistPreview data={displayData} />
                 <CalendarPreview />
               </div>
             </>
           ) : (
-            <PanoramaView data={data} />
+            <PanoramaView data={displayData} />
           )}
           <div className="dashboard-bottom-note">
             <span>
