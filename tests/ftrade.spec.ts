@@ -69,3 +69,69 @@ test("el login inicia una vinculación mediante la API y no salta la verificaci�
   expect(postedPhone).toBe("+5355123456");
   await expect(page.locator('input[aria-label^="Dígito "]')).toHaveCount(0);
 });
+
+test("Mi Plan se muestra aunque no haya un teléfono de WhatsApp configurado", async ({ page }) => {
+  await page.route(`${apiBase}/auth/refresh`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ access_token: "test-access-token" }),
+    });
+  });
+  await page.route(`${apiBase}/auth/me`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        user_id: "test-user",
+        phone: "+15550000000",
+        plan: "free",
+        trial_end: "2099-12-31T00:00:00Z",
+        ref_code: "TESTREF",
+        ref_premium_valid: false,
+        risk_profile: { capital: 1000, risk_pct: 1 },
+        watchlist: [{ symbol: "BTCUSDT", name: "Bitcoin" }],
+        alert_prefs: { on: true, liq: true, mov: true, vol: true },
+        tz: "America/Puerto_Rico",
+        banned: false,
+        created_at: "2026-10-01T00:00:00Z",
+        last_activity: "2026-10-26T00:00:00Z",
+      }),
+    });
+  });
+  await page.route(`${apiBase}/billing/plans`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        plans: [{
+          plan: "premium",
+          price_usdt: "40.000",
+          duration_days: 30,
+          network: "BNB Smart Chain (BEP20)",
+          token: "USDT",
+          wallet: null,
+          auto_verification: false,
+        }],
+        payment_configured: false,
+      }),
+    });
+  });
+  await page.route(`${apiBase}/payments/history**`, async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+  });
+  await page.route(`${apiBase}/account/restriction`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ reason: "", allowed: true, ban_active: false }),
+    });
+  });
+
+  await page.goto("/planes");
+  await expect(page.getByRole("heading", { name: "Invierte en una mejor perspectiva." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tu historial de pagos" })).toBeVisible();
+  await expect(page.getByText("El contacto de WhatsApp del administrador todavía no está configurado.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No se pudo mostrar esta sección" })).toHaveCount(0);
+});
+
