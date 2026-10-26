@@ -67,6 +67,44 @@ const groups = [
   },
 ];
 
+/**
+ * En móvil las tablas se muestran como tarjetas (sin scroll lateral).
+ * Para eso cada celda necesita su etiqueta: se copia desde el <th> de su columna.
+ */
+function useResponsiveTableLabels() {
+  useEffect(() => {
+    const root = document.querySelector(".page-content");
+    if (!root) return;
+    let frame = 0;
+    const apply = () => {
+      frame = 0;
+      root.querySelectorAll("table.data-table").forEach((table) => {
+        const heads = Array.from(table.querySelectorAll("thead th")).map(
+          (th) => (th.textContent || "").trim(),
+        );
+        table.querySelectorAll("tbody tr").forEach((row) => {
+          Array.from(row.children).forEach((cell, index) => {
+            const label = heads[index];
+            if (label && cell.getAttribute("data-label") !== label) {
+              cell.setAttribute("data-label", label);
+            }
+          });
+        });
+      });
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(apply);
+    };
+    apply();
+    const observer = new MutationObserver(schedule);
+    observer.observe(root, { childList: true, subtree: true });
+    return () => {
+      observer.disconnect();
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
+}
+
 export default function Layout() {
   const {
     variant,
@@ -88,6 +126,7 @@ export default function Layout() {
   const [query, setQuery] = useState("");
   const [now, setNow] = useState(new Date());
   const loc = useLocation();
+  useResponsiveTableLabels();
   const closeSearch = useCallback(() => setSearchOpen(false), []);
   const closeNotices = useCallback(() => setNoticesOpen(false), []);
   const unread = notifications.filter((n) => !n.read).length;
@@ -245,7 +284,7 @@ export default function Layout() {
               onClick={() => setVariant("terminal")}
             >
               <PanelTop size={12} />
-              Terminal
+              <span className="variant-label">Terminal</span>
             </button>
             <button
               className={variant === "panorama" ? "active" : ""}
@@ -253,7 +292,7 @@ export default function Layout() {
               onClick={() => setVariant("panorama")}
             >
               <Sparkles size={12} />
-              Panorama
+              <span className="variant-label">Panorama</span>
             </button>
           </div>
           <div className="topbar-actions">
