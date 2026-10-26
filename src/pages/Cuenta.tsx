@@ -38,7 +38,26 @@ export default function CuentaPage() {
   const [error, setError] = useState("");
   const sessions = useApi(getSessions);
   const navigate = useNavigate();
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div>
+        <PageHeader
+          eyebrow="TU ESPACIO, A TU MANERA"
+          title="Cargando tu cuenta…"
+          description="Estamos comprobando tu sesión para mostrar tu perfil y tu plan."
+        />
+        <section className="panel panel-pad" role="status" aria-live="polite">
+          <p className="account-explainer">
+            Si esta pantalla no cambia, vuelve al inicio e inténtalo de nuevo. No hace falta refrescar el teléfono.
+          </p>
+          <div className="signal-detail-actions">
+            <Link className="btn btn-secondary" to="/">Volver al inicio</Link>
+            <Link className="btn btn-primary" to="/login">Volver a iniciar sesión</Link>
+          </div>
+        </section>
+      </div>
+    );
+  }
   async function save() {
     setBusy(true);
     setError("");
