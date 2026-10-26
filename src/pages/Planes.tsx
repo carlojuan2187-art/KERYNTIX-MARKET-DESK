@@ -96,7 +96,7 @@ export default function PlanesPage() {
         description="FREE para empezar. PREMIUM para mantener tu acceso completo al mercado."
       >
         <Tag tone={user?.plan === "premium" ? "green" : "blue"} dot>
-          Tu plan: {user?.plan.toUpperCase()}
+          Tu plan: {(user?.plan || "free").toUpperCase()}
         </Tag>
       </PageHeader>
       <div className="plans-grid">
