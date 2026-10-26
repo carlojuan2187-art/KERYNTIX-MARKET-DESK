@@ -13,16 +13,22 @@ export function useApi<T>(
   const loaderRef = useRef(loader);
   loaderRef.current = loader;
   const generation = useRef(0);
+  const hasData = useRef(false);
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const refresh = useCallback(async () => {
     const id = ++generation.current;
-    setLoading(true);
+    // Keep the current view mounted during background refreshes. Showing a
+    // full-page loading state on every poll/WebSocket event causes visible flicker.
+    if (!hasData.current) setLoading(true);
     setError(null);
     try {
       const value = await loaderRef.current();
-      if (id === generation.current) setData(value);
+      if (id === generation.current) {
+        hasData.current = true;
+        setData(value);
+      }
     } catch (err) {
       if (id === generation.current)
         setError(
