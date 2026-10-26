@@ -1,4 +1,5 @@
 import type { User, MarketRegime, DerivativesData, WatchlistItem, CalendarEventItem, SignalState } from "./types";
+import type { WatchlistMarketItem } from "./terminal";
 import { apiRequest } from "./client";
 import {
   getQuotes, normalizeSymbol, getRadarSnapshot, getPerformance,
@@ -9,7 +10,7 @@ import {
 } from "./terminal";
 
 export {
-  loginPhone, verifyTelegramLink, verifyCode, resendCode, startPayment, verifyPayment, getPaymentHistory,
+  loginPhone, verifyTelegramLink, verifyCode, startPayment, verifyPayment, getPaymentHistory,
   getAccountRestriction, startTelegramLink, unlinkTelegramAccount, logout,
 } from "./account";
 export {
@@ -25,7 +26,7 @@ export {
 } from "./terminal";
 export { subscribeWs, emitWs } from "./events";
 export type { WsEvent } from "./events";
-export type { AssetQuote, Candle, FlowData, RadarOpportunity, OverviewData, Performance, LiquidationSummary, MoversSnapshot, AppNotification, SessionRecord, SupportTicket } from "./terminal";
+export type { AssetQuote, Candle, FlowData, RadarOpportunity, OverviewData, Performance, LiquidationSummary, MoversSnapshot, AppNotification, SessionRecord, SupportTicket, WatchlistMarketItem, WatchlistTimeframeAnalysis, WatchlistTrendState } from "./terminal";
 
 export async function getBillingPlans(): Promise<{ plans: { plan: string; price_usdt: string | null; duration_days: number; network: string; token: string; wallet: string | null; auto_verification: boolean }[]; payment_configured: boolean }> {
   return apiRequest("/billing/plans", { method: "GET" });
@@ -43,9 +44,9 @@ export async function getSignals(): Promise<SignalState[]> { return apiRequest<S
 export async function getSignal(id: string): Promise<SignalState> {
   return apiRequest<SignalState>(`/signals/${encodeURIComponent(normalizeSymbol(id))}`, { method: "GET" });
 }
-export async function getWatchlist(): Promise<WatchlistItem[]> { return getTerminalWatchlist(); }
-export async function addWatchlistItem(item: WatchlistItem): Promise<WatchlistItem[]> { return addWatchlistSymbol(item.symbol); }
-export async function removeWatchlistItem(symbol: string): Promise<WatchlistItem[]> { return deleteWatchlistSymbol(symbol); }
+export async function getWatchlist(): Promise<WatchlistMarketItem[]> { return getTerminalWatchlist(); }
+export async function addWatchlistItem(item: WatchlistItem): Promise<WatchlistMarketItem[]> { return addWatchlistSymbol(item.symbol); }
+export async function removeWatchlistItem(symbol: string): Promise<WatchlistMarketItem[]> { return deleteWatchlistSymbol(symbol); }
 export async function getRegime(): Promise<MarketRegime> { return getMarketRegime(); }
 export async function getDerivatives(symbol = "BTCUSDT"): Promise<DerivativesData> {
   return getDerivativesData(symbol) as Promise<DerivativesData>;

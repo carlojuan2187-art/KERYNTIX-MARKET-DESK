@@ -18,6 +18,41 @@ export interface AssetQuote {
   sparkline: number[];
   liquidity_sweep: boolean | null;
 }
+
+export type WatchlistTrendState = "up" | "down" | "range" | "transition" | "volatile" | null;
+export interface WatchlistTimeframeAnalysis {
+  regime: string | null;
+  strength: string | null;
+  adx: number | null;
+  plus_di: number | null;
+  minus_di: number | null;
+  close: number | null;
+  ema20: number | null;
+  ema50: number | null;
+  above_ema200: boolean | null;
+  ema50_slope_pct: number | null;
+  atr_pct: number | null;
+  vol_percentile: number | null;
+  bandwidth_trend: string | null;
+  rel_volume: number | null;
+}
+export interface WatchlistMarketItem {
+  symbol: string;
+  name: string;
+  status: string;
+  price: number | null;
+  change_pct: number | null;
+  volume_24h: number | null;
+  funding_rate: number | null;
+  trend: { "15M": WatchlistTrendState; "1H": WatchlistTrendState; "4H": WatchlistTrendState };
+  analyses: { "15m": WatchlistTimeframeAnalysis | null; "1h": WatchlistTimeframeAnalysis | null; "4h": WatchlistTimeframeAnalysis | null };
+  score: number | null;
+  score_detail: { direction: string | null; lean: string | null; strength: string | null; score: number | null; signs: Record<string, number | null> } | null;
+  liquidity_sweep: { direction: "LONG" | "SHORT"; minutes: number } | null;
+  active_signal: { id: string; direction: "LONG" | "SHORT" | null; status: string; score: number | null; entry_price: number | null; created_at: string | null } | null;
+  data_updated_at: string | null;
+}
+
 export interface Candle { time: string; timestamp: number; open: number; high: number; low: number; close: number; volume: number; cvd: number }
 export interface ClosedOperation { id: string; symbol: string; direction: "LONG" | "SHORT"; entry_price: number; exit_price: number | null; result: "TP1" | "TP2" | "SL"; r_result: number; touched_at: string; closed_at: string }
 export interface Performance { operations: number; wins: number; losses: number; win_rate: number; total_r: number; average_r: number; best_r: number; worst_r: number; streak: number; curve: { date: string; r: number }[]; trades: ClosedOperation[] }
@@ -280,17 +315,76 @@ export async function getOverview(): Promise<OverviewData> {
 }
 
 export async function getSessionsForCurrentUser(): Promise<SessionRecord[]> { return getSessions(); }
-export async function getWatchlist(): Promise<{ symbol: string; name?: string }[]> {
+function watchlistTrend(value: unknown): WatchlistTrendState {
+  const regime = String(value ?? "").trim().toUpperCase();
+  if (["UP", "BULLISH", "ALCISTA"].includes(regime)) return "up";
+  if (["DOWN", "BEARISH", "BAJISTA"].includes(regime)) return "down";
+  if (["RANGE", "FLAT", "NEUTRAL", "LATERAL"].includes(regime)) return "range";
+  if (["TRANSITION", "TRANSICION", "TRANSICIÓN"].includes(regime)) return "transition";
+  if (["VOLATILE", "VOLATIL", "VOLÁTIL", "HIGH_VOLATILITY"].includes(regime)) return "volatile";
+  return null;
+}
+function mapWatchlistAnalysis(value: unknown): WatchlistTimeframeAnalysis | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const row = record(value);
+  return {
+    regime: str(row.regime) || null, strength: str(row.strength) || null,
+    adx: numberOrNull(row.adx), plus_di: numberOrNull(row.plus_di), minus_di: numberOrNull(row.minus_di),
+    close: numberOrNull(row.close), ema20: numberOrNull(row.ema20), ema50: numberOrNull(row.ema50),
+    above_ema200: typeof row.above_ema200 === "boolean" ? row.above_ema200 : null,
+    ema50_slope_pct: numberOrNull(row.ema50_slope_pct), atr_pct: numberOrNull(row.atr_pct),
+    vol_percentile: numberOrNull(row.vol_percentile), bandwidth_trend: str(row.bandwidth_trend) || null,
+    rel_volume: numberOrNull(row.rel_volume),
+  };
+}
+function mapWatchlistRow(value: Record<string, any>): WatchlistMarketItem | null {
+  const symbol = str(value.symbol).toUpperCase();
+  if (!symbol) return null;
+  const rawAnalyses = record(value.analyses);
+  const analyses = {
+    "15m": mapWatchlistAnalysis(rawAnalyses["15m"]),
+    "1h": mapWatchlistAnalysis(rawAnalyses["1h"]),
+    "4h": mapWatchlistAnalysis(rawAnalyses["4h"]),
+  };
+  const rawTrend = record(value.trend);
+  const sweepRaw = value.liquidity_sweep;
+  const sweepRow = record(sweepRaw);
+  const sweepDirection = String(sweepRow.direction ?? "").toUpperCase();
+  const liquiditySweep = (sweepDirection === "LONG" || sweepDirection === "SHORT")
+    ? { direction: sweepDirection as "LONG" | "SHORT", minutes: numberOrNull(sweepRow.minutes) ?? 0 }
+    : null;
+  const signalRaw = record(value.active_signal);
+  const signalDirection = String(signalRaw.direction ?? "").toUpperCase();
+  const activeSignal = Object.keys(signalRaw).length ? {
+    id: str(signalRaw.id), direction: signalDirection === "LONG" || signalDirection === "SHORT" ? signalDirection as "LONG" | "SHORT" : null,
+    status: str(signalRaw.status), score: numberOrNull(signalRaw.score), entry_price: numberOrNull(signalRaw.entry_price), created_at: str(signalRaw.created_at) || null,
+  } : null;
+  const scoreRaw = record(value.score_detail);
+  const signsRaw = record(scoreRaw.signs);
+  const scoreDetail = Object.keys(scoreRaw).length ? {
+    direction: str(scoreRaw.direction) || null, lean: str(scoreRaw.lean) || null, strength: str(scoreRaw.strength) || null,
+    score: numberOrNull(scoreRaw.score), signs: Object.fromEntries(Object.entries(signsRaw).map(([key, sign]) => [key, numberOrNull(sign)])),
+  } : null;
+  return {
+    symbol, name: str(value.name) || symbol.replace(/USDT$/, ""), status: str(value.status) || "unknown",
+    price: numberOrNull(value.price), change_pct: numberOrNull(value.change_pct), volume_24h: numberOrNull(value.volume_24h),
+    funding_rate: numberOrNull(value.funding_rate),
+    trend: { "15M": watchlistTrend(rawTrend["15M"] ?? analyses["15m"]?.regime), "1H": watchlistTrend(rawTrend["1H"] ?? analyses["1h"]?.regime), "4H": watchlistTrend(rawTrend["4H"] ?? analyses["4h"]?.regime) },
+    analyses, score: numberOrNull(value.score), score_detail: scoreDetail, liquidity_sweep: liquiditySweep,
+    active_signal: activeSignal, data_updated_at: str(value.data_updated_at) || null,
+  };
+}
+export async function getWatchlist(): Promise<WatchlistMarketItem[]> {
   const result = await apiRequest<{ items: Record<string, any>[] }>("/watchlist", { method: "GET" });
-  return (result.items || []).map((x) => ({ symbol: str(x.symbol), name: str(x.name) || str(x.symbol) })).filter((x) => x.symbol);
+  return (result.items || []).map(mapWatchlistRow).filter((x): x is WatchlistMarketItem => x !== null);
 }
-export async function addWatchlistSymbol(symbol: string) {
+export async function addWatchlistSymbol(symbol: string): Promise<WatchlistMarketItem[]> {
   const result = await apiRequest<{ items: Record<string, any>[] }>("/watchlist", { method: "POST", body: JSON.stringify({ symbol: normalizeSymbol(symbol) }) });
-  return (result.items || []).map((x) => ({ symbol: str(x.symbol), name: str(x.name) || str(x.symbol) }));
+  return (result.items || []).map(mapWatchlistRow).filter((x): x is WatchlistMarketItem => x !== null);
 }
-export async function deleteWatchlistSymbol(symbol: string) {
+export async function deleteWatchlistSymbol(symbol: string): Promise<WatchlistMarketItem[]> {
   const result = await apiRequest<{ items: Record<string, any>[] }>(`/watchlist/${encodeURIComponent(normalizeSymbol(symbol))}`, { method: "DELETE" });
-  return (result.items || []).map((x) => ({ symbol: str(x.symbol), name: str(x.name) || str(x.symbol) }));
+  return (result.items || []).map(mapWatchlistRow).filter((x): x is WatchlistMarketItem => x !== null);
 }
 export async function getMarketRegime(): Promise<MarketRegime> { return apiRequest<MarketRegime>("/market/regime", { method: "GET" }); }
 export async function getDerivativesData(symbol = "BTCUSDT"): Promise<Record<string, any>> { return apiRequest<Record<string, any>>(`/derivatives?symbol=${encodeURIComponent(normalizeSymbol(symbol))}`, { method: "GET" }); }
