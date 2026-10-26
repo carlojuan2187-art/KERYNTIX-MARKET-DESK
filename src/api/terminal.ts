@@ -5,6 +5,10 @@ export interface AssetQuote {
   symbol: string;
   name: string;
   price: number;
+  /** Direction of the latest WebSocket price tick; independent from 24h change. */
+  price_direction?: "up" | "down" | "unchanged";
+  /** Browser receipt time of the latest WebSocket price tick, in epoch milliseconds. */
+  price_tick_at?: number;
   change_pct: number | null;
   volume_24h: number | null;
   high_24h: number | null;
