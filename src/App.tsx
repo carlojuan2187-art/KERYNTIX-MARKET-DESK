@@ -7,6 +7,7 @@ import {
   Link,
   useParams,
 } from "react-router-dom";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 import { ShieldAlert } from "lucide-react";
 import Layout from "@/components/Layout";
 import { AppProvider, useApp } from "@/context/AppContext";
@@ -33,6 +34,37 @@ import CuentaPage from "@/pages/Cuenta";
 import SoportePage from "@/pages/Soporte";
 import AdminPage from "@/pages/Admin";
 import AjustesAvisosPage from "@/pages/AjustesAvisos";
+
+
+class PageErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    // Keep the exception available in browser diagnostics instead of leaving a
+    // completely black page with no clue about the failing component.
+    console.error("FTrade: error al renderizar una pantalla", error, info.componentStack);
+  }
+
+  render() {
+    if (this.state.failed) {
+      return (
+        <div className="resource-state" role="alert" style={{ minHeight: "55vh", justifyContent: "center", padding: 24 }}>
+          <ShieldAlert size={36} />
+          <h1>No se pudo mostrar esta sección</h1>
+          <p>Ocurrió un error al cargar la pantalla. Puedes volver a intentarlo sin cerrar tu sesión.</p>
+          <button className="btn btn-primary" onClick={() => window.location.reload()}>
+            Recargar sección
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function SessionGuard() {
   const { user, loading } = useApp();
@@ -106,6 +138,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AppProvider>
+        <PageErrorBoundary>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/r/:ref_code" element={<ReferralLink />} />
@@ -152,6 +185,7 @@ export default function App() {
             </Route>
           </Route>
         </Routes>
+        </PageErrorBoundary>
       </AppProvider>
     </BrowserRouter>
   );
