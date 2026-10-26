@@ -77,8 +77,8 @@ export async function searchSymbols(query: string): Promise<AssetQuote[]> {
 export async function getQuote(symbol: string): Promise<AssetQuote> {
   return apiRequest<AssetQuote>(`/symbols/${encodeURIComponent(normalizeSymbol(symbol))}`, { method: "GET" });
 }
-export async function getCandles(symbol = "BTCUSDT", timeframe = "1h", timezone?: string): Promise<Candle[]> {
-  const params = new URLSearchParams({ symbol: normalizeSymbol(symbol), timeframe, limit: "120" });
+export async function getCandles(symbol = "BTCUSDT", timeframe = "1h", timezone?: string, limit = 300): Promise<Candle[]> {
+  const params = new URLSearchParams({ symbol: normalizeSymbol(symbol), timeframe, limit: String(Math.max(1, Math.min(500, Math.floor(limit)))) });
   if (timezone) params.set("tz", timezone);
   return apiRequest<Candle[]>(`/market/candles?${params.toString()}`, { method: "GET" });
 }
