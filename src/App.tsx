@@ -93,14 +93,18 @@ function SessionGuard() {
             ? `Finaliza el ${new Date(user.ban_until).toLocaleString("es", { timeZone: user.tz })}.`
             : "La restricción es permanente."}
         </p>
-        <a
-          className="btn btn-secondary"
-          href={`https://wa.me/${appConfig.whatsapp[0].replace(/\D/g, "")}`}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Contactar administrador
-        </a>
+        {appConfig.whatsapp[0] ? (
+          <a
+            className="btn btn-secondary"
+            href={`https://wa.me/${appConfig.whatsapp[0].replace(/\D/g, "")}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Contactar administrador
+          </a>
+        ) : (
+          <p>El contacto de WhatsApp del administrador no está configurado.</p>
+        )}
       </div>
     );
   return <Outlet />;
