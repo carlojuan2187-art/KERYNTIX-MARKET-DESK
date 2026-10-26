@@ -76,10 +76,15 @@ export default function MercadoPage() {
     "BNBUSDT",
     "XRPUSDT",
     "DOGEUSDT",
-    ...(user?.watchlist.map((q) => q.symbol) || []),
+    ...(Array.isArray(user?.watchlist)
+      ? user.watchlist.map((item) =>
+          typeof item === "string" ? item : item?.symbol,
+        ).filter((symbol): symbol is string => typeof symbol === "string" && symbol.length > 0)
+      : []),
   ];
   const pairSymbols = [...new Set(defaultPairs)];
   const quote = quotes.find((q) => q.symbol === simbolo);
+  const flowWindows = Array.isArray(flow.data?.windows) ? flow.data.windows : [];
   const sourceStatus = tab === "flujo" ? flow.data?.status : tab === "liquidaciones" ? liq.data?.status : movers.data?.status;
   const sourceMessage = tab === "flujo" ? flow.data?.reading : tab === "liquidaciones" ? liq.data?.message : movers.data?.message;
   const isCollecting = sourceStatus === "collecting";
@@ -224,7 +229,7 @@ export default function MercadoPage() {
             </div>
             <div className="flow-quote">
               <strong className="mono">
-                {price(quote?.price ?? flow.data.windows[0]?.price)}
+                {price(quote?.price ?? flowWindows[0]?.price)}
               </strong>
               <span
                 className={
@@ -237,7 +242,7 @@ export default function MercadoPage() {
             </div>
           </div>
           <div className="flow-windows">
-            {flow.data.windows.map((item) => (
+            {flowWindows.map((item) => (
               <section className="flow-window panel panel-pad" key={item.label}>
                 <div className="section-heading">
                   <h2>Ventana {item.label}</h2>
@@ -296,13 +301,13 @@ export default function MercadoPage() {
                 subtitle="Delta acumulado (CVD) · Últimas 4 horas"
               >
                 <Tag
-                  tone={flow.data.windows.find((item) => item.label === "4h")?.buy_pct == null ? "muted" : (flow.data.windows.find((item) => item.label === "4h")?.buy_pct ?? 50) > 50 ? "green" : "red"}
+                  tone={flowWindows.find((item) => item.label === "4h")?.buy_pct == null ? "muted" : (flowWindows.find((item) => item.label === "4h")?.buy_pct ?? 50) > 50 ? "green" : "red"}
                 >
-                  {flow.data.windows.find((item) => item.label === "4h")?.buy_pct == null ? null : (flow.data.windows.find((item) => item.label === "4h")!.buy_pct! >= 50 ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />)}
+                  {flowWindows.find((item) => item.label === "4h")?.buy_pct == null ? null : (flowWindows.find((item) => item.label === "4h")!.buy_pct! >= 50 ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />)}
                   Tendencia{" "}
-                  {flow.data.windows.find((item) => item.label === "4h")?.buy_pct == null
+                  {flowWindows.find((item) => item.label === "4h")?.buy_pct == null
                     ? "—"
-                    : (flow.data.windows.find((item) => item.label === "4h")!.buy_pct! > 50 ? "compradora" : flow.data.windows.find((item) => item.label === "4h")!.buy_pct! < 50 ? "vendedora" : "equilibrada")}
+                    : (flowWindows.find((item) => item.label === "4h")!.buy_pct! > 50 ? "compradora" : flowWindows.find((item) => item.label === "4h")!.buy_pct! < 50 ? "vendedora" : "equilibrada")}
                 </Tag>
               </SectionHeader>
               <HistoryChart
@@ -396,7 +401,7 @@ export default function MercadoPage() {
                 />
               </div>
               <div className="liquidation-pairs">
-                {liq.data.pairs.map((p) => (
+                {(Array.isArray(liq.data.pairs) ? liq.data.pairs : []).map((p) => (
                   <Link
                     key={p.symbol}
                     to={`/mercado/flujo/${p.symbol}`}
@@ -490,14 +495,14 @@ export default function MercadoPage() {
               rows={movers.data.gainers}
               positive
             />
-            <MoverList title="Los que más bajan" rows={movers.data.losers} />
+            <MoverList title="Los que más bajan" rows={Array.isArray(movers.data.losers) ? movers.data.losers : []} />
           </div>
           <section className="panel panel-pad" style={{ marginTop: 22 }}>
             <SectionHeader
               title="Volumen anormal, precio en calma"
               subtitle="Actividad elevada que todavía no se traduce en movimiento."
             />
-            {movers.data.volume_flat.map((q) => (
+            {(Array.isArray(movers.data.volume_flat) ? movers.data.volume_flat : []).map((q) => (
               <Link
                 className="volume-flat-row"
                 key={q.symbol}
@@ -513,7 +518,7 @@ export default function MercadoPage() {
                 <ArrowUpRight size={14} />
               </Link>
             ))}
-            {!movers.data.volume_flat.length && (
+            {(!Array.isArray(movers.data.volume_flat) || !movers.data.volume_flat.length) && (
               <p className="slim-note">
                 No hay anomalías de volumen sin movimiento en esta ventana.
               </p>
