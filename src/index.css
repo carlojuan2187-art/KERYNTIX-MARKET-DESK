@@ -6035,3 +6035,105 @@ html {
     flex-direction: column;
   }
 }
+
+/* Watchlist: range location, real derivatives and order-flow context */
+.watchlist-range-section {
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface, transparent);
+}
+.watchlist-range-section .watchlist-detail-section-head {
+  align-items: center;
+  margin-bottom: 14px;
+}
+.watchlist-range-section .watchlist-detail-section-head > strong {
+  font-family: var(--mono, monospace);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.watchlist-range-track {
+  position: relative;
+  height: 7px;
+  margin: 0 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--red), var(--amber), var(--green));
+}
+.watchlist-range-track > span {
+  position: absolute;
+  top: 50%;
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--surface-raised, var(--surface));
+  border-radius: 50%;
+  background: var(--text);
+  box-shadow: 0 0 0 1px var(--border);
+  transform: translate(-50%, -50%);
+}
+.watchlist-range-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 9px;
+  color: var(--text-muted);
+  font-size: 9px;
+  font-family: var(--mono, monospace);
+}
+.watchlist-derivatives-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+.watchlist-flow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+.watchlist-flow-card {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, transparent);
+}
+.watchlist-flow-card > strong {
+  display: block;
+  margin-bottom: 11px;
+  font-size: 10px;
+}
+.watchlist-flow-card > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  padding-top: 8px;
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.watchlist-flow-card > div > span {
+  color: var(--text-muted);
+  font-size: 9px;
+}
+.watchlist-flow-card > div > b {
+  text-align: right;
+  font-size: 10px;
+  font-family: var(--mono, monospace);
+}
+.watchlist-analytics-reading {
+  margin: 12px 0 0;
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+.watchlist-data-stamp {
+  margin: 7px 0 0;
+  color: var(--text-muted);
+  font-size: 8px;
+}
+@media (max-width: 620px) {
+  .watchlist-derivatives-grid,
+  .watchlist-flow-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
