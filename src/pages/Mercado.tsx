@@ -134,9 +134,9 @@ export default function MercadoPage() {
       setOrderBookStreamStatus(attempts === 0 ? "connecting" : "reconnecting");
       socketStartedAt = Date.now();
       try {
-        // Binance USDⓈ-M Futures public market stream. Partial depth sends the top
-        // 20 bid/ask levels repeatedly, so this view does not merge diff updates.
-        socket = new WebSocket(`wss://fstream.binance.com/market/ws/${streamName}`);
+        // Binance moved high-frequency depth streams to the PUBLIC endpoint category.
+        // Partial depth sends the top 20 bid/ask levels repeatedly, so we do not merge diff updates.
+        socket = new WebSocket(`wss://fstream.binance.com/public/ws/${streamName}`);
       } catch {
         attempts += 1;
         setOrderBookStreamError("No se pudo abrir el WebSocket de Binance.");
