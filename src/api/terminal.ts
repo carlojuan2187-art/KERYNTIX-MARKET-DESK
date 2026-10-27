@@ -53,7 +53,7 @@ export interface WatchlistMarketItem {
   score: number | null;
   score_detail: { direction: string | null; lean: string | null; strength: string | null; score: number | null; signs: Record<string, number | null> } | null;
   liquidity_sweep: { direction: "LONG" | "SHORT"; minutes: number } | null;
-  active_signal: { id: string; direction: "LONG" | "SHORT" | null; status: string; score: number | null; entry_price: number | null; created_at: string | null } | null;
+  active_signal: { id: string; direction: "LONG" | "SHORT" | null; status: string; score: number | null; entry_price: number | null; entry_low?: number | null; entry_high?: number | null; stop_loss?: number | null; take_profits?: number[]; created_at: string | null } | null;
   data_updated_at: string | null;
 }
 
@@ -509,7 +509,12 @@ function mapWatchlistRow(value: Record<string, any>): WatchlistMarketItem | null
   const signalDirection = String(signalRaw.direction ?? "").toUpperCase();
   const activeSignal = Object.keys(signalRaw).length ? {
     id: str(signalRaw.id), direction: signalDirection === "LONG" || signalDirection === "SHORT" ? signalDirection as "LONG" | "SHORT" : null,
-    status: str(signalRaw.status), score: numberOrNull(signalRaw.score), entry_price: numberOrNull(signalRaw.entry_price), created_at: str(signalRaw.created_at) || null,
+    status: str(signalRaw.status), score: numberOrNull(signalRaw.score), entry_price: numberOrNull(signalRaw.entry_price),
+    entry_low: numberOrNull(signalRaw.entry_low ?? record(signalRaw.entry_zone).low),
+    entry_high: numberOrNull(signalRaw.entry_high ?? record(signalRaw.entry_zone).high),
+    stop_loss: numberOrNull(signalRaw.stop_loss),
+    take_profits: (Array.isArray(signalRaw.take_profits) && signalRaw.take_profits.length ? signalRaw.take_profits : [signalRaw.tp1, signalRaw.tp2, signalRaw.tp3]).map(numberOrNull).filter((value: number | null): value is number => value != null && value > 0),
+    created_at: str(signalRaw.created_at) || null,
   } : null;
   const scoreRaw = record(value.score_detail);
   const signsRaw = record(scoreRaw.signs);
