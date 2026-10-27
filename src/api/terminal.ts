@@ -67,7 +67,53 @@ export interface LiquidationSummary {
   reading: string; updated_at: string; status?: string; message?: string | null; coverage_complete?: boolean; connected?: boolean;
 }
 export interface FlowData { symbol: string; windows: { label: "15m" | "1h" | "4h"; buy_pct: number | null; delta: number | null; delta_usdt: number | null; price: number | null; change_pct: number | null }[]; cvd: Candle[]; volume_ratio: number | null; reading: string; updated_at?: string; status?: string }
-export interface RadarOpportunity { symbol: string; kind: "setup" | "sweep" | "watch" | "move"; label: string; direction: "LONG" | "SHORT" | null; score: number | null; detail: string; score_breakdown: Record<string, number>; created_at: string }
+export interface RadarOpportunity {
+  symbol: string;
+  kind: "setup" | "sweep" | "watch" | "move";
+  label: string;
+  direction: "LONG" | "SHORT" | null;
+  score: number | null;
+  detail: string;
+  score_breakdown: Record<string, number>;
+  created_at: string;
+  snapshot_updated_at?: string | null;
+  scanned_symbols?: number | null;
+  snapshot_status?: string | null;
+  status?: string | null;
+  visibility?: string | null;
+  current_price?: number | null;
+  change_24h_pct?: number | null;
+  volume_24h?: number | null;
+  high_24h?: number | null;
+  low_24h?: number | null;
+  funding_rate?: number | null;
+  open_interest?: number | null;
+  buy_pct?: number | null;
+  quote_volume_ratio?: number | null;
+  trend?: AssetQuote["trend"] | null;
+  entry_price?: number | null;
+  entry_zone?: { low: number | null; high: number | null } | null;
+  stop_loss?: number | null;
+  take_profits?: number[];
+  entry_expires_at?: string | null;
+  touched_at?: string | null;
+  liquidity_sweep_extreme_price?: number | null;
+  atr_value?: number | null;
+  level?: number | null;
+  extreme_price?: number | null;
+  wick_ratio?: number | null;
+  sweep_distance_atr?: number | null;
+  atr_pct?: number | null;
+  rel_volume?: number | null;
+  trend_1h?: string | null;
+  alignment?: string | null;
+  alignment_detail?: string | null;
+  distance_pct?: number | null;
+  distance_atr?: number | null;
+  zone_count?: number | null;
+  change_1h_pct?: number | null;
+  volume_ratio?: number | null;
+}
 export interface OverviewData { quotes: AssetQuote[]; signals: SignalState[]; regime: MarketRegime; performance: Performance; liquidations: LiquidationSummary; alerts: AlertItem[]; radar: RadarOpportunity[]; breadth: { up: number | null; down: number | null; total: number | null }; breadth_pct: number | null; updated_at: string }
 
 export function regimeContext(regime: MarketRegime) {
@@ -209,27 +255,103 @@ function scoreBreakdown(values: unknown): Record<string, number> {
   return {};
 }
 export async function getRadarSnapshot(): Promise<RadarOpportunity[]> {
-  const raw = await apiRequest<Record<string, any>>("/radar", { method: "GET" });
+  const [raw, quotes] = await Promise.all([
+    apiRequest<Record<string, any>>("/radar", { method: "GET" }),
+    getQuotes().catch((): AssetQuote[] => []),
+  ]);
   const items: RadarOpportunity[] = [];
+  const quoteBySymbol = new Map(quotes.map((quote) => [quote.symbol, quote]));
+  const cachedPrices = record(raw.prices);
+  const fundingBySymbol = record(raw.funding);
+  const quoteContext = (symbol: string, preferredPrice?: unknown) => {
+    const quote = quoteBySymbol.get(symbol);
+    return {
+      current_price: quote?.price ?? numberOrNull(preferredPrice) ?? numberOrNull(cachedPrices[symbol]) ?? null,
+      change_24h_pct: quote?.change_pct ?? null,
+      volume_24h: quote?.volume_24h ?? null,
+      high_24h: quote?.high_24h ?? null,
+      low_24h: quote?.low_24h ?? null,
+      funding_rate: quote?.funding_rate ?? numberOrNull(fundingBySymbol[symbol]),
+      open_interest: quote?.open_interest ?? null,
+      buy_pct: quote?.buy_pct ?? null,
+      quote_volume_ratio: quote?.volume_ratio ?? null,
+      trend: quote?.trend ?? null,
+    };
+  };
+  const takeProfits = (value: unknown): number[] => Array.isArray(value)
+    ? value.flatMap((target: any) => {
+        const numeric = numberOrNull(target) ?? numberOrNull(record(target).price);
+        return numeric == null ? [] : [numeric];
+      })
+    : [];
+  const entryZone = (value: unknown): RadarOpportunity["entry_zone"] => {
+    const zone = record(value);
+    if (numberOrNull(zone.low) == null && numberOrNull(zone.high) == null) return null;
+    return { low: numberOrNull(zone.low), high: numberOrNull(zone.high) };
+  };
+
   for (const setup of Array.isArray(raw.setups) ? raw.setups : []) {
-    items.push({ symbol: str(setup.symbol), kind: "setup", label: "Setup activo", direction: directionOrNull(setup.direction), score: numberOrNull(setup.score),
-      detail: `Estado: ${str(setup.status) || "sin estado"}.`, score_breakdown: scoreBreakdown(setup.components), created_at: str(setup.created_at) });
+    const symbol = str(setup.symbol);
+    items.push({
+      symbol, kind: "setup", label: "Setup activo", direction: directionOrNull(setup.direction),
+      score: numberOrNull(setup.score), detail: `Estado: ${str(setup.status) || "sin estado"}.`,
+      score_breakdown: scoreBreakdown(setup.components), created_at: str(setup.created_at),
+      status: str(setup.status) || null, visibility: str(setup.visibility) || null,
+      ...quoteContext(symbol), entry_price: numberOrNull(setup.entry_price), entry_zone: entryZone(setup.entry_zone),
+      stop_loss: numberOrNull(setup.stop_loss), take_profits: takeProfits(setup.take_profits),
+      entry_expires_at: str(setup.entry_expires_at) || null, touched_at: str(setup.touched_at) || null,
+      liquidity_sweep_extreme_price: numberOrNull(setup.liquidity_sweep_extreme_price), atr_value: numberOrNull(setup.atr_value),
+    });
   }
   for (const sweep of Array.isArray(raw.sweeps) ? raw.sweeps : []) {
-    items.push({ symbol: str(sweep.symbol), kind: "sweep", label: "Barrido detectado", direction: directionOrNull(sweep.direction), score: numberOrNull(sweep.score),
-      detail: [sweep.level ? `Nivel: ${sweep.level}` : "", sweep.distance_pct != null ? `Distancia: ${sweep.distance_pct}%` : "", sweep.alignment?.status ? `Alineación: ${sweep.alignment.status}` : ""].filter(Boolean).join(" · "), score_breakdown: scoreBreakdown(sweep.components), created_at: str(sweep.created_at ?? raw.updated_at) });
+    const symbol = str(sweep.symbol);
+    const eventEpoch = numberOrNull(sweep.event_ts);
+    const createdAt = str(sweep.event_at) || (eventEpoch != null ? new Date(eventEpoch * 1000).toISOString() : str(raw.updated_at));
+    const alignment = record(sweep.alignment);
+    items.push({
+      symbol, kind: "sweep", label: "Barrido detectado", direction: directionOrNull(sweep.direction),
+      score: numberOrNull(sweep.score),
+      detail: [sweep.level != null ? `Nivel barrido: ${sweep.level}` : "", sweep.wick_ratio != null ? `Mecha: ${sweep.wick_ratio}x` : "", alignment.status ? `Alineación: ${alignment.status}` : ""].filter(Boolean).join(" · "),
+      score_breakdown: scoreBreakdown(sweep.components), created_at: createdAt,
+      ...quoteContext(symbol, sweep.price), level: numberOrNull(sweep.level), extreme_price: numberOrNull(sweep.extreme_price),
+      wick_ratio: numberOrNull(sweep.wick_ratio), sweep_distance_atr: numberOrNull(sweep.sweep_distance_atr),
+      rel_volume: numberOrNull(sweep.rel_volume), atr_pct: numberOrNull(sweep.atr_pct),
+      trend_1h: str(sweep.trend_1h) || null, alignment: str(alignment.status) || null, alignment_detail: str(alignment.text) || null,
+    });
   }
   for (const item of Array.isArray(raw.items) ? raw.items : []) {
     for (const watch of Array.isArray(item.watch) ? item.watch : []) {
-      items.push({ symbol: str(watch.symbol ?? item.symbol), kind: "watch", label: "Zona en vigilancia", direction: directionOrNull(watch.direction), score: numberOrNull(watch.watch_score),
-        detail: [watch.distance_pct != null ? `Distancia a zona: ${watch.distance_pct}%` : "", watch.zone_count != null ? `Zonas: ${watch.zone_count}` : "", watch.alignment?.status ? `Alineación: ${watch.alignment.status}` : ""].filter(Boolean).join(" · "), score_breakdown: {}, created_at: str(raw.updated_at) });
+      const symbol = str(watch.symbol ?? item.symbol);
+      const alignment = typeof watch.alignment === "string" ? watch.alignment : str(record(watch.alignment).status);
+      items.push({
+        symbol, kind: "watch", label: "Zona en vigilancia", direction: directionOrNull(watch.direction),
+        score: numberOrNull(watch.watch_score),
+        detail: [watch.distance_pct != null ? `Distancia a zona: ${watch.distance_pct}%` : "", watch.zone_count != null ? `Zonas: ${watch.zone_count}` : "", alignment ? `Alineación: ${alignment}` : ""].filter(Boolean).join(" · "),
+        score_breakdown: {}, created_at: str(raw.updated_at),
+        ...quoteContext(symbol, item.price), level: numberOrNull(watch.level), distance_pct: numberOrNull(watch.distance_pct),
+        distance_atr: numberOrNull(watch.distance_atr), zone_count: numberOrNull(watch.zone_count),
+        rel_volume: numberOrNull(watch.rel_volume ?? item.rel_volume), atr_pct: numberOrNull(item.atr_pct),
+        trend_1h: str(watch.trend_1h ?? item.trend_1h) || null, alignment: alignment || null,
+      });
     }
   }
+  const scannerItems = Array.isArray(raw.items) ? raw.items : [];
+  const scannerBySymbol = new Map(scannerItems.map((item: any) => [str(item.symbol), item]));
   for (const move of Array.isArray(raw.movers) ? raw.movers : []) {
-    items.push({ symbol: str(move.symbol), kind: "move", label: "Movimiento detectado", direction: directionOrNull(move.direction), score: numberOrNull(move.score),
-      detail: [move.change_1h_pct != null ? `Variación 1h: ${move.change_1h_pct}%` : "", move.vol_ratio != null ? `Volumen relativo: ${move.vol_ratio}x` : ""].filter(Boolean).join(" · "), score_breakdown: {}, created_at: str(move.created_at ?? raw.updated_at) });
+    const symbol = str(move.symbol);
+    const scannerItem = record(scannerBySymbol.get(symbol));
+    items.push({
+      symbol, kind: "move", label: "Movimiento detectado", direction: null, score: numberOrNull(move.score),
+      detail: [move.change_1h_pct != null ? `Variación 1h: ${move.change_1h_pct}%` : "", move.vol_ratio != null ? `Volumen relativo: ${move.vol_ratio}x` : ""].filter(Boolean).join(" · "),
+      score_breakdown: {}, created_at: str(move.created_at ?? raw.updated_at),
+      ...quoteContext(symbol, scannerItem.price), change_1h_pct: numberOrNull(move.change_1h_pct), volume_ratio: numberOrNull(move.vol_ratio),
+      atr_pct: numberOrNull(scannerItem.atr_pct), rel_volume: numberOrNull(scannerItem.rel_volume), trend_1h: str(scannerItem.trend_1h) || null,
+    });
   }
-  return items.filter((x) => x.symbol).sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
+  return items.filter((x) => x.symbol).sort((a, b) => (b.score ?? -1) - (a.score ?? -1)).map((item) => ({
+    ...item, snapshot_updated_at: str(raw.updated_at) || null,
+    scanned_symbols: numberOrNull(raw.scanned), snapshot_status: str(raw.status) || null,
+  }));
 }
 
 export interface MoversSnapshot { window: 5 | 15 | 60; gainers: AssetQuote[]; losers: AssetQuote[]; volume_flat: AssetQuote[]; btc_change_pct: number | null; breadth_pct: number | null; breadth: { up: number | null; down: number | null; total: number | null }; reading: string; updated_at: string; status?: string; message?: string | null }
