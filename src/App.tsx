@@ -7,7 +7,7 @@ import {
   Link,
   useParams,
 } from "react-router-dom";
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, Suspense, lazy, type ErrorInfo, type ReactNode } from "react";
 import { ShieldAlert } from "lucide-react";
 import Layout from "@/components/Layout";
 import { AppProvider, useApp } from "@/context/AppContext";
@@ -16,24 +16,37 @@ import { ResourceState } from "@/components/ui";
 import { getAccountRestriction } from "@/api/account";
 import { appConfig } from "@/api/config";
 import { useApi } from "@/hooks/useApi";
-import LoginPage from "@/pages/Login";
-import DashboardPage from "@/pages/Dashboard";
-import SignalsPage from "@/pages/Signals";
-import RadarPage from "@/pages/Radar";
-import WatchlistPage from "@/pages/Watchlist";
-import MercadoPage from "@/pages/Mercado";
-import ResultadosPage from "@/pages/Resultados";
-import RegimenPage from "@/pages/Regimen";
-import DerivadosPage from "@/pages/Derivados";
-import CalendarioPage from "@/pages/Calendario";
-import CalculadoraPage from "@/pages/Calculadora";
-import GuiaPage from "@/pages/Guia";
-import PlanesPage from "@/pages/Planes";
-import ReferidosPage from "@/pages/Referidos";
-import CuentaPage from "@/pages/Cuenta";
-import SoportePage from "@/pages/Soporte";
-import AdminPage from "@/pages/Admin";
-import AjustesAvisosPage from "@/pages/AjustesAvisos";
+const LoginPage = lazy(() => import("@/pages/Login"));
+const DashboardPage = lazy(() => import("@/pages/Dashboard"));
+const SignalsPage = lazy(() => import("@/pages/Signals"));
+const RadarPage = lazy(() => import("@/pages/Radar"));
+const WatchlistPage = lazy(() => import("@/pages/Watchlist"));
+const MercadoPage = lazy(() => import("@/pages/Mercado"));
+const ResultadosPage = lazy(() => import("@/pages/Resultados"));
+const RegimenPage = lazy(() => import("@/pages/Regimen"));
+const DerivadosPage = lazy(() => import("@/pages/Derivados"));
+const CalendarioPage = lazy(() => import("@/pages/Calendario"));
+const CalculadoraPage = lazy(() => import("@/pages/Calculadora"));
+const GuiaPage = lazy(() => import("@/pages/Guia"));
+const PlanesPage = lazy(() => import("@/pages/Planes"));
+const ReferidosPage = lazy(() => import("@/pages/Referidos"));
+const CuentaPage = lazy(() => import("@/pages/Cuenta"));
+const SoportePage = lazy(() => import("@/pages/Soporte"));
+const AdminPage = lazy(() => import("@/pages/Admin"));
+const AjustesAvisosPage = lazy(() => import("@/pages/AjustesAvisos"));
+
+function PageLoading() {
+  return (
+    <div className="resource-state page-loading" role="status" aria-live="polite">
+      <span className="loading-spinner" aria-hidden="true" />
+      <p>Cargando sección…</p>
+    </div>
+  );
+}
+
+function LazyPage({ children }: { children: ReactNode }) {
+  return <Suspense fallback={<PageLoading />}>{children}</Suspense>;
+}
 
 
 class PageErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -129,7 +142,7 @@ function AccessGuard() {
 }
 function AdminGuard() {
   const { user } = useApp();
-  return user?.is_admin ? <AdminPage /> : <Navigate to="/" replace />;
+  return user?.is_admin ? <LazyPage><AdminPage /></LazyPage> : <Navigate to="/" replace />;
 }
 function ReferralLink() {
   const { ref_code: code } = useParams<{ ref_code: string }>();
@@ -144,36 +157,36 @@ export default function App() {
       <AppProvider>
         <PageErrorBoundary>
         <Routes>
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="/login" element={<LazyPage><LoginPage /></LazyPage>} />
           <Route path="/r/:ref_code" element={<ReferralLink />} />
           <Route element={<SessionGuard />}>
             <Route element={<Layout />}>
               <Route element={<AccessGuard />}>
-                <Route index element={<DashboardPage />} />
-                <Route path="senales" element={<SignalsPage />} />
-                <Route path="radar" element={<RadarPage />} />
-                <Route path="watchlist" element={<WatchlistPage />} />
-                <Route path="mercado" element={<MercadoPage />} />
+                <Route index element={<LazyPage><DashboardPage /></LazyPage>} />
+                <Route path="senales" element={<LazyPage><SignalsPage /></LazyPage>} />
+                <Route path="radar" element={<LazyPage><RadarPage /></LazyPage>} />
+                <Route path="watchlist" element={<LazyPage><WatchlistPage /></LazyPage>} />
+                <Route path="mercado" element={<LazyPage><MercadoPage /></LazyPage>} />
                 <Route
                   path="mercado/flujo/:simbolo"
-                  element={<MercadoPage />}
+                  element={<LazyPage><MercadoPage /></LazyPage>}
                 />
-                <Route path="mercado/liquidaciones" element={<MercadoPage />} />
-                <Route path="mercado/movers" element={<MercadoPage />} />
-                <Route path="resultados" element={<ResultadosPage />} />
-                <Route path="regimen" element={<RegimenPage />} />
-                <Route path="derivados" element={<DerivadosPage />} />
-                <Route path="derivados/:simbolo" element={<DerivadosPage />} />
-                <Route path="calendario" element={<CalendarioPage />} />
+                <Route path="mercado/liquidaciones" element={<LazyPage><MercadoPage /></LazyPage>} />
+                <Route path="mercado/movers" element={<LazyPage><MercadoPage /></LazyPage>} />
+                <Route path="resultados" element={<LazyPage><ResultadosPage /></LazyPage>} />
+                <Route path="regimen" element={<LazyPage><RegimenPage /></LazyPage>} />
+                <Route path="derivados" element={<LazyPage><DerivadosPage /></LazyPage>} />
+                <Route path="derivados/:simbolo" element={<LazyPage><DerivadosPage /></LazyPage>} />
+                <Route path="calendario" element={<LazyPage><CalendarioPage /></LazyPage>} />
               </Route>
-              <Route path="calculadora" element={<CalculadoraPage />} />
-              <Route path="guia" element={<GuiaPage />} />
-              <Route path="guia/:tema" element={<GuiaPage />} />
-              <Route path="planes" element={<PlanesPage />} />
-              <Route path="referidos" element={<ReferidosPage />} />
-              <Route path="cuenta" element={<CuentaPage />} />
-              <Route path="soporte" element={<SoportePage />} />
-              <Route path="ajustes/avisos" element={<AjustesAvisosPage />} />
+              <Route path="calculadora" element={<LazyPage><CalculadoraPage /></LazyPage>} />
+              <Route path="guia" element={<LazyPage><GuiaPage /></LazyPage>} />
+              <Route path="guia/:tema" element={<LazyPage><GuiaPage /></LazyPage>} />
+              <Route path="planes" element={<LazyPage><PlanesPage /></LazyPage>} />
+              <Route path="referidos" element={<LazyPage><ReferidosPage /></LazyPage>} />
+              <Route path="cuenta" element={<LazyPage><CuentaPage /></LazyPage>} />
+              <Route path="soporte" element={<LazyPage><SoportePage /></LazyPage>} />
+              <Route path="ajustes/avisos" element={<LazyPage><AjustesAvisosPage /></LazyPage>} />
               <Route path="admin" element={<AdminGuard />} />
               <Route
                 path="*"
