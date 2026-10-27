@@ -3717,6 +3717,17 @@ option {
   line-height: 1.9;
   margin: 12px 0;
 }
+.regime-timeframe-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 18px;
+  flex-wrap: wrap;
+}
+.regime-timeframe-picker > span {
+  color: var(--text-muted);
+  font-size: 10px;
+}
 .regime-classifications {
   display: flex;
   align-items: center;
@@ -3954,6 +3965,9 @@ option {
   }
   .regime-secondary {
     font-size: 9px;
+  }
+  .regime-timeframe-picker {
+    gap: 8px 12px;
   }
   .regime-classifications {
     gap: 13px 18px;
@@ -5736,4 +5750,288 @@ html {
   background: var(--amber);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
   animation: none;
+}
+
+/* Radar de oportunidades enriquecido */
+.radar-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 6px 0 20px;
+}
+.radar-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 15px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.radar-summary-card > span {
+  color: var(--text-secondary);
+  font-size: 10px;
+}
+.radar-summary-card > strong {
+  font-size: 23px;
+  font-weight: 500;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.radar-summary-card > small {
+  color: var(--text-muted);
+  font-size: 9px;
+}
+.radar-controls {
+  align-items: center;
+  gap: 12px;
+}
+.radar-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 210px;
+  max-width: 310px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text-muted);
+  background: var(--surface);
+}
+.radar-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  background: transparent;
+  font-size: 10px;
+}
+.radar-search input::placeholder {
+  color: var(--text-muted);
+}
+.radar-scan-status {
+  margin-left: auto;
+  white-space: nowrap;
+}
+.radar-opportunity-card {
+  gap: 18px;
+}
+.radar-opportunity-main {
+  min-width: 0;
+}
+.radar-opportunity-heading {
+  justify-content: space-between;
+}
+.radar-opportunity-heading .asset-pair small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.radar-tag-group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.radar-description {
+  max-width: none !important;
+  margin: 11px 0 15px !important;
+}
+.radar-data-section {
+  margin-top: 13px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.radar-data-heading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 550;
+}
+.radar-data-heading svg {
+  color: var(--accent);
+}
+.radar-specific-metrics,
+.radar-market-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.radar-metric {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  min-height: 49px;
+  padding: 8px 9px;
+  border-radius: 6px;
+  background: var(--surface-raised);
+}
+.radar-metric > span {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 9px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+}
+.radar-metric > strong {
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+.radar-metric > strong.positive {
+  color: var(--green);
+}
+.radar-metric > strong.negative {
+  color: var(--red);
+}
+.radar-metric > strong.muted {
+  color: var(--text-muted);
+}
+.radar-timeframe-trends {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 9px;
+}
+.radar-subsection-label {
+  margin-right: 4px;
+  color: var(--text-muted);
+  font-size: 9px;
+}
+.radar-trend-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-raised);
+}
+.radar-trend-pill small {
+  color: var(--text-muted);
+  font-size: 8px;
+}
+.radar-trend-pill strong {
+  font-size: 9px;
+  font-weight: 500;
+}
+.radar-trend-pill strong.positive {
+  color: var(--green);
+}
+.radar-trend-pill strong.negative {
+  color: var(--red);
+}
+.radar-score > span:not(.score-display) {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+.radar-breakdown {
+  flex-wrap: wrap;
+  row-gap: 9px;
+  margin-top: 12px;
+}
+.radar-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+@media (max-width: 1000px) {
+  .radar-controls {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .radar-scan-status {
+    margin-left: 0;
+  }
+  .radar-specific-metrics,
+  .radar-market-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 620px) {
+  .radar-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+  .radar-summary-card {
+    padding: 12px;
+  }
+  .radar-summary-card > strong {
+    font-size: 20px;
+  }
+  .radar-search {
+    width: 100%;
+    max-width: none;
+  }
+  .radar-scan-status {
+    width: 100%;
+  }
+  .radar-opportunity-card {
+    padding: 18px 0 22px;
+  }
+  .radar-opportunity-heading {
+    align-items: flex-start;
+    padding-right: 0;
+  }
+  .radar-tag-group {
+    justify-content: flex-start;
+    padding-right: 85px;
+  }
+  .radar-score {
+    top: 22px;
+    right: 0;
+    gap: 7px;
+  }
+  .radar-score > span:not(.score-display) {
+    font-size: 8px;
+  }
+  .radar-data-section {
+    padding: 9px;
+  }
+  .radar-specific-metrics,
+  .radar-market-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .radar-metric {
+    min-height: 45px;
+    padding: 7px;
+  }
+  .radar-metric > span {
+    font-size: 8px;
+  }
+  .radar-metric > strong {
+    font-size: 10px;
+  }
+  .radar-timeframe-trends {
+    align-items: flex-start;
+  }
+  .radar-subsection-label {
+    width: 100%;
+  }
+  .radar-breakdown {
+    font-size: 8px;
+  }
+  .radar-footer-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
