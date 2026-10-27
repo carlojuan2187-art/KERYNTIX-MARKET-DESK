@@ -10,12 +10,14 @@ import {
   X,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
+import ftradeBrandLogo from "@/assets/ftrade-logo-brand.jpg";
+import ftradeBrandIcon from "@/assets/ftrade-icon.png";
 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <span className={`brand${compact ? " brand-compact" : ""}`}>
       <img
-        src={compact ? "/ftrade-icon.png" : "/ftrade-logo-brand.jpg"}
+        src={compact ? ftradeBrandIcon : ftradeBrandLogo}
         alt={compact ? "FTrade" : "FTrade — Analiza, opera, avanza"}
         className="brand-image"
         loading="eager"
