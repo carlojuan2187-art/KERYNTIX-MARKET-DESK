@@ -152,7 +152,7 @@ export interface RadarOpportunity {
   change_1h_pct?: number | null;
   volume_ratio?: number | null;
 }
-export interface OverviewData { quotes: AssetQuote[]; signals: SignalState[]; regime: MarketRegime; performance: Performance; liquidations: LiquidationSummary; alerts: AlertItem[]; radar: RadarOpportunity[]; breadth: { up: number | null; down: number | null; total: number | null }; breadth_pct: number | null; updated_at: string }
+export interface OverviewData { quotes: AssetQuote[]; signals: SignalState[]; regime: MarketRegime; performance: Performance; liquidations: LiquidationSummary; alerts: AlertItem[]; radar: RadarOpportunity[]; breadth: { up: number | null; down: number | null; total: number | null }; breadth_pct: number | null; updated_at: string; partial?: boolean; unavailable_sources?: number }
 
 export function regimeContext(regime: MarketRegime) {
   const states = {
@@ -530,12 +530,63 @@ export async function getMarketSummary(): Promise<{ liquidations: { symbol: stri
 }
 
 export async function getOverview(): Promise<OverviewData> {
-  const [quotes, signals, regime, performance, liquidations, alerts, radar, moverSnapshot] = await Promise.all([
-    getQuotes(), apiRequest<SignalState[]>("/signals?limit=10", { method: "GET" }),
-    apiRequest<MarketRegime>("/market/regime", { method: "GET" }), getPerformance(), getLiquidationSummary(), getAlerts(), getRadarSnapshot(), getMoversSnapshot(),
-  ]);
-  return { quotes, signals: signals.filter((x) => x.status !== "CANCELLED"), regime, performance, liquidations, alerts, radar,
-    breadth: moverSnapshot.breadth, breadth_pct: moverSnapshot.breadth_pct, updated_at: moverSnapshot.updated_at };
+  // Dashboard cards are independent data sources. One slow analytics endpoint
+  // (e.g. regime/radar) must not prevent prices and the rest of the homepage
+  // from appearing. apiRequest imposes a 9s timeout; settle every source and
+  // keep unavailable metrics explicitly empty rather than blocking the page.
+  const bounded = <T,>(promise: Promise<T>, label: string, timeoutMs = 3500): Promise<T> =>
+    new Promise<T>((resolve, reject) => {
+      const timer = window.setTimeout(() => reject(new Error(`${label}: fuente lenta; se omitió temporalmente`)), timeoutMs);
+      promise.then(
+        (result) => { window.clearTimeout(timer); resolve(result); },
+        (error) => { window.clearTimeout(timer); reject(error); },
+      );
+    });
+  const results = await Promise.allSettled([
+    bounded(getQuotes(), "Cotizaciones", 4500),
+    bounded(apiRequest<SignalState[]>("/signals?limit=10", { method: "GET" }), "Señales", 3500),
+    bounded(apiRequest<MarketRegime>("/market/regime", { method: "GET" }), "Régimen", 2500),
+    bounded(getPerformance(), "Resultados", 3000),
+    bounded(getLiquidationSummary(), "Liquidaciones", 2500),
+    bounded(getAlerts(), "Avisos", 2500),
+    bounded(getRadarSnapshot(), "Radar", 2500),
+    bounded(getMoversSnapshot(), "Movimientos", 2500),
+  ] as const);
+  const value = <T,>(index: number, fallback: T): T => {
+    const result = results[index];
+    return result.status === "fulfilled" ? result.value as T : fallback;
+  };
+  const quotes = value<AssetQuote[]>(0, []);
+  const signals = value<SignalState[]>(1, []).filter((x) => x.status !== "CANCELLED");
+  const regime = value<MarketRegime>(2, {
+    trend: "TRANSICIÓN", adx: null, atr_pct: null, volume_relative: null,
+    session_now: null, updated_at: "", timeframes: {},
+  });
+  const performance = value<Performance>(3, {
+    operations: 0, wins: 0, losses: 0, win_rate: 0, total_r: 0,
+    average_r: 0, best_r: 0, worst_r: 0, streak: 0, curve: [], trades: [],
+  });
+  const liquidations = value<LiquidationSummary>(4, {
+    window: 15, long_usdt: 0, short_usdt: 0, total: 0, orders: 0,
+    pace: null, usdt_per_min: 0, pairs: [], largest_order: null,
+    reading: "Datos de liquidaciones no disponibles", updated_at: "", status: "unavailable",
+    message: "No se pudo consultar esta fuente.", coverage_complete: false,
+  });
+  const alerts = value<AlertItem[]>(5, []);
+  const radar = value<RadarOpportunity[]>(6, []);
+  const moverSnapshot = value<MoversSnapshot>(7, {
+    window: 15, gainers: [], losers: [], volume_flat: [], btc_change_pct: null,
+    breadth_pct: null, breadth: { up: null, down: null, total: null },
+    reading: "Datos de amplitud no disponibles", updated_at: "", status: "unavailable",
+    message: "No se pudo consultar esta fuente.",
+  });
+  const failures = results.filter((result) => result.status === "rejected").length;
+  return {
+    quotes, signals, regime, performance, liquidations, alerts, radar,
+    breadth: moverSnapshot.breadth, breadth_pct: moverSnapshot.breadth_pct,
+    updated_at: moverSnapshot.updated_at || new Date().toISOString(),
+    ...(failures ? { partial: true, unavailable_sources: failures } : {}),
+  } as OverviewData;
 }
 
 export async function getSessionsForCurrentUser(): Promise<SessionRecord[]> { return getSessions(); }
