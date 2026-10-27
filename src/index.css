@@ -6137,3 +6137,49 @@ html {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+
+/* Watchlist phase: momentum, structure levels and live-signal distance cards. */
+.watchlist-technical-grid,
+.watchlist-levels-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.watchlist-technical-card,
+.watchlist-level-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 14px;
+  border: 1px solid var(--border, rgba(148, 163, 184, .2));
+  border-radius: 12px;
+  background: var(--panel, rgba(148, 163, 184, .035));
+}
+.watchlist-technical-card > small,
+.watchlist-level-card > small {
+  color: var(--muted, #94a3b8);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.watchlist-technical-card > strong,
+.watchlist-level-card > strong {
+  font-size: 16px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.watchlist-technical-card > span,
+.watchlist-level-card > span {
+  color: var(--muted, #94a3b8);
+  font-size: 12px;
+  line-height: 1.5;
+}
+@media (max-width: 620px) {
+  .watchlist-technical-grid,
+  .watchlist-levels-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
