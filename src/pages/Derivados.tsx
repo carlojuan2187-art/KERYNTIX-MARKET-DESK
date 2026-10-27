@@ -1,13 +1,33 @@
+import { useEffect } from "react";
 import {
   Link,
   useNavigate,
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { ArrowRight, ArrowUpRight, Clock3, Info, Waves } from "lucide-react";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Clock3,
+  Database,
+  Info,
+  RefreshCw,
+  Waves,
+} from "lucide-react";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  ReferenceLine,
+} from "recharts";
 import { getDerivatives, getSignals } from "@/api";
 import { useApi } from "@/hooks/useApi";
-import { number, percent } from "@/utils/format";
+import type { DerivativesData, DerivativesHistoryPoint, DerivativesSourceMeta } from "@/api/types";
+import { ago, number, percent } from "@/utils/format";
 import {
   Countdown,
   PageHeader,
@@ -18,37 +38,117 @@ import {
   Tag,
 } from "@/components/ui";
 
+const REFRESH_MS = 45_000;
+
+function usdCompact(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  const abs = Math.abs(value);
+  if (abs >= 1e9) return `$${number(value / 1e9, 2)}B`;
+  if (abs >= 1e6) return `$${number(value / 1e6, 2)}M`;
+  if (abs >= 1e3) return `$${number(value / 1e3, 1)}K`;
+  return `$${number(value, 2)}`;
+}
+
+function fmtTimestamp(value?: string | null): string {
+  if (!value || !Number.isFinite(Date.parse(value))) return "Sin marca temporal";
+  return new Date(value).toLocaleString("es-PR", {
+    month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit",
+  });
+}
+
+function ageFromSeconds(value?: number | null): string {
+  if (value == null || !Number.isFinite(value)) return "Antigüedad desconocida";
+  if (value < 60) return `Hace ${Math.round(value)} s`;
+  if (value < 3600) return `Hace ${Math.floor(value / 60)} min`;
+  return `Hace ${Math.floor(value / 3600)} h ${Math.floor((value % 3600) / 60)} min`;
+}
+
+function statusLabel(status?: string): string {
+  switch (status) {
+    case "available": return "Disponible";
+    case "partial": return "Cobertura parcial";
+    case "stale": return "Dato atrasado";
+    case "api_key_missing": return "Requiere API key";
+    default: return "No disponible";
+  }
+}
+
+function statusTone(status?: string): "green" | "amber" | "red" | "muted" {
+  if (status === "available") return "green";
+  if (status === "partial" || status === "api_key_missing") return "amber";
+  if (status === "stale") return "red";
+  return "muted";
+}
+
+function chartTime(point: DerivativesHistoryPoint): string {
+  if (!point.timestamp || !Number.isFinite(point.timestamp)) return "—";
+  return new Date(point.timestamp).toLocaleTimeString("es-PR", { hour: "2-digit", minute: "2-digit" });
+}
+
+function sourceDescription(meta?: DerivativesSourceMeta): string {
+  if (!meta) return "No hay metadatos de fuente.";
+  if (meta.status === "api_key_missing") return "Configura BINANCE_API_KEY en el entorno del backend; no hace falta exponer la clave en el navegador.";
+  if (meta.status === "unavailable") return "Binance no devolvió una lectura válida para esta fuente.";
+  const age = ageFromSeconds(meta.age_seconds);
+  const coverage = meta.coverage_hours != null ? ` · ${number(meta.coverage_hours, 1)} h de cobertura` : "";
+  const points = meta.points != null ? ` · ${meta.points} puntos` : "";
+  return `${age}${coverage}${points}`;
+}
+
 export default function DerivadosPage() {
   const { simbolo = "BTCUSDT" } = useParams();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { data: signals } = useApi(getSignals);
-  const { data, loading, error, refresh } = useApi(
+  const { data, loading, error, refresh } = useApi<DerivativesData>(
     () => getDerivatives(simbolo),
     [simbolo],
   );
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refresh();
+    }, REFRESH_MS);
+    return () => window.clearInterval(timer);
+  }, [refresh, simbolo]);
+
   const symbols = [
     ...new Set([
       "BTCUSDT",
       "ETHUSDT",
-      ...(signals
-        ?.filter((s) => s.status !== "CANCELLED")
-        .map((s) => s.symbol) || []),
+      ...(signals?.filter((s) => s.status !== "CANCELLED").map((s) => s.symbol) || []),
     ]),
   ];
   const direction = params.get("direccion");
   const fundingRate = data?.funding_rate ?? null;
   const longPct = data?.long_short_ratio?.percent_long ?? null;
   const shortPct = data?.long_short_ratio?.percent_short ?? null;
-  const topLongPct = data?.top_trader_ratio?.long ?? null;
-  const topShortPct = data?.top_trader_ratio?.short ?? null;
-  const longShortRatio = longPct != null && shortPct != null && shortPct > 0 ? longPct / shortPct : null;
+  const topAccounts = data?.top_trader_accounts;
+  const topPositions: NonNullable<DerivativesData["top_trader_positions"]> | undefined = data?.top_trader_positions ?? (data?.top_trader_ratio ? {
+    ratio: data.top_trader_ratio.ratio ?? null,
+    long: data.top_trader_ratio.long,
+    short: data.top_trader_ratio.short,
+  } : undefined);
+  const longShortRatio = data?.long_short_ratio?.ratio ?? (
+    longPct != null && shortPct != null && shortPct > 0 ? longPct / shortPct : null
+  );
+  const oiChart = (data?.oi_history ?? []).filter((point) => point.value_usdt != null).map((point) => ({
+    label: chartTime(point), value_b: (point.value_usdt ?? 0) / 1e9,
+  }));
+  const fundingChart = (data?.funding_history ?? []).filter((point) => point.funding_rate_pct != null).map((point) => ({
+    label: chartTime(point), funding_pct: point.funding_rate_pct ?? 0,
+  }));
+  const basisChart = (data?.basis_history ?? []).filter((point) => point.annualized_basis_pct != null).map((point) => ({
+    label: chartTime(point), basis_pct: point.annualized_basis_pct ?? 0,
+  }));
+  const sourceEntries = Object.entries(data?.sources ?? {});
+  const reading = data?.market_reading;
+
   return (
     <div>
       <PageHeader
         eyebrow="CÓMO ESTÁ POSICIONADO EL MERCADO"
         title="Mira detrás de las posiciones."
-        description="Funding, interés abierto y sesgo de los traders. Más contexto para tu próxima entrada."
+        description="Funding, interés abierto, ratios de cuentas y posiciones, y presión agresiva de compra/venta. Los datos históricos muestran su cobertura y antigüedad."
       >
         <RefreshButton loading={loading} onClick={refresh} />
       </PageHeader>
@@ -58,202 +158,225 @@ export default function DerivadosPage() {
             <button
               className={`pair-chip ${symbol === simbolo ? "active" : ""}`}
               key={symbol}
-              onClick={() =>
-                navigate(
-                  `/derivados/${symbol}${direction ? `?direccion=${direction}` : ""}`,
-                )
-              }
+              onClick={() => navigate(`/derivados/${symbol}${direction ? `?direccion=${direction}` : ""}`)}
             >
               {symbol.replace("USDT", "")}
             </button>
           ))}
         </div>
+        <div className="derivatives-header-status">
+          <span className="derivatives-refresh-dot" />
+          Actualización automática cada 45 s
+        </div>
         <Link className="btn btn-blue" to={`/mercado/flujo/${simbolo}`}>
-          <Waves size={12} />
-          Ver flujo del par
-          <ArrowUpRight size={12} />
+          <Waves size={12} /> Ver flujo del par <ArrowUpRight size={12} />
         </Link>
       </div>
       <ResourceState loading={loading} error={error} retry={refresh} />
-      {data && !loading && !error && (
+      {data && !loading && (
         <>
           <div className="overview-metrics derivatives-metrics">
             <div className="overview-metric">
-              <div className="metric-label">
-                Funding actual
-                <Info size={12} />
-              </div>
-              <div
-                className={`metric-value ${fundingRate == null ? "" : fundingRate >= 0 ? "positive" : "negative"}`}
-              >
+              <div className="metric-label">Funding actual <Info size={12} /></div>
+              <div className={`metric-value ${fundingRate == null ? "" : fundingRate >= 0 ? "positive" : "negative"}`}>
                 {percent(fundingRate == null ? null : fundingRate * 100, 4)}
               </div>
               <div className="metric-note">
-                {fundingRate == null
-                  ? "Sin dato de funding del proveedor"
-                  : fundingRate >= 0
-                    ? "Los largos pagan a los cortos"
-                    : "Los cortos pagan a los largos"}
+                {fundingRate == null ? "Sin dato del proveedor" : fundingRate >= 0 ? "Los largos pagan a los cortos" : "Los cortos pagan a los largos"}
               </div>
             </div>
             <div className="overview-metric">
-              <div className="metric-label">
-                Próximo cobro
-                <Clock3 size={12} />
-              </div>
-              <div className="metric-value">
-                {data.funding_next ? <Countdown until={data.funding_next} /> : "—"}
-              </div>
+              <div className="metric-label">Próximo funding <Clock3 size={12} /></div>
+              <div className="metric-value">{data.funding_next ? <Countdown until={data.funding_next} /> : "—"}</div>
+              <div className="metric-note">Liquidación estimada del contrato</div>
+            </div>
+            <div className="overview-metric">
+              <div className="metric-label">Interés abierto actual <Database size={12} /></div>
+              <div className="metric-value">{usdCompact(data.open_interest)}</div>
               <div className="metric-note">
-                Liquidación de funding en Binance
+                {data.open_interest_contracts != null ? `${number(data.open_interest_contracts, 2)} unidades base · ${data.open_interest_updated_at ? ago(data.open_interest_updated_at) : "sin hora de fuente"}` : "Notional actual no disponible"}
               </div>
             </div>
             <div className="overview-metric">
-              <div className="metric-label">Interés abierto (OI)</div>
-              <div className="metric-value">
-                {data.open_interest == null ? "—" : `$${number(data.open_interest / 1e9, 2)}`}
-                <small>mil M</small>
+              <div className="metric-label">Prima mark / index <Info size={12} /></div>
+              <div className={`metric-value ${data.mark_index_delta == null ? "" : data.mark_index_delta >= 0 ? "positive" : "negative"}`}>
+                {percent(data.mark_index_delta, 4)}
               </div>
-              <div className="metric-note">
-                <span className="positive">
-                  {percent(data.oi_change_24h, 1)}
-                </span>
-                en las últimas 24h
-              </div>
-            </div>
-            <div className="overview-metric">
-              <div className="metric-label">Prima mark / index</div>
-              <div className="metric-value">
-                {percent(data.mark_index_delta)}
-              </div>
-              <div className="metric-note">
-                Diferencia porcentual de referencia
-              </div>
+              <div className="metric-note">Diferencia de precio: {data.basis_usdt == null ? "—" : number(data.basis_usdt, 4)} USDT</div>
             </div>
           </div>
-          <div className="two-col">
-            <section className="panel panel-pad">
-              <SectionHeader
-                title="De qué lado están las cuentas"
-                subtitle={`${simbolo.replace("USDT", " / USDT")} · Ratio long / short`}
-              />
-              <div className="ratio-numbers">
-                <div className="positive">
-                  <strong>
-                    {number(longPct, 1)}
-                    {longPct == null ? null : <span>%</span>}
-                  </strong>
-                  <span>Cuentas long</span>
+
+          <div className="derivatives-chart-grid">
+            <section className="panel panel-pad derivatives-chart-panel">
+              <SectionHeader title="Interés abierto · últimas 26 horas" subtitle="Serie histórica en valor USDT, separada de la lectura actual." />
+              <div className="derivatives-chart-kpis">
+                <div><span>Cambio 1H</span><strong className={(data.oi_change_1h ?? 0) >= 0 ? "positive" : "negative"}>{percent(data.oi_change_1h, 2)}</strong></div>
+                <div><span>Cambio 24H</span><strong className={(data.oi_change_24h ?? 0) >= 0 ? "positive" : "negative"}>{percent(data.oi_change_24h, 2)}</strong></div>
+                <div><span>Cobertura</span><strong>{number(data.oi_history_coverage_hours, 1)} h</strong></div>
+              </div>
+              {oiChart.length > 1 ? (
+                <div className="derivatives-chart">
+                  <ResponsiveContainer width="100%" height={220}>
+                    <LineChart data={oiChart} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                      <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                      <XAxis dataKey="label" minTickGap={24} tick={{ fill: "var(--text-muted)", fontSize: 10 }} />
+                      <YAxis tickFormatter={(value: number) => `${number(value, 2)}B`} width={64} tick={{ fill: "var(--text-muted)", fontSize: 10 }} />
+                      <Tooltip formatter={(value) => [`$${number(Number(value), 3)}B`, "OI histórico"]} />
+                      <Line type="monotone" dataKey="value_b" stroke="var(--accent)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
-                <div className="negative">
-                  <strong>
-                    {number(shortPct, 1)}
-                    {shortPct == null ? null : <span>%</span>}
-                  </strong>
-                  <span>Cuentas short</span>
-                </div>
-              </div>
-              <div className="bar-track ratio-bar">
-                <span
-                  className="buy"
-                  style={{ width: `${longPct ?? 0}%` }}
-                />
-                <span
-                  className="sell"
-                  style={{ width: `${shortPct ?? 0}%` }}
-                />
-              </div>
-              <div className="detail-row">
-                <span>Ratio long / short actual</span>
-                <strong className="mono">
-                  {number(longShortRatio, 3)}
-                </strong>
-              </div>
-              <div className="detail-row">
-                <span>Cuentas long hace 24h</span>
-                <strong className="mono">
-                  {data.long_short_ratio.value_24h_ago == null ? "—" : `${number(data.long_short_ratio.value_24h_ago, 1)}%`}
-                </strong>
-              </div>
-              <Reading title="Cómo interpretarlo">
-                Una mayoría en un lado no confirma una tendencia. Puede
-                acompañar el impulso, pero también crear combustible para una
-                liquidación cuando el precio se mueve en contra.
-              </Reading>
+              ) : <div className="derivatives-chart-empty">Se necesita más historial para dibujar la evolución del OI.</div>}
+              <div className="detail-row"><span>Variación del precio en 24H</span><strong className={`mono ${data.price_change_24h_pct == null ? "" : data.price_change_24h_pct >= 0 ? "positive" : "negative"}`}>{percent(data.price_change_24h_pct, 2)}</strong></div>
+              <p className="slim-note"><Info size={12} />El cambio de 24H solo se muestra si el historial contiene cobertura temporal suficiente.</p>
             </section>
-            <section className="panel panel-pad">
-              <SectionHeader
-                title="El posicionamiento de los top traders"
-                subtitle="Distribución de las cuentas con mayor actividad."
-              />
-              <div className="ratio-numbers">
-                <div className="positive">
-                  <strong>
-                    {number(topLongPct, 1)}
-                    {topLongPct == null ? null : <span>%</span>}
-                  </strong>
-                  <span>Top traders long</span>
+            <section className="panel panel-pad derivatives-chart-panel">
+              <SectionHeader title="Histórico de funding" subtitle="Últimos eventos de liquidación reportados por Binance." />
+              <div className="derivatives-chart-kpis">
+                <div><span>Funding anualizado estimado</span><strong className={(data.funding_annualized_pct ?? 0) >= 0 ? "positive" : "negative"}>{percent(data.funding_annualized_pct, 2)}</strong></div>
+                <div><span>Intervalo observado</span><strong>{data.funding_interval_hours == null ? "—" : `${number(data.funding_interval_hours, 1)} h`}</strong></div>
+              </div>
+              {fundingChart.length > 1 ? (
+                <div className="derivatives-chart">
+                  <ResponsiveContainer width="100%" height={220}>
+                    <LineChart data={fundingChart} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                      <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                      <XAxis dataKey="label" minTickGap={24} tick={{ fill: "var(--text-muted)", fontSize: 10 }} />
+                      <YAxis tickFormatter={(value: number) => `${number(value, 3)}%`} width={64} tick={{ fill: "var(--text-muted)", fontSize: 10 }} />
+                      <Tooltip formatter={(value) => [`${number(Number(value), 5)}%`, "Funding"]} />
+                      <ReferenceLine y={0} stroke="var(--border-strong)" />
+                      <Line type="monotone" dataKey="funding_pct" stroke="var(--accent)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
-                <div className="negative">
-                  <strong>
-                    {number(topShortPct, 1)}
-                    {topShortPct == null ? null : <span>%</span>}
-                  </strong>
-                  <span>Top traders short</span>
+              ) : <div className="derivatives-chart-empty">No hay suficientes liquidaciones históricas de funding para trazar una serie.</div>}
+              <p className="slim-note"><Info size={12} />El funding anualizado es una extrapolación basada en el intervalo observado; no es una rentabilidad garantizada.</p>
+            </section>
+            <section className="panel panel-pad derivatives-chart-panel derivatives-basis-panel">
+              <SectionHeader title="Base del contrato · anualizada" subtitle="Datos históricos de base del futuro perpetuo frente al índice; fuente independiente de la prima mark/index." />
+              <div className="derivatives-chart-kpis">
+                <div><span>Base por período</span><strong className={(data.basis_rate_pct ?? 0) >= 0 ? "positive" : "negative"}>{percent(data.basis_rate_pct, 4)}</strong></div>
+                <div><span>Base anualizada</span><strong className={(data.annualized_basis_pct ?? 0) >= 0 ? "positive" : "negative"}>{percent(data.annualized_basis_pct, 2)}</strong></div>
+                <div><span>Cobertura</span><strong>{number(data.basis_coverage_hours, 1)} h</strong></div>
+              </div>
+              {basisChart.length > 1 ? (
+                <div className="derivatives-chart">
+                  <ResponsiveContainer width="100%" height={220}>
+                    <LineChart data={basisChart} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                      <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                      <XAxis dataKey="label" minTickGap={24} tick={{ fill: "var(--text-muted)", fontSize: 10 }} />
+                      <YAxis tickFormatter={(value: number) => `${number(value, 2)}%`} width={64} tick={{ fill: "var(--text-muted)", fontSize: 10 }} />
+                      <Tooltip formatter={(value) => [`${number(Number(value), 4)}%`, "Base anualizada"]} />
+                      <ReferenceLine y={0} stroke="var(--border-strong)" />
+                      <Line type="monotone" dataKey="basis_pct" stroke="var(--accent)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
-              </div>
-              <div className="bar-track ratio-bar">
-                <span
-                  className="buy"
-                  style={{ width: `${topLongPct ?? 0}%` }}
-                />
-                <span
-                  className="sell"
-                  style={{ width: `${topShortPct ?? 0}%` }}
-                />
-              </div>
-              <div className="detail-row">
-                <span>Cambio de OI en 1 hora</span>
-                <strong
-                  className={`mono ${data.oi_change_1h == null ? "" : data.oi_change_1h >= 0 ? "positive" : "negative"}`}
-                >
-                  {percent(data.oi_change_1h, 1)}
-                </strong>
-              </div>
-              <div className="detail-row">
-                <span>Cambio de OI en 24 horas</span>
-                <strong
-                  className={`mono ${data.oi_change_24h == null ? "" : data.oi_change_24h >= 0 ? "positive" : "negative"}`}
-                >
-                  {percent(data.oi_change_24h, 1)}
-                </strong>
-              </div>
-              {data.reading && <Reading title="La lectura de FTrade">{data.reading}</Reading>}
+              ) : <div className="derivatives-chart-empty">Binance no ha proporcionado suficientes puntos válidos de base para graficar el histórico.</div>}
+              <p className="slim-note"><Info size={12} />Base y funding son conceptos distintos. La base anualizada se presenta solo cuando Binance la reporta; no se extrapola si falta el campo.</p>
             </section>
           </div>
+
+          <div className="two-col derivatives-positioning-grid">
+            <section className="panel panel-pad">
+              <SectionHeader title="Posicionamiento de las cuentas" subtitle="Ratio de cuentas long/short y cambio real de su distribución." />
+              <div className="ratio-numbers">
+                <div className="positive"><strong>{number(longPct, 1)}{longPct == null ? null : <span>%</span>}</strong><span>Cuentas net-long</span></div>
+                <div className="negative"><strong>{number(shortPct, 1)}{shortPct == null ? null : <span>%</span>}</strong><span>Cuentas net-short</span></div>
+              </div>
+              <div className="bar-track ratio-bar"><span className="buy" style={{ width: `${Math.min(100, Math.max(0, longPct ?? 0))}%` }} /><span className="sell" style={{ width: `${Math.min(100, Math.max(0, shortPct ?? 0))}%` }} /></div>
+              <div className="detail-row"><span>Ratio long / short (último registro 1H)</span><strong className="mono">{number(longShortRatio, 3)}</strong></div>
+              <div className="detail-row"><span>Ratio de hace 24H</span><strong className="mono">{number(data.long_short_ratio.ratio_24h_ago, 3)}</strong></div>
+              <div className="detail-row"><span>Cuentas long hace 24H</span><strong className="mono">{percent(data.long_short_ratio.percent_long_24h_ago, 1)}</strong></div>
+              <div className="detail-row"><span>Cuentas short hace 24H</span><strong className="mono">{percent(data.long_short_ratio.percent_short_24h_ago, 1)}</strong></div>
+              <div className="derivatives-mini-meta">Fuente: ratio global de cuentas · {data.long_short_ratio.updated_at ? ago(data.long_short_ratio.updated_at) : "marca temporal no disponible"} · cobertura {number(data.long_short_ratio.coverage_hours, 1)} h</div>
+              <Reading title="Cómo interpretarlo">Una mayoría en un lado no confirma una tendencia. El ratio describe cuentas, no tamaño de posiciones ni dirección garantizada del próximo movimiento.</Reading>
+            </section>
+            <section className="panel panel-pad">
+              <SectionHeader title="Top traders: cuentas y posiciones" subtitle="Son dos conjuntos de datos distintos; Binance requiere una API key para estas estadísticas." />
+              <div className="derivatives-top-traders-grid">
+                <div className="derivatives-top-trader-card">
+                  <div className="derivatives-subsection-title">Por cuentas</div>
+                  <div className="ratio-numbers">
+                    <div className="positive"><strong>{number(topAccounts?.long, 1)}{topAccounts?.long == null ? null : <span>%</span>}</strong><span>Long</span></div>
+                    <div className="negative"><strong>{number(topAccounts?.short, 1)}{topAccounts?.short == null ? null : <span>%</span>}</strong><span>Short</span></div>
+                  </div>
+                  <div className="detail-row"><span>Ratio long/short</span><strong>{number(topAccounts?.ratio, 3)}</strong></div>
+                  {topAccounts?.percentages_derived && <div className="derivatives-mini-meta">Porcentajes estimados desde el ratio.</div>}
+                </div>
+                <div className="derivatives-top-trader-card">
+                  <div className="derivatives-subsection-title">Por posiciones</div>
+                  <div className="ratio-numbers">
+                    <div className="positive"><strong>{number(topPositions?.long, 1)}{topPositions?.long == null ? null : <span>%</span>}</strong><span>Long</span></div>
+                    <div className="negative"><strong>{number(topPositions?.short, 1)}{topPositions?.short == null ? null : <span>%</span>}</strong><span>Short</span></div>
+                  </div>
+                  <div className="detail-row"><span>Ratio long/short</span><strong>{number(topPositions?.ratio, 3)}</strong></div>
+                  {topPositions?.percentages_derived && <div className="derivatives-mini-meta">Porcentajes estimados desde el ratio.</div>}
+                </div>
+              </div>
+              {data.sources?.top_trader_accounts?.status === "api_key_missing" || data.sources?.top_trader_positions?.status === "api_key_missing" ? (
+                <div className="derivatives-config-note"><Info size={14} />Para habilitar ambos bloques, configura una API key de Binance con acceso de lectura de datos de mercado en la variable <code>BINANCE_API_KEY</code> del backend. No añadas la clave al frontend ni habilites permisos de trading.</div>
+              ) : null}
+              <div className="detail-row"><span>Cambio de OI en 1 hora</span><strong className={`mono ${data.oi_change_1h == null ? "" : data.oi_change_1h >= 0 ? "positive" : "negative"}`}>{percent(data.oi_change_1h, 2)}</strong></div>
+              <div className="detail-row"><span>Cambio de OI en 24 horas</span><strong className={`mono ${data.oi_change_24h == null ? "" : data.oi_change_24h >= 0 ? "positive" : "negative"}`}>{percent(data.oi_change_24h, 2)}</strong></div>
+              {data.reading && <Reading title="Lectura base de FTrade">{data.reading}</Reading>}
+            </section>
+          </div>
+
+          <section className="panel panel-pad derivatives-taker-panel">
+            <SectionHeader title="Presión agresiva de compra y venta" subtitle="Volumen taker agregado por ventanas. Las ventanas de 1H y 4H requieren 4 y 16 muestras de 15 minutos respectivamente." />
+            <div className="derivatives-flow-grid">
+              {(data.taker_flow?.windows ?? []).map((window) => (
+                <article className="derivatives-flow-card" key={window.label}>
+                  <div className="derivatives-flow-card-head"><span>{window.label}</span><Tag tone={window.status === "available" ? "green" : window.status === "partial" ? "amber" : "muted"}>{statusLabel(window.status)}</Tag></div>
+                  <div className="derivatives-flow-buy">{percent(window.buy_pct, 1)} <span>compras taker</span></div>
+                  <div className="bar-track ratio-bar"><span className="buy" style={{ width: `${Math.min(100, Math.max(0, window.buy_pct ?? 0))}%` }} /><span className="sell" style={{ width: `${Math.min(100, Math.max(0, window.sell_pct ?? 0))}%` }} /></div>
+                  <div className="detail-row"><span>Ratio buy/sell</span><strong>{number(window.buy_sell_ratio, 3)}</strong></div>
+                  <div className="detail-row"><span>Delta volumen base</span><strong className={(window.delta_volume ?? 0) >= 0 ? "positive" : "negative"}>{number(window.delta_volume, 3)}</strong></div>
+                  <div className="detail-row"><span>Volumen compra / venta</span><strong>{number(window.buy_volume, 2)} / {number(window.sell_volume, 2)}</strong></div>
+                  <div className="derivatives-mini-meta">{window.points}/{window.required_points} muestras · {window.updated_at ? ago(window.updated_at) : "sin timestamp"}</div>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="panel panel-pad derivatives-reading-panel">
+            <SectionHeader title="Lectura combinada de derivados" subtitle="Resumen explicable de funding, OI, posicionamiento y flujo; no es una señal automática de trading." />
+            <div className="derivatives-reading-summary">
+              <Tag tone={reading?.bias === "comprador" ? "green" : reading?.bias === "vendedor" ? "red" : reading?.bias === "mixto" ? "amber" : "muted"}>
+                {reading?.bias ? `Contexto ${reading.bias}` : "Contexto insuficiente"}
+              </Tag>
+              <p>{reading?.summary ?? "No hay suficientes métricas verificables para generar una lectura combinada."}</p>
+            </div>
+            {reading?.factors?.length ? <ul className="derivatives-reading-factors">{reading.factors.map((factor, index) => <li key={`${index}-${factor}`}>{factor}</li>)}</ul> : <div className="derivatives-chart-empty">Las fuentes todavía no ofrecen suficientes factores para una interpretación combinada.</div>}
+          </section>
+
+          <section className="panel panel-pad derivatives-quality-panel">
+            <SectionHeader title="Calidad y frescura de las fuentes" subtitle={`Respuesta consultada ${data.updated_at ? ago(data.updated_at) : "sin timestamp"} · los históricos se actualizan con la cadencia publicada por Binance, no en cada tick.`} />
+            <div className="derivatives-source-grid">
+              {sourceEntries.map(([key, meta]) => (
+                <div className="derivatives-source-card" key={key}>
+                  <div><strong>{key.replace(/_/g, " ")}</strong><Tag tone={statusTone(meta.status)}>{statusLabel(meta.status)}</Tag></div>
+                  <p>{sourceDescription(meta)}</p>
+                  {meta.updated_at && <small>{fmtTimestamp(meta.updated_at)}</small>}
+                </div>
+              ))}
+            </div>
+          </section>
+
           {direction && (
             <div className="signal-context-reading">
-              <Tag tone={direction === "LONG" ? "green" : "red"}>
-                Tu señal {direction}
-              </Tag>
-              <p>
-                {direction === "LONG"
-                  ? "Tu LONG va con la mayoría de las cuentas. El posicionamiento acompaña, pero también te expone a un barrido de longs. Respeta la entrada y el Stop Loss."
-                  : "Tu SHORT va contra la mayoría de las cuentas. No basta con un mercado cargado de longs: confirma que el flujo y la estructura respalden el movimiento."}
-              </p>
-              <Link className="link-accent" to={`/senales?par=${simbolo}`}>
-                Volver a la señal
-                <ArrowRight size={12} />
-              </Link>
+              <Tag tone={direction === "LONG" ? "green" : "red"}>Tu señal {direction}</Tag>
+              <p>{direction === "LONG"
+                ? "Contrasta tu LONG con funding, evolución del OI, flujo taker y concentración de cuentas. La mayoría puede reforzar una tendencia, pero también elevar el riesgo de un barrido contrario."
+                : "Contrasta tu SHORT con funding, evolución del OI, flujo taker y concentración de cuentas. Un mercado cargado de longs no confirma por sí solo que el precio vaya a caer."}</p>
+              <Link className="link-accent" to={`/senales?par=${simbolo}`}>Volver a la señal <ArrowRight size={12} /></Link>
             </div>
           )}
-          <p className="slim-note">
-            <Info size={12} />
-            El interés abierto no revela por sí solo si el nuevo capital es
-            comprador o vendedor. Contrástalo con el precio y el flujo.
-          </p>
+          <p className="slim-note"><Info size={12} />El interés abierto no revela por sí solo si el capital nuevo es comprador o vendedor. Ratios long/short, funding y flujo miden cosas distintas; confirma su timestamp y cobertura antes de interpretarlos.</p>
         </>
       )}
+      {data && error && <div className="derivatives-stale-banner"><RefreshCw size={14} />No se pudo actualizar el snapshot. Se conserva el último dato visible; pulsa actualizar para reintentar. Error: {error}</div>}
     </div>
   );
 }
