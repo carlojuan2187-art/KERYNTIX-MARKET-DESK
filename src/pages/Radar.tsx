@@ -87,6 +87,10 @@ function formatDeadline(value: string | null | undefined): string {
   return Number.isFinite(timestamp) ? dateTime(new Date(timestamp).toISOString(), "America/Puerto_Rico") : "Sin dato";
 }
 
+function hasMetricValue(value: number | null | undefined): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
 function Metric({ label, value, tone = "" }: { label: string; value: string; tone?: string }) {
   return (
     <div className="radar-metric">
@@ -135,7 +139,7 @@ function OpportunityMetrics({ row }: { row: RadarOpportunity }) {
         <Metric label="Mecha / rechazo" value={row.wick_ratio == null ? "—" : `${number(row.wick_ratio, 2)}x`} />
         <Metric label="Distancia del barrido" value={row.sweep_distance_atr == null ? "—" : `${number(row.sweep_distance_atr, 2)} ATR`} />
         <Metric label="ATR 15M" value={row.atr_pct == null ? "—" : `${number(row.atr_pct, 3)}%`} />
-        <Metric label="Volumen relativo" value={row.rel_volume == null ? "—" : `${number(row.rel_volume, 2)}x`} />
+        {hasMetricValue(row.rel_volume) && <Metric label="Volumen relativo" value={`${number(row.rel_volume, 2)}x`} />}
         <Metric label="Tendencia 1H" value={trendText(row.trend_1h)} tone={trendTone(row.trend_1h)} />
         <Metric label="Alineación" value={row.alignment_detail || alignmentText(row.alignment)} />
       </div>
@@ -149,7 +153,7 @@ function OpportunityMetrics({ row }: { row: RadarOpportunity }) {
         <Metric label="Distancia a zona" value={row.distance_pct == null ? "—" : `${number(row.distance_pct)}%`} />
         <Metric label="Distancia en ATR" value={row.distance_atr == null ? "—" : `${number(row.distance_atr, 2)} ATR`} />
         <Metric label="Zonas detectadas" value={row.zone_count == null ? "—" : String(row.zone_count)} />
-        <Metric label="Volumen relativo" value={row.rel_volume == null ? "—" : `${number(row.rel_volume, 2)}x`} />
+        {hasMetricValue(row.rel_volume) && <Metric label="Volumen relativo" value={`${number(row.rel_volume, 2)}x`} />}
         <Metric label="ATR 15M" value={row.atr_pct == null ? "—" : `${number(row.atr_pct, 3)}%`} />
         <Metric label="Tendencia 1H" value={trendText(row.trend_1h)} tone={trendTone(row.trend_1h)} />
         <Metric label="Alineación" value={alignmentText(row.alignment)} />
@@ -161,7 +165,7 @@ function OpportunityMetrics({ row }: { row: RadarOpportunity }) {
   return (
     <div className="radar-specific-metrics">
       <Metric label="Variación 1H" value={row.change_1h_pct == null ? "—" : percent(row.change_1h_pct)} tone={moveTone} />
-      <Metric label="Volumen vs. promedio" value={row.volume_ratio == null ? "—" : `${number(row.volume_ratio, 2)}x`} />
+      {hasMetricValue(row.volume_ratio) && <Metric label="Volumen vs. promedio" value={`${number(row.volume_ratio, 2)}x`} />}
       <Metric label="ATR 15M" value={row.atr_pct == null ? "—" : `${number(row.atr_pct, 3)}%`} />
       <Metric label="Tendencia 1H" value={trendText(row.trend_1h)} tone={trendTone(row.trend_1h)} />
     </div>
@@ -187,9 +191,9 @@ function MarketContext({ row }: { row: RadarOpportunity }) {
         />
         <Metric label="Máximo 24H" value={price(row.high_24h)} />
         <Metric label="Mínimo 24H" value={price(row.low_24h)} />
-        <Metric label="Interés abierto" value={row.open_interest == null ? "—" : `${compact(row.open_interest)} USDT`} />
-        <Metric label="Ratio de volumen" value={row.quote_volume_ratio == null ? "—" : `${number(row.quote_volume_ratio, 2)}x`} />
-        <Metric label="Flujo comprador" value={row.buy_pct == null ? "—" : `${number(row.buy_pct, 1)}%`} />
+        {hasMetricValue(row.open_interest) && <Metric label="Interés abierto" value={`${compact(row.open_interest)} USDT`} />}
+        {hasMetricValue(row.quote_volume_ratio) && <Metric label="Ratio de volumen" value={`${number(row.quote_volume_ratio, 2)}x`} />}
+        {hasMetricValue(row.buy_pct) && <Metric label="Flujo comprador" value={`${number(row.buy_pct, 1)}%`} />}
       </div>
       {trend && (
         <div className="radar-timeframe-trends" aria-label="Tendencia por temporalidad">
