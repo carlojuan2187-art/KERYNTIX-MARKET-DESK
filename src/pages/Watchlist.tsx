@@ -20,7 +20,7 @@ import {
   getWatchlist,
   removeWatchlistItem,
 } from "@/api";
-import { type AssetQuote, type FlowData, type WatchlistMarketItem, type WatchlistTimeframeAnalysis, type WatchlistTrendState } from "@/api/terminal";
+import { getCandles, type AssetQuote, type Candle, type FlowData, type WatchlistMarketItem, type WatchlistTimeframeAnalysis, type WatchlistTrendState } from "@/api/terminal";
 import type { DerivativesData } from "@/api/types";
 import { useApi } from "@/hooks/useApi";
 import { useApp } from "@/context/AppContext";
@@ -46,11 +46,137 @@ type WatchlistDisplayItem = Omit<AssetQuote, "price" | "trend" | "score" | "liqu
   sparkline: number[];
 };
 
+interface WatchlistTechnicalSummary {
+  rsi14: number | null;
+  macdLine: number | null;
+  macdSignal: number | null;
+  macdHistogram: number | null;
+  support4h: number | null;
+  resistance4h: number | null;
+  supportDistancePct: number | null;
+  resistanceDistancePct: number | null;
+  supportMethod: "Swing 4H" | "Rango 4H" | null;
+  resistanceMethod: "Swing 4H" | "Rango 4H" | null;
+  candles1h: number;
+  candles4h: number;
+}
+
 const timeframeEntries = [
   { key: "15m", label: "15M", trend: "15M" },
   { key: "1h", label: "1H", trend: "1H" },
   { key: "4h", label: "4H", trend: "4H" },
 ] as const;
+
+function closedCandles(rows: Candle[], timeframe: "1h" | "4h"): Candle[] {
+  const intervalMs = timeframe === "1h" ? 60 * 60 * 1000 : 4 * 60 * 60 * 1000;
+  const now = Date.now();
+  const valid = rows.filter((row) => Number.isFinite(row.timestamp) && Number.isFinite(row.close) && row.close > 0);
+  const closed = valid.filter((row) => row.timestamp + intervalMs <= now);
+  // A stale/mock API can label all returned candles as open. Prefer its sequence over returning no usable analysis.
+  return closed.length >= 35 ? closed : valid.slice(0, -1);
+}
+
+function emaSeries(values: number[], period: number): Array<number | null> {
+  const output: Array<number | null> = Array(values.length).fill(null);
+  if (values.length < period) return output;
+  let previous = values.slice(0, period).reduce((total, value) => total + value, 0) / period;
+  output[period - 1] = previous;
+  const alpha = 2 / (period + 1);
+  for (let i = period; i < values.length; i += 1) {
+    previous = values[i] * alpha + previous * (1 - alpha);
+    output[i] = previous;
+  }
+  return output;
+}
+
+function calculateRsi(closes: number[], period = 14): number | null {
+  if (closes.length < period + 1) return null;
+  let gain = 0;
+  let loss = 0;
+  for (let i = 1; i <= period; i += 1) {
+    const change = closes[i] - closes[i - 1];
+    if (change > 0) gain += change; else loss -= change;
+  }
+  let averageGain = gain / period;
+  let averageLoss = loss / period;
+  for (let i = period + 1; i < closes.length; i += 1) {
+    const change = closes[i] - closes[i - 1];
+    averageGain = (averageGain * (period - 1) + Math.max(change, 0)) / period;
+    averageLoss = (averageLoss * (period - 1) + Math.max(-change, 0)) / period;
+  }
+  if (averageLoss === 0) return averageGain === 0 ? 50 : 100;
+  const relativeStrength = averageGain / averageLoss;
+  return 100 - 100 / (1 + relativeStrength);
+}
+
+function buildTechnicalSummary(candleRows1h: Candle[], candleRows4h: Candle[], currentPrice: number | null): WatchlistTechnicalSummary {
+  const candles1h = closedCandles(candleRows1h, "1h");
+  const candles4h = closedCandles(candleRows4h, "4h");
+  const closes = candles1h.map((row) => row.close);
+  const fastEma = emaSeries(closes, 12);
+  const slowEma = emaSeries(closes, 26);
+  const macdSeries: number[] = [];
+  for (let i = 0; i < closes.length; i += 1) {
+    if (fastEma[i] != null && slowEma[i] != null) macdSeries.push(fastEma[i]! - slowEma[i]!);
+  }
+  const macdSignalSeries = emaSeries(macdSeries, 9);
+  const macdLine = macdSeries.length ? macdSeries[macdSeries.length - 1] : null;
+  const macdSignal = macdSignalSeries.length ? macdSignalSeries[macdSignalSeries.length - 1] : null;
+  const macdHistogram = macdLine != null && macdSignal != null ? macdLine - macdSignal : null;
+
+  // Confirmed 2-left/2-right pivots from closed 4H candles; fallback to recent range extrema if there is no pivot.
+  const history = candles4h.slice(-100);
+  const swingSupports: number[] = [];
+  const swingResistances: number[] = [];
+  for (let i = 2; i < history.length - 2; i += 1) {
+    const row = history[i];
+    const left = history.slice(i - 2, i);
+    const right = history.slice(i + 1, i + 3);
+    if (left.every((item) => row.low <= item.low) && right.every((item) => row.low <= item.low)) swingSupports.push(row.low);
+    if (left.every((item) => row.high >= item.high) && right.every((item) => row.high >= item.high)) swingResistances.push(row.high);
+  }
+  const validPrice = currentPrice != null && currentPrice > 0 ? currentPrice : (closes.length ? closes[closes.length - 1] : null);
+  let support = validPrice == null ? null : swingSupports.filter((level) => level < validPrice).sort((a, b) => b - a)[0] ?? null;
+  let resistance = validPrice == null ? null : swingResistances.filter((level) => level > validPrice).sort((a, b) => a - b)[0] ?? null;
+  let supportMethod: WatchlistTechnicalSummary["supportMethod"] = support == null ? null : "Swing 4H";
+  let resistanceMethod: WatchlistTechnicalSummary["resistanceMethod"] = resistance == null ? null : "Swing 4H";
+  if (validPrice != null && history.length) {
+    if (support == null) {
+      support = history.slice(-30).map((row) => row.low).filter((level) => level < validPrice).sort((a, b) => b - a)[0] ?? null;
+      supportMethod = support == null ? null : "Rango 4H";
+    }
+    if (resistance == null) {
+      resistance = history.slice(-30).map((row) => row.high).filter((level) => level > validPrice).sort((a, b) => a - b)[0] ?? null;
+      resistanceMethod = resistance == null ? null : "Rango 4H";
+    }
+  }
+  return {
+    rsi14: calculateRsi(closes), macdLine, macdSignal, macdHistogram, support4h: support, resistance4h: resistance,
+    supportDistancePct: validPrice != null && support != null ? ((validPrice - support) / validPrice) * 100 : null,
+    resistanceDistancePct: validPrice != null && resistance != null ? ((resistance - validPrice) / validPrice) * 100 : null,
+    supportMethod, resistanceMethod, candles1h: candles1h.length, candles4h: candles4h.length,
+  };
+}
+
+function targetDistance(currentPrice: number | null, target: number | null | undefined): string | null {
+  if (currentPrice == null || currentPrice <= 0 || target == null || target <= 0) return null;
+  const distance = Math.abs(target - currentPrice) / currentPrice * 100;
+  const relative = target > currentPrice ? "por encima" : target < currentPrice ? "por debajo" : "al precio actual";
+  return `${percent(distance, 2)} ${relative}`;
+}
+
+function entryDistance(currentPrice: number | null, signal: { entry_price?: number | null; entry_low?: number | null; entry_high?: number | null }): string | null {
+  if (currentPrice == null || currentPrice <= 0) return null;
+  const low = signal.entry_low ?? null;
+  const high = signal.entry_high ?? null;
+  if (low != null && high != null && low > 0 && high > 0) {
+    if (currentPrice >= low && currentPrice <= high) return "Dentro de la zona";
+    const boundary = currentPrice < low ? low : high;
+    const distance = Math.abs(boundary - currentPrice) / currentPrice * 100;
+    return `${percent(distance, 2)} ${currentPrice < low ? "por debajo" : "por encima"} de la zona`;
+  }
+  return targetDistance(currentPrice, signal.entry_price);
+}
 
 function trendLabel(trend: WatchlistTrendState): string {
   if (trend === "up") return "Alcista";
@@ -116,6 +242,9 @@ export default function WatchlistPage() {
   const [detailFlow, setDetailFlow] = useState<FlowData | null>(null);
   const [detailAnalyticsLoading, setDetailAnalyticsLoading] = useState(false);
   const [detailAnalyticsUnavailable, setDetailAnalyticsUnavailable] = useState(false);
+  const [detailTechnical, setDetailTechnical] = useState<WatchlistTechnicalSummary | null>(null);
+  const [detailTechnicalLoading, setDetailTechnicalLoading] = useState(false);
+  const [detailTechnicalUnavailable, setDetailTechnicalUnavailable] = useState(false);
   const closeDetail = useCallback(() => setSelected(null), []);
 
   // Load high-cost per-symbol derivatives and flow only when the user opens a pair.
@@ -141,6 +270,39 @@ export default function WatchlistPage() {
       setDetailAnalyticsUnavailable(derivatives.status === "rejected" && flow.status === "rejected");
     }).finally(() => {
       if (!cancelled) setDetailAnalyticsLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [selected?.symbol]);
+  useEffect(() => {
+    const symbol = selected?.symbol;
+    if (!symbol) {
+      setDetailTechnical(null);
+      setDetailTechnicalLoading(false);
+      setDetailTechnicalUnavailable(false);
+      return;
+    }
+    let cancelled = false;
+    setDetailTechnical(null);
+    setDetailTechnicalUnavailable(false);
+    setDetailTechnicalLoading(true);
+    void Promise.allSettled([
+      getCandles(symbol, "1h", undefined, 150),
+      getCandles(symbol, "4h", undefined, 120),
+    ]).then(([oneHour, fourHour]) => {
+      if (cancelled) return;
+      const candles1h = oneHour.status === "fulfilled" ? oneHour.value : [];
+      const candles4h = fourHour.status === "fulfilled" ? fourHour.value : [];
+      if (!candles1h.length && !candles4h.length) {
+        setDetailTechnical(null);
+        setDetailTechnicalUnavailable(true);
+        return;
+      }
+      setDetailTechnical(buildTechnicalSummary(candles1h, candles4h, selected?.price ?? null));
+      setDetailTechnicalUnavailable(oneHour.status === "rejected" && fourHour.status === "rejected");
+    }).catch(() => {
+      if (!cancelled) setDetailTechnicalUnavailable(true);
+    }).finally(() => {
+      if (!cancelled) setDetailTechnicalLoading(false);
     });
     return () => { cancelled = true; };
   }, [selected?.symbol]);
@@ -195,10 +357,15 @@ export default function WatchlistPage() {
     if (user) setUser({ ...user, watchlist: updated });
     toast("Par eliminado de tu watchlist");
   }
-  const selectedScannerSignal = selected ? signals?.find((signal) => signal.symbol === selected.symbol && signal.status !== "CANCELLED") : undefined;
+  const selectedScannerSignal = selected ? signals?.find((signal) => signal.symbol === selected.symbol && ["PENDING", "TOUCHED"].includes(String(signal.status).toUpperCase())) : undefined;
   const selectedActiveSignal = selected?.active_signal ?? (selectedScannerSignal ? {
     id: selectedScannerSignal.id ?? "", direction: selectedScannerSignal.direction, status: selectedScannerSignal.status,
-    score: selectedScannerSignal.score ?? null, entry_price: selectedScannerSignal.entry_price ?? selectedScannerSignal.entry_low ?? null, created_at: selectedScannerSignal.created_at ?? null,
+    score: selectedScannerSignal.score ?? null, entry_price: selectedScannerSignal.entry_price ?? selectedScannerSignal.entry_low ?? null,
+    entry_low: selectedScannerSignal.entry_zone?.low ?? selectedScannerSignal.entry_low ?? null,
+    entry_high: selectedScannerSignal.entry_zone?.high ?? selectedScannerSignal.entry_high ?? null,
+    stop_loss: selectedScannerSignal.stop_loss ?? null,
+    take_profits: selectedScannerSignal.take_profits?.length ? selectedScannerSignal.take_profits : [selectedScannerSignal.tp1, selectedScannerSignal.tp2, selectedScannerSignal.tp3].filter((value): value is number => typeof value === "number" && Number.isFinite(value)),
+    created_at: selectedScannerSignal.created_at ?? null,
   } : null);
   const flow15m = detailFlow?.windows.find((row) => row.label === "15m");
   const selectedFundingRate = detailDerivatives?.funding_rate ?? selected?.funding_rate ?? null;
@@ -343,10 +510,13 @@ export default function WatchlistPage() {
               </thead>
               <tbody>
                 {items.map((q) => {
-                  const scannerSignal = signals?.find((signal) => signal.symbol === q.symbol && signal.status !== "CANCELLED");
+                  const scannerSignal = signals?.find((signal) => signal.symbol === q.symbol && ["PENDING", "TOUCHED"].includes(String(signal.status).toUpperCase()));
                   const activeSignal = q.active_signal ?? (scannerSignal ? {
                     id: scannerSignal.id ?? "", direction: scannerSignal.direction, status: scannerSignal.status,
-                    score: scannerSignal.score ?? null, entry_price: scannerSignal.entry_price ?? scannerSignal.entry_low ?? null, created_at: scannerSignal.created_at ?? null,
+                    score: scannerSignal.score ?? null, entry_price: scannerSignal.entry_price ?? scannerSignal.entry_low ?? null,
+                    entry_low: scannerSignal.entry_zone?.low ?? scannerSignal.entry_low ?? null, entry_high: scannerSignal.entry_zone?.high ?? scannerSignal.entry_high ?? null,
+                    stop_loss: scannerSignal.stop_loss ?? null, take_profits: scannerSignal.take_profits?.length ? scannerSignal.take_profits : [scannerSignal.tp1, scannerSignal.tp2, scannerSignal.tp3].filter((value): value is number => typeof value === "number" && Number.isFinite(value)),
+                    created_at: scannerSignal.created_at ?? null,
                   } : null);
                   const frame1h = q.analyses["1h"];
                   const lean = q.score_detail?.lean ?? q.score_detail?.direction;
@@ -478,6 +648,45 @@ export default function WatchlistPage() {
             </div>
           </section>
           <section className="watchlist-timeframe-section">
+            <div className="watchlist-detail-section-head"><div><h3>Momentum y niveles técnicos</h3><p>RSI(14) y MACD sobre velas cerradas de 1H; soportes y resistencias por pivotes de 4H. Los niveles son zonas técnicas aproximadas, no garantías.</p></div></div>
+            {detailTechnicalLoading ? <p className="slim-note">Calculando RSI, MACD y niveles sobre velas de Binance…</p> : detailTechnical ? (
+              <div className="watchlist-technical-grid">
+                <article className="watchlist-technical-card">
+                  <small>RSI (14) · 1H</small>
+                  <strong className={detailTechnical.rsi14 == null ? "muted" : detailTechnical.rsi14 >= 70 ? "negative" : detailTechnical.rsi14 <= 30 ? "positive" : ""}>{detailTechnical.rsi14 == null ? "Sin lectura" : number(detailTechnical.rsi14, 1)}</strong>
+                  <span>{detailTechnical.rsi14 == null ? "Se requieren al menos 15 cierres" : detailTechnical.rsi14 >= 70 ? "Zona de sobrecompra" : detailTechnical.rsi14 <= 30 ? "Zona de sobreventa" : detailTechnical.rsi14 >= 55 ? "Impulso comprador" : detailTechnical.rsi14 <= 45 ? "Impulso vendedor" : "Zona neutral"}</span>
+                </article>
+                <article className="watchlist-technical-card">
+                  <small>MACD (12, 26, 9) · 1H</small>
+                  <strong className={detailTechnical.macdHistogram == null ? "muted" : detailTechnical.macdHistogram >= 0 ? "positive" : "negative"}>{detailTechnical.macdHistogram == null ? "Sin lectura" : detailTechnical.macdHistogram >= 0 ? "Histograma positivo" : "Histograma negativo"}</strong>
+                  <span>{detailTechnical.macdLine == null || detailTechnical.macdSignal == null || detailTechnical.macdHistogram == null ? "Se requieren más velas" : `MACD ${price(detailTechnical.macdLine)} · señal ${price(detailTechnical.macdSignal)} · hist. ${price(detailTechnical.macdHistogram)}`}</span>
+                </article>
+                <article className="watchlist-technical-card">
+                  <small>Soporte más cercano · 4H</small>
+                  <strong>{detailTechnical.support4h == null ? "Sin nivel claro" : price(detailTechnical.support4h)}</strong>
+                  <span>{detailTechnical.supportDistancePct == null ? (detailTechnical.supportMethod ?? "No identificado") : `${percent(detailTechnical.supportDistancePct, 2)} por encima del soporte`}{detailTechnical.supportMethod ? ` · ${detailTechnical.supportMethod}` : ""}</span>
+                </article>
+                <article className="watchlist-technical-card">
+                  <small>Resistencia más cercana · 4H</small>
+                  <strong>{detailTechnical.resistance4h == null ? "Sin nivel claro" : price(detailTechnical.resistance4h)}</strong>
+                  <span>{detailTechnical.resistanceDistancePct == null ? (detailTechnical.resistanceMethod ?? "No identificada") : `${percent(detailTechnical.resistanceDistancePct, 2)} por debajo de la resistencia`}{detailTechnical.resistanceMethod ? ` · ${detailTechnical.resistanceMethod}` : ""}</span>
+                </article>
+              </div>
+            ) : <p className="slim-note">{detailTechnicalUnavailable ? "No se pudieron consultar las velas de Binance en este momento." : "No hay suficientes velas cerradas para calcular los indicadores."}</p>}
+            {detailTechnical && <p className="watchlist-data-stamp">Muestra: {detailTechnical.candles1h} velas cerradas de 1H y {detailTechnical.candles4h} de 4H. RSI/MACD se calculan localmente desde velas reales; los soportes y resistencias son pivotes recientes o extremos de rango.</p>}
+          </section>
+          {selectedActiveSignal && (selectedActiveSignal.entry_price != null || selectedActiveSignal.entry_low != null || selectedActiveSignal.entry_high != null || selectedActiveSignal.stop_loss != null || (selectedActiveSignal.take_profits?.length ?? 0) > 0) && (
+            <section className="watchlist-timeframe-section">
+              <div className="watchlist-detail-section-head"><div><h3>Distancia a los niveles de señal</h3><p>Distancia entre el precio actual y los niveles de la señal activa. Las distancias no significan que el precio vaya a alcanzarlos.</p></div></div>
+              <div className="watchlist-levels-grid">
+                {(selectedActiveSignal.entry_price != null || selectedActiveSignal.entry_low != null || selectedActiveSignal.entry_high != null) && <article className="watchlist-level-card"><small>Entrada {selectedActiveSignal.entry_low != null && selectedActiveSignal.entry_high != null ? "(zona)" : ""}</small><strong>{selectedActiveSignal.entry_low != null && selectedActiveSignal.entry_high != null ? `${price(selectedActiveSignal.entry_low)} – ${price(selectedActiveSignal.entry_high)}` : price(selectedActiveSignal.entry_price ?? selectedActiveSignal.entry_low ?? selectedActiveSignal.entry_high)}</strong><span>{entryDistance(selected.price, selectedActiveSignal) ?? "Precio actual no disponible"}</span></article>}
+                {selectedActiveSignal.stop_loss != null && <article className="watchlist-level-card"><small>Stop-loss</small><strong>{price(selectedActiveSignal.stop_loss)}</strong><span>{targetDistance(selected.price, selectedActiveSignal.stop_loss) ?? "Precio actual no disponible"} {selected.price == null ? "" : "desde el precio actual"}</span></article>}
+                {(selectedActiveSignal.take_profits ?? []).filter((target) => typeof target === "number" && Number.isFinite(target) && target > 0).slice(0, 3).map((target, index) => <article className="watchlist-level-card" key={`tp-${index}`}><small>Objetivo TP{index + 1}</small><strong>{price(target)}</strong><span>{targetDistance(selected.price, target) ?? "Precio actual no disponible"} {selected.price == null ? "" : "desde el precio actual"}</span></article>)}
+              </div>
+              <p className="watchlist-data-stamp">Señal {selectedActiveSignal.direction ?? "sin dirección"} · {selectedActiveSignal.status}{selectedActiveSignal.created_at ? ` · creada ${ago(selectedActiveSignal.created_at)}` : ""}</p>
+            </section>
+          )}
+          <section className="watchlist-timeframe-section">
             <div className="watchlist-detail-section-head"><div><h3>Sesgo combinado</h3><p>Resumen de la combinación 15M / 1H / 4H. Es contexto informativo, no una orden de entrada.</p></div></div>
             <div className="watchlist-combined-bias">
               <div><small>Dirección ponderada</small><strong className={(selected.score_detail?.lean ?? selected.score_detail?.direction) === "LONG" ? "positive" : (selected.score_detail?.lean ?? selected.score_detail?.direction) === "SHORT" ? "negative" : "muted"}>{selected.score_detail?.lean ?? selected.score_detail?.direction ?? "Sin datos"}</strong></div>
@@ -492,7 +701,7 @@ export default function WatchlistPage() {
               <div className="watchlist-modal-signal">
                 <Link className="link-accent" to={`/senales?par=${selected.symbol}`}><Check size={12} /> Ver señal <ArrowRight size={12} /></Link>
                 <strong className={selectedActiveSignal.direction === "LONG" ? "positive" : selectedActiveSignal.direction === "SHORT" ? "negative" : "muted"}>{selectedActiveSignal.direction || "Activa"} · {selectedActiveSignal.status}</strong>
-                <small>Entrada {price(selectedActiveSignal.entry_price)} · {selectedActiveSignal.created_at ? ago(selectedActiveSignal.created_at) : "fecha no disponible"}</small>
+                <small>Entrada {selectedActiveSignal.entry_low != null && selectedActiveSignal.entry_high != null ? `${price(selectedActiveSignal.entry_low)}–${price(selectedActiveSignal.entry_high)}` : price(selectedActiveSignal.entry_price ?? selectedActiveSignal.entry_low ?? selectedActiveSignal.entry_high)} · {selectedActiveSignal.created_at ? ago(selectedActiveSignal.created_at) : "fecha no disponible"}</small>
               </div>
             ) : <span className="muted">Sin señal activa confirmada</span>}
           </div>
