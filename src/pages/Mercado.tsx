@@ -21,8 +21,10 @@ import {
   getMoversSnapshot,
   getOrderBook,
   getOrderFlow,
+  normalizeSymbol,
   type AssetQuote,
   type OrderBookData,
+  type OrderBookLevel,
 } from "@/api/terminal";
 import { useApp } from "@/context/AppContext";
 import { useApi } from "@/hooks/useApi";
@@ -38,6 +40,49 @@ import {
 } from "@/components/ui";
 import { HistoryChart } from "@/components/Charts";
 import { subscribeWs } from "@/api/events";
+
+type OrderBookStreamStatus = "connecting" | "live" | "reconnecting" | "stale" | "disconnected";
+
+/** Binance partial-depth messages contain a fresh top-20 book, not individual fills. */
+function parseLiveOrderBook(messageValue: unknown, expectedSymbol: string): OrderBookData | null {
+  if (!messageValue || typeof messageValue !== "object") return null;
+  const wrapper = messageValue as Record<string, unknown>;
+  const message = wrapper.data && typeof wrapper.data === "object"
+    ? wrapper.data as Record<string, unknown>
+    : wrapper;
+  const symbol = typeof message.s === "string" ? message.s.toUpperCase() : expectedSymbol;
+  if (symbol !== expectedSymbol.toUpperCase()) return null;
+  const readLevels = (value: unknown, side: "bid" | "ask"): OrderBookLevel[] => {
+    if (!Array.isArray(value)) return [];
+    return value.flatMap((rawLevel: unknown) => {
+      if (!Array.isArray(rawLevel) || rawLevel.length < 2) return [];
+      const levelPrice = Number(rawLevel[0]);
+      const quantity = Number(rawLevel[1]);
+      if (!Number.isFinite(levelPrice) || levelPrice <= 0 || !Number.isFinite(quantity) || quantity <= 0) return [];
+      return [{ price: levelPrice, quantity, notional_usdt: levelPrice * quantity }];
+    }).sort((a, b) => side === "bid" ? b.price - a.price : a.price - b.price);
+  };
+  const bids = readLevels(message.b ?? message.bids, "bid");
+  const asks = readLevels(message.a ?? message.asks, "ask");
+  if (!bids.length || !asks.length) return null;
+  const bestBid = bids[0].price;
+  const bestAsk = asks[0].price;
+  if (bestAsk < bestBid) return null;
+  const bidDepth = bids.reduce((sum, level) => sum + level.notional_usdt, 0);
+  const askDepth = asks.reduce((sum, level) => sum + level.notional_usdt, 0);
+  const combinedDepth = bidDepth + askDepth;
+  const receivedAt = new Date().toISOString();
+  return {
+    symbol, limit: 20, last_update_id: Number(message.u ?? message.lastUpdateId ?? message.lastUpdateID ?? 0) || 0,
+    best_bid: bestBid, best_ask: bestAsk, mid_price: (bestBid + bestAsk) / 2,
+    spread: bestAsk - bestBid, spread_pct: ((bestAsk - bestBid) / ((bestAsk + bestBid) / 2)) * 100,
+    bid_depth_usdt: bidDepth, ask_depth_usdt: askDepth,
+    bid_share_pct: combinedDepth > 0 ? bidDepth / combinedDepth * 100 : null,
+    imbalance_pct: combinedDepth > 0 ? (bidDepth - askDepth) / combinedDepth * 100 : null,
+    bids, asks, levels_returned: Math.min(bids.length, asks.length),
+    source: "binance-usdm-depth-websocket", status: "live", updated_at: receivedAt,
+  };
+}
 
 export default function MercadoPage() {
   const { quotes, user } = useApp();
@@ -59,7 +104,113 @@ export default function MercadoPage() {
     (): Promise<OrderBookData | null> => tab === "flujo" ? getOrderBook(simbolo, 20) : Promise.resolve(null),
     [simbolo, tab],
   );
+  const [liveOrderBook, setLiveOrderBook] = useState<OrderBookData | null>(null);
+  const [orderBookStreamStatus, setOrderBookStreamStatus] = useState<OrderBookStreamStatus>("connecting");
+  const [orderBookStreamError, setOrderBookStreamError] = useState<string | null>(null);
   const refreshInFlight = useRef(false);
+
+  useEffect(() => {
+    if (tab !== "flujo") {
+      setOrderBookStreamStatus("disconnected");
+      return;
+    }
+    let disposed = false;
+    let socket: WebSocket | null = null;
+    let reconnectTimer: number | undefined;
+    let watchdogTimer: number | undefined;
+    let attempts = 0;
+    let lastMessageAt = 0;
+    let socketOpenedAt = 0;
+    let socketStartedAt = 0;
+    const expectedSymbol = normalizeSymbol(simbolo);
+    const streamName = `${expectedSymbol.toLowerCase()}@depth20@100ms`;
+
+    setLiveOrderBook(null);
+    setOrderBookStreamStatus("connecting");
+    setOrderBookStreamError(null);
+
+    const connect = () => {
+      if (disposed) return;
+      setOrderBookStreamStatus(attempts === 0 ? "connecting" : "reconnecting");
+      socketStartedAt = Date.now();
+      try {
+        // Binance USDⓈ-M Futures public market stream. Partial depth sends the top
+        // 20 bid/ask levels repeatedly, so this view does not merge diff updates.
+        socket = new WebSocket(`wss://fstream.binance.com/market/ws/${streamName}`);
+      } catch {
+        attempts += 1;
+        setOrderBookStreamError("No se pudo abrir el WebSocket de Binance.");
+        const delay = Math.min(1_000 * 2 ** Math.min(attempts - 1, 4), 15_000);
+        reconnectTimer = globalThis.setTimeout(connect, delay);
+        setOrderBookStreamStatus("reconnecting");
+        return;
+      }
+      const currentSocket = socket;
+      currentSocket.onopen = () => {
+        if (disposed || socket !== currentSocket) return;
+        socketOpenedAt = Date.now();
+        lastMessageAt = 0;
+        setOrderBookStreamStatus("connecting"); // Wait for a valid depth frame before claiming live.
+        setOrderBookStreamError(null);
+      };
+      currentSocket.onmessage = (event) => {
+        if (disposed || socket !== currentSocket) return;
+        try {
+          const parsed = JSON.parse(String(event.data)) as unknown;
+          const nextBook = parseLiveOrderBook(parsed, expectedSymbol);
+          if (!nextBook) return;
+          lastMessageAt = Date.now();
+          attempts = 0;
+          setLiveOrderBook(nextBook);
+          setOrderBookStreamStatus("live");
+          setOrderBookStreamError(null);
+        } catch {
+          setOrderBookStreamError("Se recibió un mensaje de profundidad que no se pudo interpretar.");
+        }
+      };
+      currentSocket.onerror = () => {
+        if (disposed || socket !== currentSocket) return;
+        setOrderBookStreamError("Error en la conexión directa con el WebSocket de Binance.");
+        try { currentSocket.close(); } catch { /* The close handler performs the retry. */ }
+      };
+      currentSocket.onclose = () => {
+        if (disposed || socket !== currentSocket) return;
+        attempts += 1;
+        setOrderBookStreamStatus("reconnecting");
+        setOrderBookStreamError("El stream de profundidad se cerró; se está intentando reconectar.");
+        const delay = Math.min(1_000 * 2 ** Math.min(attempts - 1, 4), 15_000);
+        reconnectTimer = globalThis.setTimeout(connect, delay);
+      };
+    };
+
+    connect();
+    watchdogTimer = globalThis.setInterval(() => {
+      if (disposed || !socket) return;
+      const now = Date.now();
+      const noFirstFrameTooLong = !lastMessageAt && socketOpenedAt > 0 && now - socketOpenedAt > 8_000;
+      const connectionAttemptTooLong = socket.readyState === WebSocket.CONNECTING && socketStartedAt > 0 && now - socketStartedAt > 10_000;
+      const lastFrameTooOld = lastMessageAt > 0 && now - lastMessageAt > 5_000;
+      if (noFirstFrameTooLong || lastFrameTooOld) {
+        setOrderBookStreamStatus("stale");
+        setOrderBookStreamError("No se reciben actualizaciones recientes de profundidad.");
+      }
+      if ((lastMessageAt > 0 && now - lastMessageAt > 15_000) || (noFirstFrameTooLong && now - socketOpenedAt > 15_000) || connectionAttemptTooLong) {
+        if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+          try { socket.close(); } catch { /* The reconnect path will retry if this socket cannot be closed. */ }
+        }
+      }
+    }, 1_000);
+
+    return () => {
+      disposed = true;
+      if (reconnectTimer !== undefined) globalThis.clearTimeout(reconnectTimer);
+      if (watchdogTimer !== undefined) globalThis.clearInterval(watchdogTimer);
+      if (socket) {
+        socket.onopen = null; socket.onmessage = null; socket.onerror = null; socket.onclose = null;
+        try { socket.close(); } catch { /* Ignore a socket already closed by the browser. */ }
+      }
+    };
+  }, [tab, simbolo]);
   const liq = useApi(() => getLiquidationSummary(window), [window]);
   const movers = useApi(() => getMoversSnapshot(window), [window]);
   useEffect(
@@ -78,20 +229,20 @@ export default function MercadoPage() {
     [window, tab, liq.refresh, movers.refresh],
   );
   useEffect(() => {
-    // Poll only the active view, at a bounded rate. Flow/depth snapshots are
-    // refreshed together; liquidations and movers also need periodic refreshes
-    // when a websocket event is quiet or a window other than 15m is selected.
+    // Poll only the active summary at a bounded rate. The order book has its own
+    // direct Binance depth WebSocket; REST is used only for the initial fallback
+    // snapshot and an explicit manual refresh.
     const cadence = tab === "liquidaciones" ? 10_000 : 15_000;
     const timer = globalThis.setInterval(() => {
       if (refreshInFlight.current) return;
       refreshInFlight.current = true;
       const pending = tab === "flujo"
-        ? Promise.all([flow.refresh(), orderBook.refresh()])
+        ? flow.refresh()
         : tab === "liquidaciones" ? liq.refresh() : movers.refresh();
       void pending.finally(() => { refreshInFlight.current = false; });
     }, cadence);
     return () => globalThis.clearInterval(timer);
-  }, [tab, flow.refresh, orderBook.refresh, liq.refresh, movers.refresh]);
+  }, [tab, flow.refresh, liq.refresh, movers.refresh]);
   const active =
     tab === "flujo" ? flow : tab === "liquidaciones" ? liq : movers;
   const refreshCurrent = () => {
@@ -125,6 +276,16 @@ export default function MercadoPage() {
   const sourceMessage = tab === "flujo" ? flow.data?.reading : tab === "liquidaciones" ? liq.data?.message : movers.data?.message;
   const isCollecting = sourceStatus === "collecting";
   const hasCompleteSource = sourceStatus === "ok";
+  const normalizedOrderBookSymbol = normalizeSymbol(simbolo);
+  const currentLiveOrderBook = liveOrderBook?.symbol.toUpperCase() === normalizedOrderBookSymbol ? liveOrderBook : null;
+  const fallbackOrderBook = orderBook.data?.symbol?.toUpperCase() === normalizedOrderBookSymbol ? orderBook.data : null;
+  const displayedOrderBook = currentLiveOrderBook ?? fallbackOrderBook;
+  const effectiveOrderBookStreamStatus: OrderBookStreamStatus =
+    orderBookStreamStatus === "live" && !currentLiveOrderBook ? "connecting" : orderBookStreamStatus;
+  const orderBookConnectionLabel: Record<OrderBookStreamStatus, string> = {
+    connecting: "Conectando con Binance…", live: "En vivo · WebSocket Binance",
+    reconnecting: "Reconectando WebSocket", stale: "Feed de profundidad atrasado", disconnected: "WebSocket desconectado",
+  };
   const liquidationLongPct = liq.data && liq.data.total > 0 ? liq.data.long_usdt / liq.data.total * 100 : null;
   const liquidationShortPct = liq.data && liq.data.total > 0 ? liq.data.short_usdt / liq.data.total * 100 : null;
   return (
@@ -417,36 +578,52 @@ export default function MercadoPage() {
             </section>
           </div>
           <section className="panel panel-pad order-book-panel" style={{ marginTop: 22 }}>
-            <SectionHeader title={`Libro de órdenes · ${simbolo.replace("USDT", " / USDT")}`} subtitle="Profundidad agregada de los 20 mejores niveles · Binance USDⓈ-M Futures">
-              {orderBook.data?.updated_at && <Tag tone="muted">Actualizado {ago(orderBook.data.updated_at)}</Tag>}
+            <SectionHeader title={`Libro de órdenes · ${simbolo.replace("USDT", " / USDT")}`} subtitle="Top 20 niveles · Binance USDⓈ-M Futures · Stream de profundidad en directo">
+              <div className="order-book-live-status">
+                <Tag tone={effectiveOrderBookStreamStatus === "live" && currentLiveOrderBook ? "green" : effectiveOrderBookStreamStatus === "stale" || effectiveOrderBookStreamStatus === "disconnected" ? "red" : "amber"} dot>
+                  {orderBookConnectionLabel[effectiveOrderBookStreamStatus]}
+                </Tag>
+                {displayedOrderBook?.updated_at && <Tag tone="muted">{currentLiveOrderBook ? "Último tick" : "Snapshot REST"} · {ago(displayedOrderBook.updated_at)}</Tag>}
+              </div>
             </SectionHeader>
-            {orderBook.loading && !orderBook.data && <p className="slim-note">Cargando profundidad del libro…</p>}
-            {orderBook.error && <p className="slim-note" role="status">{orderBook.data ? `No se pudo refrescar el libro; se mantiene la última lectura (${ago(orderBook.data.updated_at)}).` : `El libro de órdenes no está disponible ahora. ${orderBook.error}`}</p>}
-            {orderBook.data && (
+            {orderBook.loading && !displayedOrderBook && <p className="slim-note">Cargando snapshot inicial mientras se conecta el WebSocket de Binance…</p>}
+            {!currentLiveOrderBook && displayedOrderBook && effectiveOrderBookStreamStatus !== "live" && (
+              <p className="slim-note order-book-feed-warning" role="status">
+                La tabla mostrada es una instantánea REST de respaldo, no un libro en vivo. Se marcará como en vivo solo después de recibir un mensaje válido del WebSocket.
+              </p>
+            )}
+            {currentLiveOrderBook && effectiveOrderBookStreamStatus !== "live" && (
+              <p className="slim-note order-book-feed-warning" role="status">
+                El feed no está actualizando la profundidad. Se conserva la última lectura recibida hace {ago(currentLiveOrderBook.updated_at)} y no debe tratarse como dato en vivo. {orderBookStreamError || "Intentando reconectar automáticamente."}
+              </p>
+            )}
+            {orderBookStreamError && !displayedOrderBook && <p className="slim-note" role="status">{orderBookStreamError} El libro no está disponible hasta recibir datos válidos.</p>}
+            {orderBook.error && !displayedOrderBook && <p className="slim-note" role="status">No se pudo obtener la instantánea REST inicial: {orderBook.error}</p>}
+            {displayedOrderBook && (
               <>
                 <div className="order-book-metrics">
-                  <div className="overview-metric"><div className="metric-label">Mejor bid</div><div className="metric-value positive mono">{price(orderBook.data.best_bid)}</div></div>
-                  <div className="overview-metric"><div className="metric-label">Mejor ask</div><div className="metric-value negative mono">{price(orderBook.data.best_ask)}</div></div>
-                  <div className="overview-metric"><div className="metric-label">Spread</div><div className="metric-value mono">{price(orderBook.data.spread)}</div><div className="metric-note">{percent(orderBook.data.spread_pct, 4)}</div></div>
-                  <div className="overview-metric"><div className="metric-label">Desequilibrio por profundidad</div><div className={`metric-value mono ${(orderBook.data.imbalance_pct ?? 0) > 0 ? "positive" : (orderBook.data.imbalance_pct ?? 0) < 0 ? "negative" : ""}`}>{percent(orderBook.data.imbalance_pct, 1)}</div><div className="metric-note">Solo los niveles visibles</div></div>
+                  <div className="overview-metric"><div className="metric-label">Mejor bid</div><div className="metric-value positive mono">{price(displayedOrderBook.best_bid)}</div></div>
+                  <div className="overview-metric"><div className="metric-label">Mejor ask</div><div className="metric-value negative mono">{price(displayedOrderBook.best_ask)}</div></div>
+                  <div className="overview-metric"><div className="metric-label">Spread</div><div className="metric-value mono">{price(displayedOrderBook.spread)}</div><div className="metric-note">{percent(displayedOrderBook.spread_pct, 4)}</div></div>
+                  <div className="overview-metric"><div className="metric-label">Desequilibrio por profundidad</div><div className={`metric-value mono ${(displayedOrderBook.imbalance_pct ?? 0) > 0 ? "positive" : (displayedOrderBook.imbalance_pct ?? 0) < 0 ? "negative" : ""}`}>{percent(displayedOrderBook.imbalance_pct, 1)}</div><div className="metric-note">Solo los niveles visibles</div></div>
                 </div>
                 <div className="order-book-depth-bars">
-                  <div><span className="positive">Bids · ${compact(orderBook.data.bid_depth_usdt)}</span><span className="negative">Asks · ${compact(orderBook.data.ask_depth_usdt)}</span></div>
-                  <div className="bar-track"><span className="buy" style={{ width: `${orderBook.data.bid_share_pct ?? 50}%` }} /><span className="sell" style={{ width: `${orderBook.data.bid_share_pct == null ? 50 : 100 - orderBook.data.bid_share_pct}%` }} /></div>
+                  <div><span className="positive">Bids · ${compact(displayedOrderBook.bid_depth_usdt)}</span><span className="negative">Asks · ${compact(displayedOrderBook.ask_depth_usdt)}</span></div>
+                  <div className="bar-track"><span className="buy" style={{ width: `${displayedOrderBook.bid_share_pct ?? 50}%` }} /><span className="sell" style={{ width: `${displayedOrderBook.bid_share_pct == null ? 50 : 100 - displayedOrderBook.bid_share_pct}%` }} /></div>
                 </div>
                 <div className="order-book-columns">
                   <div>
                     <h3 className="order-book-side positive">Compras límite (Bid)</h3>
                     <div className="order-book-head"><span>Precio</span><span>Cantidad</span><span>Valor USDT</span></div>
-                    {orderBook.data.bids.slice(0, 5).map((level) => <div className="order-book-row bid" key={`bid-${level.price}`}><span className="mono">{price(level.price)}</span><span className="mono">{compact(level.quantity)}</span><span className="mono">${compact(level.notional_usdt)}</span></div>)}
+                    {displayedOrderBook.bids.slice(0, 5).map((level) => <div className="order-book-row bid" key={`bid-${level.price}`}><span className="mono">{price(level.price)}</span><span className="mono">{compact(level.quantity)}</span><span className="mono">${compact(level.notional_usdt)}</span></div>)}
                   </div>
                   <div>
                     <h3 className="order-book-side negative">Ventas límite (Ask)</h3>
                     <div className="order-book-head"><span>Precio</span><span>Cantidad</span><span>Valor USDT</span></div>
-                    {orderBook.data.asks.slice(0, 5).map((level) => <div className="order-book-row ask" key={`ask-${level.price}`}><span className="mono">{price(level.price)}</span><span className="mono">{compact(level.quantity)}</span><span className="mono">${compact(level.notional_usdt)}</span></div>)}
+                    {displayedOrderBook.asks.slice(0, 5).map((level) => <div className="order-book-row ask" key={`ask-${level.price}`}><span className="mono">{price(level.price)}</span><span className="mono">{compact(level.quantity)}</span><span className="mono">${compact(level.notional_usdt)}</span></div>)}
                   </div>
                 </div>
-                <p className="slim-note">El desequilibrio refleja únicamente los primeros {orderBook.data.limit} niveles del libro. Las órdenes pueden cancelarse o cambiar antes de ejecutarse; no implica que el precio vaya a dirigirse a esa zona.</p>
+                <p className="slim-note">{currentLiveOrderBook && effectiveOrderBookStreamStatus === "live" ? "Actualización directa desde el WebSocket público de Binance Futures; top 20 niveles, con actualización cuando cambia la profundidad." : "Datos de respaldo. No son cotizaciones en vivo hasta que el estado indique WebSocket Binance conectado."} El desequilibrio refleja únicamente los niveles visibles. Las órdenes pueden cancelarse o cambiar antes de ejecutarse; no implica que el precio vaya a dirigirse a esa zona.</p>
               </>
             )}
           </section>
