@@ -123,6 +123,18 @@ export interface MoverRow {
   price: number;
 }
 
+export type MarketRegimeTimeframe = "15m" | "1h" | "4h";
+
+export interface MarketRegimeTimeframeAnalysis {
+  regime: "UP" | "DOWN" | "RANGE" | "TRANSITION" | "VOLATILE";
+  strength: string;
+  adx: number | null;
+  atr_pct: number | null;
+  vol_percentile: number | null;
+  bandwidth_trend: string | null;
+  rel_volume: number | null;
+}
+
 export interface MarketRegime {
   trend:
     | "TENDENCIA ALCISTA"
@@ -139,6 +151,7 @@ export interface MarketRegime {
   market_breadth?: number | null;
   session_now: string | null;
   updated_at: string;
+  timeframes?: Partial<Record<MarketRegimeTimeframe, MarketRegimeTimeframeAnalysis>>;
 }
 
 export interface AlertItem {
