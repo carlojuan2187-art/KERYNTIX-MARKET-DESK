@@ -10,8 +10,8 @@ import {
   X,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import ftradeBrandLogo from "@/assets/ftrade-logo-brand.jpg";
-import ftradeBrandIcon from "@/assets/ftrade-icon.png";
+import ftradeBrandLogo from "@/assets/ftrade-logo-brand.webp";
+import ftradeBrandIcon from "@/assets/ftrade-icon.webp";
 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (

@@ -34,7 +34,7 @@ import {
 import { useApp } from "@/context/AppContext";
 import { ago, percent, price } from "@/utils/format";
 import { AssetIcon, Brand, Modal } from "./ui";
-import { Sparkline } from "./Charts";
+import { Sparkline } from "./Sparkline";
 
 const groups = [
   {
