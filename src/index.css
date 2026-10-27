@@ -6228,6 +6228,17 @@ html {
   font-size: 10px;
   padding: 8px 0;
 }
+.order-book-live-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.order-book-feed-warning {
+  border-left: 2px solid var(--amber);
+  padding-left: 10px;
+}
 .order-book-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -6301,6 +6312,10 @@ html {
     align-items: flex-start;
     gap: 7px 10px;
     font-size: 9px;
+  }
+  .order-book-live-status {
+    justify-content: flex-start;
+    margin-top: 8px;
   }
   .order-book-metrics {
     grid-template-columns: 1fr 1fr;
