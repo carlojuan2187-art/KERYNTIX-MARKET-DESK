@@ -575,12 +575,25 @@ export function MarketChart({
   const [stopInput, setStopInput] = useState("");
   const [targetInput, setTargetInput] = useState("");
   const { data, loading, error, refresh } = useApi(
-    () => getCandles(symbol, timeframe, user?.tz, 300),
+    () => getCandles(symbol, timeframe, user?.tz, 240),
     [symbol, timeframe, user?.tz],
   );
+  // Candle history is separate from the live quote stream. Refresh it in the
+  // background while the chart is visible so the chart does not stay frozen
+  // on the initial snapshot. Never overlap requests or poll hidden tabs.
+  const candleRefreshInFlight = useRef(false);
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "hidden" || candleRefreshInFlight.current) return;
+      candleRefreshInFlight.current = true;
+      void refresh().finally(() => { candleRefreshInFlight.current = false; });
+    }, 30_000);
+    return () => window.clearInterval(timer);
+  }, [refresh, symbol, timeframe, user?.tz]);
   const quote = quotes.find((item) => item.symbol === symbol);
   const quoteAgeMs = quote?.price_tick_at == null ? null : Math.max(0, clockNow - quote.price_tick_at);
-  const quoteIsLive = quoteAgeMs != null && quoteAgeMs <= 2500;
+  const quoteIsLive = quoteAgeMs != null && quoteAgeMs <= 8_000;
+  const quoteIsRecent = quoteAgeMs != null && quoteAgeMs <= 20_000;
   const calculated = useMemo(() => technicalSeries(mergeLivePrice(data ?? [], quote?.price, timeframe)), [data, quote?.price, timeframe]);
   // Keep the full candle history available to chart pan/zoom; visible bars are windowed interactively.
   const chartData = useMemo(() => calculated, [calculated]);
@@ -640,7 +653,7 @@ export function MarketChart({
         {quote && <span className={`chart-change ${quote.change_pct == null ? "muted" : quote.change_pct >= 0 ? "positive" : "negative"}`}>
           <ArrowUpRight size={13} />{percent(quote.change_pct)}<span>24h</span>
         </span>}
-        <span className={`chart-live-status ${quoteIsLive ? "is-live" : "is-stale"}`} title={quoteAgeMs == null ? "Todavía no se ha recibido un tick WebSocket para este símbolo" : `Último tick recibido hace ${(quoteAgeMs / 1000).toFixed(1)} s`}><span className="live-dot" />{quoteIsLive ? "Precio en vivo" : quoteAgeMs == null ? "Esperando tick" : "Datos retrasados"}</span>
+        <span className={`chart-live-status ${quoteIsLive ? "is-live" : quoteIsRecent ? "is-recent" : "is-stale"}`} title={quoteAgeMs == null ? "Todavía no se ha recibido un tick WebSocket para este símbolo" : `Último tick WebSocket recibido hace ${(quoteAgeMs / 1000).toFixed(1)} s. Las velas históricas se actualizan cada 30 s; este indicador mide la conexión en vivo, no la antigüedad del snapshot REST.`}><span className="live-dot" />{quoteIsLive ? "Precio en vivo" : quoteAgeMs == null ? "Esperando tick" : quoteIsRecent ? "WebSocket lento" : "WebSocket sin datos"}</span>
       </div>
       <div className="chart-toolbar">
         <div className="timeframes" aria-label="Temporalidad del gráfico">
