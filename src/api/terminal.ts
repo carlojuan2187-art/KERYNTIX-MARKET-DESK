@@ -67,6 +67,13 @@ export interface LiquidationSummary {
   reading: string; updated_at: string; status?: string; message?: string | null; coverage_complete?: boolean; connected?: boolean;
 }
 export interface FlowData { symbol: string; windows: { label: "15m" | "1h" | "4h"; buy_pct: number | null; delta: number | null; delta_usdt: number | null; price: number | null; change_pct: number | null }[]; cvd: Candle[]; volume_ratio: number | null; reading: string; updated_at?: string; status?: string }
+export type RadarTrendState = "up" | "down" | "flat" | "range" | "transition" | "volatile" | null;
+export interface RadarTimeframeTrend {
+  "15M": RadarTrendState;
+  "1H": RadarTrendState;
+  "4H": RadarTrendState;
+}
+
 export interface RadarOpportunity {
   symbol: string;
   kind: "setup" | "sweep" | "watch" | "move";
@@ -90,7 +97,7 @@ export interface RadarOpportunity {
   open_interest?: number | null;
   buy_pct?: number | null;
   quote_volume_ratio?: number | null;
-  trend?: AssetQuote["trend"] | null;
+  trend?: RadarTimeframeTrend | null;
   entry_price?: number | null;
   entry_zone?: { low: number | null; high: number | null } | null;
   stop_loss?: number | null;
@@ -142,6 +149,15 @@ function str(value: unknown): string { return typeof value === "string" ? value 
 function direction(value: unknown): "LONG" | "SHORT" { return String(value).toUpperCase() === "SHORT" ? "SHORT" : "LONG"; }
 function directionOrNull(value: unknown): "LONG" | "SHORT" | null { const d = String(value ?? "").toUpperCase(); return d === "LONG" || d === "SHORT" ? d : null; }
 function record(value: unknown): Record<string, any> { return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, any> : {}; }
+function normalizeRadarTrend(value: unknown): RadarTrendState {
+  const trend = String(value ?? "").trim().toLowerCase();
+  if (["up", "uptrend", "bullish", "alcista"].includes(trend)) return "up";
+  if (["down", "downtrend", "bearish", "bajista"].includes(trend)) return "down";
+  if (["flat", "mixed", "range", "rango", "mixta"].includes(trend)) return trend === "flat" ? "flat" : "range";
+  if (["transition", "transicion", "transición"].includes(trend)) return "transition";
+  if (["volatile", "volatil", "volátil", "alta volatilidad"].includes(trend)) return "volatile";
+  return null;
+}
 
 const featured = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "AVAXUSDT", "XRPUSDT", "DOGEUSDT", "LINKUSDT", "1000PEPEUSDT", "ARBUSDT", "OPUSDT", "SUIUSDT", "APTUSDT", "NEARUSDT", "TIAUSDT", "WIFUSDT", "ADAUSDT"];
 export async function getQuotes(): Promise<AssetQuote[]> {
@@ -263,8 +279,17 @@ export async function getRadarSnapshot(): Promise<RadarOpportunity[]> {
   const quoteBySymbol = new Map(quotes.map((quote) => [quote.symbol, quote]));
   const cachedPrices = record(raw.prices);
   const fundingBySymbol = record(raw.funding);
+  const timeframeTrendsBySymbol = record(raw.timeframe_trends);
   const quoteContext = (symbol: string, preferredPrice?: unknown) => {
     const quote = quoteBySymbol.get(symbol);
+    const trendPayload = record(timeframeTrendsBySymbol[symbol]);
+    const trend = Object.keys(trendPayload).length > 0
+      ? {
+          "15M": normalizeRadarTrend(trendPayload["15M"]),
+          "1H": normalizeRadarTrend(trendPayload["1H"]),
+          "4H": normalizeRadarTrend(trendPayload["4H"]),
+        }
+      : quote?.trend ?? null;
     return {
       current_price: quote?.price ?? numberOrNull(preferredPrice) ?? numberOrNull(cachedPrices[symbol]) ?? null,
       change_24h_pct: quote?.change_pct ?? null,
@@ -275,7 +300,7 @@ export async function getRadarSnapshot(): Promise<RadarOpportunity[]> {
       open_interest: quote?.open_interest ?? null,
       buy_pct: quote?.buy_pct ?? null,
       quote_volume_ratio: quote?.volume_ratio ?? null,
-      trend: quote?.trend ?? null,
+      trend,
     };
   };
   const takeProfits = (value: unknown): number[] => Array.isArray(value)
