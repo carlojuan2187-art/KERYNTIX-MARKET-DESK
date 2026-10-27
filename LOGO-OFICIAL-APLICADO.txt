@@ -1,0 +1,3 @@
+Se sustituyó el logo anterior por la imagen exacta suministrada por el usuario (1000103171.jpg).
+Assets: public/ftrade-logo-brand.jpg, public/ftrade-social.jpg, public/ftrade-icon.png.
+Open Graph/Twitter metadata in index.html point to https://ftrade-web-production.up.railway.app/ftrade-social.jpg.
