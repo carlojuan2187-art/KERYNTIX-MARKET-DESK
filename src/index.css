@@ -5789,9 +5789,15 @@ html {
 .price-up { color: var(--green) !important; }
 .price-down { color: var(--red) !important; }
 
-.chart-live-status.is-stale .live-dot {
+.chart-live-status.is-recent .live-dot {
   background: var(--amber);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+  animation: none;
+}
+
+.chart-live-status.is-stale .live-dot {
+  background: var(--red);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 10%, transparent);
   animation: none;
 }
 
