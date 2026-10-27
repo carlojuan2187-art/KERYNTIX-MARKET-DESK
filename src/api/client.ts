@@ -79,13 +79,36 @@ async function rawRequest<T>(
   if (token) headers.set("Authorization", `Bearer ${token}`);
   else headers.delete("Authorization");
 
-  const response = await fetch(urlFor(path), {
-    ...init,
-    headers,
-    // Required for the refresh cookie. The cookie is HttpOnly and is not
-    // exposed to this client.
-    credentials: "include",
-  });
+  // A stalled Railway/API request must never leave a screen in a loading
+  // skeleton forever. Keep the caller's signal when provided and impose a
+  // hard upper bound on network + response-body time.
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(new DOMException("Timeout", "TimeoutError")), 9000);
+  const callerSignal = init.signal;
+  const abortFromCaller = () => controller.abort(callerSignal?.reason);
+  if (callerSignal) {
+    if (callerSignal.aborted) abortFromCaller();
+    else callerSignal.addEventListener("abort", abortFromCaller, { once: true });
+  }
+  let response: Response;
+  try {
+    response = await fetch(urlFor(path), {
+      ...init,
+      signal: controller.signal,
+      headers,
+      // Required for the refresh cookie. The cookie is HttpOnly and is not
+      // exposed to this client.
+      credentials: "include",
+    });
+  } catch (error) {
+    if (controller.signal.aborted && !callerSignal?.aborted) {
+      throw new Error("El servidor tardó demasiado en responder (9 s). Comprueba el backend o vuelve a intentarlo.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+    callerSignal?.removeEventListener("abort", abortFromCaller);
+  }
 
   if (!response.ok) throw await parseError(response);
   if (response.status === 204) return undefined as T;
