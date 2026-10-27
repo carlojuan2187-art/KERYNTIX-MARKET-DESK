@@ -42,17 +42,20 @@ function kindTone(kind: RadarOpportunity["kind"]): "green" | "blue" | "amber" | 
 }
 
 function trendText(value: string | null | undefined): string {
-  const trend = String(value ?? "").toUpperCase();
-  if (["UP", "UPTREND", "ALCISTA", "UP"].includes(trend)) return "Alcista";
-  if (["DOWN", "DOWNTREND", "BAJISTA"].includes(trend)) return "Bajista";
-  if (["MIXED", "FLAT", "RANGE", "RANGO"].includes(trend)) return "Mixta / rango";
+  const trend = String(value ?? "").trim().toUpperCase();
+  if (["UP", "UPTREND", "BULLISH", "ALCISTA"].includes(trend)) return "Alcista";
+  if (["DOWN", "DOWNTREND", "BEARISH", "BAJISTA"].includes(trend)) return "Bajista";
+  if (["RANGE", "RANGO"].includes(trend)) return "Rango";
+  if (["MIXED", "FLAT", "MIXTA"].includes(trend)) return "Mixta / rango";
+  if (["TRANSITION", "TRANSICIÓN", "TRANSICION"].includes(trend)) return "Transición";
+  if (["VOLATILE", "VOLÁTIL", "VOLATIL", "ALTA VOLATILIDAD"].includes(trend)) return "Alta volatilidad";
   return "Sin lectura";
 }
 
 function trendTone(value: string | null | undefined): string {
   const trend = String(value ?? "").toUpperCase();
-  if (["UP", "UPTREND", "ALCISTA"].includes(trend)) return "positive";
-  if (["DOWN", "DOWNTREND", "BAJISTA"].includes(trend)) return "negative";
+  if (["UP", "UPTREND", "BULLISH", "ALCISTA"].includes(trend)) return "positive";
+  if (["DOWN", "DOWNTREND", "BEARISH", "BAJISTA"].includes(trend)) return "negative";
   return "muted";
 }
 
