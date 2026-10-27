@@ -637,6 +637,15 @@ export default function DashboardPage() {
       }),
     [refresh],
   );
+  // If any optional dashboard source timed out, retry in the background while
+  // keeping the already-rendered page visible. Do not poll while hidden.
+  useEffect(() => {
+    if (!data?.partial) return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refresh();
+    }, 12000);
+    return () => window.clearInterval(timer);
+  }, [data?.partial, refresh]);
   return (
     <div>
       <PageHeader
@@ -663,6 +672,11 @@ export default function DashboardPage() {
         </Link>
       </PageHeader>
       <ResourceState loading={loading} error={error} retry={refresh} />
+      {displayData && !loading && !error && displayData.partial && (
+        <div className="slim-note" role="status" style={{ margin: "0 0 12px" }}>
+          Algunos módulos están tardando en responder. Mostramos los datos disponibles y volverán a consultarse al actualizar.
+        </div>
+      )}
       {displayData && !loading && !error && (
         <>
           {variant === "terminal" ? (
