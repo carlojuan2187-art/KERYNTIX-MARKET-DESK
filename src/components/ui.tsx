@@ -13,16 +13,14 @@ import { useApp } from "@/context/AppContext";
 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
-    <span className="brand">
-      <svg viewBox="0 0 32 32" aria-hidden="true">
-        <path d="M4 24V8h25l-5.3 6H11v4h10l-5.2 6H4Z" fill="currentColor" />
-        <path d="m19 25 5-6h5l-5 6h-5Z" fill="currentColor" opacity=".55" />
-      </svg>
-      {!compact && (
-        <span>
-          ftrade<span className="brand-point">.</span>
-        </span>
-      )}
+    <span className={`brand${compact ? " brand-compact" : ""}`}>
+      <img
+        src={compact ? "/ftrade-icon.png" : "/ftrade-logo-brand.jpg"}
+        alt={compact ? "FTrade" : "FTrade — Analiza, opera, avanza"}
+        className="brand-image"
+        loading="eager"
+        decoding="async"
+      />
     </span>
   );
 }
