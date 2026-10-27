@@ -17,6 +17,8 @@ export interface AssetQuote {
   open_interest: number | null;
   buy_pct: number | null;
   volume_ratio: number | null;
+  /** Whether the volume ratio is calculated from exact candle statistics or estimated from price history. */
+  volume_ratio_source?: "exact" | "estimated" | null;
   score: number | null;
   trend: { "15M": "up" | "down" | "flat" | null; "1H": "up" | "down" | "flat" | null; "4H": "up" | "down" | "flat" | null };
   sparkline: number[];
@@ -65,8 +67,37 @@ export interface LiquidationSummary {
   pairs: { symbol: string; long_usdt: number; short_usdt: number }[];
   largest_order: { symbol: string; side: "LONG" | "SHORT"; amount_usdt: number; created_at: string } | null;
   reading: string; updated_at: string; status?: string; message?: string | null; coverage_complete?: boolean; connected?: boolean;
+  coverage_seconds?: number | null; last_event_at?: string | null; source?: string | null;
 }
-export interface FlowData { symbol: string; windows: { label: "15m" | "1h" | "4h"; buy_pct: number | null; delta: number | null; delta_usdt: number | null; price: number | null; change_pct: number | null; volume_ratio: number | null; volume_usdt: number | null }[]; cvd: Candle[]; volume_ratio: number | null; reading: string; updated_at?: string; status?: string }
+export interface FlowQuality {
+  history_candles: number | null;
+  closed_candles: number | null;
+  history_minutes: number | null;
+  history_hours: number | null;
+  required_candles_for_4h_volume_baseline: number | null;
+  volume_ratio_4h_ready: boolean;
+  last_closed_candle_at: string | null;
+  last_closed_age_seconds: number | null;
+  coverage_complete: boolean;
+  message: string | null;
+}
+export interface PriceCvdContext {
+  status: string;
+  label: string;
+  price_change_pct: number | null;
+  delta_usdt: number | null;
+  delta_share_pct: number | null;
+  lookback_candles: number | null;
+  message: string;
+}
+export interface FlowData { symbol: string; windows: { label: "15m" | "1h" | "4h"; buy_pct: number | null; delta: number | null; delta_usdt: number | null; price: number | null; change_pct: number | null; volume_ratio: number | null; volume_usdt: number | null }[]; cvd: Candle[]; volume_ratio: number | null; reading: string; updated_at?: string; status?: string; source?: string; quality?: FlowQuality; price_cvd?: PriceCvdContext }
+export interface OrderBookLevel { price: number; quantity: number; notional_usdt: number }
+export interface OrderBookData {
+  symbol: string; limit: number; last_update_id: number; best_bid: number; best_ask: number; mid_price: number;
+  spread: number; spread_pct: number | null; bid_depth_usdt: number; ask_depth_usdt: number;
+  bid_share_pct: number | null; imbalance_pct: number | null; bids: OrderBookLevel[]; asks: OrderBookLevel[];
+  levels_returned: number; source: string; status: string; updated_at: string;
+}
 export type RadarTrendState = "up" | "down" | "flat" | "range" | "transition" | "volatile" | null;
 export interface RadarTimeframeTrend {
   "15M": RadarTrendState;
@@ -253,6 +284,7 @@ export async function getLiquidationSummary(window: 5 | 15 | 60 = 15): Promise<L
     largest_order: str(biggest.symbol) && amount != null && (sideRaw === "LONG" || sideRaw === "SHORT") ? { symbol: str(biggest.symbol), side: sideRaw, amount_usdt: amount, created_at: timestamp != null ? new Date(timestamp * 1000).toISOString() : "" } : null,
     reading: interpretation, updated_at: str(raw.updated_at), status: str(raw.status), message: typeof raw.message === "string" ? raw.message : null,
     coverage_complete: Boolean(raw.coverage_complete), connected: Boolean(raw.connected),
+    coverage_seconds: numberOrNull(raw.coverage_seconds), last_event_at: str(raw.last_event_at) || null, source: str(raw.source) || null,
   };
 }
 export async function getOrderFlow(symbol = "BTCUSDT"): Promise<FlowData> {
@@ -264,7 +296,45 @@ export async function getOrderFlow(symbol = "BTCUSDT"): Promise<FlowData> {
     price: numberOrNull(row.price), change_pct: numberOrNull(row.change_pct),
     volume_ratio: numberOrNull(row.volume_ratio), volume_usdt: numberOrNull(row.volume_usdt),
   }));
-  return { symbol: str(raw.symbol) || normalizeSymbol(symbol), windows, cvd: Array.isArray(raw.cvd) ? raw.cvd : [], volume_ratio: numberOrNull(raw.volume_ratio), reading: str(raw.reading), updated_at: str(raw.updated_at), status: str(raw.status) };
+  const quality = record(raw.quality);
+  const priceCvd = record(raw.price_cvd);
+  return {
+    symbol: str(raw.symbol) || normalizeSymbol(symbol), windows, cvd: Array.isArray(raw.cvd) ? raw.cvd : [],
+    volume_ratio: numberOrNull(raw.volume_ratio), reading: str(raw.reading), updated_at: str(raw.updated_at),
+    status: str(raw.status), source: str(raw.source),
+    quality: Object.keys(quality).length ? {
+      history_candles: numberOrNull(quality.history_candles), closed_candles: numberOrNull(quality.closed_candles),
+      history_minutes: numberOrNull(quality.history_minutes), history_hours: numberOrNull(quality.history_hours),
+      required_candles_for_4h_volume_baseline: numberOrNull(quality.required_candles_for_4h_volume_baseline),
+      volume_ratio_4h_ready: Boolean(quality.volume_ratio_4h_ready), last_closed_candle_at: str(quality.last_closed_candle_at) || null,
+      last_closed_age_seconds: numberOrNull(quality.last_closed_age_seconds), coverage_complete: Boolean(quality.coverage_complete),
+      message: str(quality.message) || null,
+    } : undefined,
+    price_cvd: Object.keys(priceCvd).length ? {
+      status: str(priceCvd.status), label: str(priceCvd.label), price_change_pct: numberOrNull(priceCvd.price_change_pct),
+      delta_usdt: numberOrNull(priceCvd.delta_usdt), delta_share_pct: numberOrNull(priceCvd.delta_share_pct),
+      lookback_candles: numberOrNull(priceCvd.lookback_candles), message: str(priceCvd.message),
+    } : undefined,
+  };
+}
+
+export async function getOrderBook(symbol = "BTCUSDT", limit = 20): Promise<OrderBookData> {
+  const raw = await apiRequest<Record<string, any>>(`/market/orderbook?symbol=${encodeURIComponent(normalizeSymbol(symbol))}&limit=${limit}`, { method: "GET" });
+  const parseLevels = (value: unknown): OrderBookLevel[] => (Array.isArray(value) ? value : []).flatMap((item: any) => {
+    const row = record(item);
+    const price = numberOrNull(row.price), quantity = numberOrNull(row.quantity), notional = numberOrNull(row.notional_usdt);
+    return price != null && quantity != null && notional != null ? [{ price, quantity, notional_usdt: notional }] : [];
+  });
+  return {
+    symbol: str(raw.symbol) || normalizeSymbol(symbol), limit: numberOrNull(raw.limit) ?? limit,
+    last_update_id: numberOrNull(raw.last_update_id) ?? 0, best_bid: numberOrNull(raw.best_bid) ?? 0,
+    best_ask: numberOrNull(raw.best_ask) ?? 0, mid_price: numberOrNull(raw.mid_price) ?? 0,
+    spread: numberOrNull(raw.spread) ?? 0, spread_pct: numberOrNull(raw.spread_pct),
+    bid_depth_usdt: numberOrNull(raw.bid_depth_usdt) ?? 0, ask_depth_usdt: numberOrNull(raw.ask_depth_usdt) ?? 0,
+    bid_share_pct: numberOrNull(raw.bid_share_pct), imbalance_pct: numberOrNull(raw.imbalance_pct),
+    bids: parseLevels(raw.bids), asks: parseLevels(raw.asks), levels_returned: numberOrNull(raw.levels_returned) ?? 0,
+    source: str(raw.source), status: str(raw.status), updated_at: str(raw.updated_at),
+  };
 }
 
 function scoreBreakdown(values: unknown): Record<string, number> {
@@ -380,7 +450,7 @@ export async function getRadarSnapshot(): Promise<RadarOpportunity[]> {
   }));
 }
 
-export interface MoversSnapshot { window: 5 | 15 | 60; gainers: AssetQuote[]; losers: AssetQuote[]; volume_flat: AssetQuote[]; btc_change_pct: number | null; breadth_pct: number | null; breadth: { up: number | null; down: number | null; total: number | null }; reading: string; updated_at: string; status?: string; message?: string | null }
+export interface MoversSnapshot { window: 5 | 15 | 60; gainers: AssetQuote[]; losers: AssetQuote[]; volume_flat: AssetQuote[]; btc_change_pct: number | null; breadth_pct: number | null; breadth: { up: number | null; down: number | null; total: number | null }; reading: string; updated_at: string; status?: string; message?: string | null; collected_minutes?: number | null; required_minutes?: number | null; eligible_count?: number | null; source?: string | null }
 export async function getMoversSnapshot(window: 5 | 15 | 60 = 15): Promise<MoversSnapshot> {
   const [raw, quotes] = await Promise.all([
     apiRequest<Record<string, any>>(`/market/movers?window=${window}`, { method: "GET" }), getQuotes(),
@@ -396,6 +466,7 @@ export async function getMoversSnapshot(window: 5 | 15 | 60 = 15): Promise<Mover
       high_24h: base?.high_24h ?? null, low_24h: base?.low_24h ?? null,
       funding_rate: base?.funding_rate ?? null, open_interest: base?.open_interest ?? null,
       buy_pct: numberOrNull(entry.buy_pct) ?? base?.buy_pct ?? null, volume_ratio: numberOrNull(entry.volume_ratio) ?? base?.volume_ratio ?? null,
+      volume_ratio_source: entry.volume_ratio == null ? null : entry.volume_exact === true ? "exact" : "estimated",
       score: base?.score ?? null, trend: base?.trend ?? { "15M": null, "1H": null, "4H": null }, sparkline: base?.sparkline ?? [], liquidity_sweep: base?.liquidity_sweep ?? null,
     };
   };
@@ -404,7 +475,8 @@ export async function getMoversSnapshot(window: 5 | 15 | 60 = 15): Promise<Mover
   const btc = record(raw.btc);
   const up = numberOrNull(breadth.up), down = numberOrNull(breadth.down), total = numberOrNull(breadth.total);
   return { window, gainers: mapGroup("gainers"), losers: mapGroup("losers"), volume_flat: mapGroup("flat_volume"), btc_change_pct: numberOrNull(btc.change_pct), breadth_pct: up != null && total != null && total > 0 ? up / total * 100 : null,
-    breadth: { up, down, total }, reading: str(raw.message), updated_at: str(raw.updated_at), status: str(raw.status), message: typeof raw.message === "string" ? raw.message : null };
+    breadth: { up, down, total }, reading: str(raw.message), updated_at: str(raw.updated_at), status: str(raw.status), message: typeof raw.message === "string" ? raw.message : null,
+    collected_minutes: numberOrNull(raw.collected_minutes), required_minutes: numberOrNull(raw.required_minutes), eligible_count: numberOrNull(raw.eligible_count), source: str(raw.source) || null };
 }
 
 export interface AppNotification { id: string; title: string; text: string; created_at: string; read: boolean; href: string }
