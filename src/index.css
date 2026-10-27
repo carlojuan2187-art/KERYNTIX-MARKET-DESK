@@ -6340,3 +6340,299 @@ html {
     grid-template-columns: 1fr;
   }
 }
+
+/* Derivatives phase: source-aware historical analytics */
+.derivatives-header-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.derivatives-refresh-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.derivatives-chart-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.derivatives-chart-panel,
+.derivatives-quality-panel,
+.derivatives-taker-panel,
+.derivatives-reading-panel {
+  min-width: 0;
+  margin-bottom: 18px;
+}
+.derivatives-basis-panel {
+  grid-column: 1 / -1;
+}
+.derivatives-chart {
+  width: 100%;
+  height: 220px;
+  margin: 14px 0 8px;
+}
+.derivatives-chart-empty {
+  display: flex;
+  align-items: center;
+  min-height: 112px;
+  padding: 18px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.8;
+  margin: 14px 0 8px;
+}
+.derivatives-chart-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+.derivatives-chart-kpis > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.derivatives-chart-kpis span {
+  color: var(--text-muted);
+  font-size: 9px;
+}
+.derivatives-chart-kpis strong {
+  font-size: 15px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.derivatives-positioning-grid {
+  margin-bottom: 18px;
+}
+.derivatives-mini-meta {
+  color: var(--text-muted);
+  font-size: 9px;
+  line-height: 1.7;
+  margin-top: 10px;
+}
+.derivatives-top-traders-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0 20px;
+}
+.derivatives-top-trader-card {
+  min-width: 0;
+  padding: 12px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.derivatives-top-trader-card .ratio-numbers {
+  margin: 14px 0 12px;
+  gap: 6px;
+}
+.derivatives-top-trader-card .ratio-numbers strong {
+  font-size: 25px;
+  letter-spacing: -0.045em;
+}
+.derivatives-top-trader-card .ratio-numbers strong > span {
+  font-size: 13px;
+}
+.derivatives-top-trader-card .ratio-numbers > div > span {
+  font-size: 9px;
+}
+.derivatives-subsection-title {
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+.derivatives-config-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px;
+  margin: 12px 0 18px;
+  border: 1px solid color-mix(in srgb, var(--warning, #d3a24e) 35%, var(--border));
+  border-radius: 8px;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--warning, #d3a24e) 7%, transparent);
+  font-size: 10px;
+  line-height: 1.8;
+}
+.derivatives-config-note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.derivatives-config-note code {
+  font-size: 10px;
+  color: var(--text);
+}
+.derivatives-flow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+.derivatives-flow-card {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-raised);
+}
+.derivatives-flow-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.derivatives-flow-card-head > span {
+  font-size: 13px;
+  font-weight: 600;
+}
+.derivatives-flow-card-head .tag {
+  flex-shrink: 0;
+  font-size: 8px;
+}
+.derivatives-flow-buy {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -.045em;
+  margin: 18px 0 10px;
+}
+.derivatives-flow-buy span {
+  display: block;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+.derivatives-flow-card .ratio-bar {
+  margin: 0 0 15px;
+}
+.derivatives-flow-card .detail-row {
+  gap: 10px;
+  font-size: 9px;
+  padding: 8px 0;
+}
+.derivatives-flow-card .detail-row strong {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.derivatives-reading-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 16px 0 12px;
+}
+.derivatives-reading-summary p {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 0;
+}
+.derivatives-reading-factors {
+  padding-left: 19px;
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.9;
+}
+.derivatives-reading-factors li + li {
+  margin-top: 6px;
+}
+.derivatives-source-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+.derivatives-source-card {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-raised);
+}
+.derivatives-source-card > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.derivatives-source-card > div > strong {
+  font-size: 10px;
+  text-transform: capitalize;
+  overflow-wrap: anywhere;
+}
+.derivatives-source-card .tag {
+  flex-shrink: 0;
+  font-size: 8px;
+}
+.derivatives-source-card p {
+  color: var(--text-muted);
+  font-size: 9px;
+  line-height: 1.75;
+  margin: 10px 0 6px;
+}
+.derivatives-source-card small {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 8px;
+}
+.derivatives-stale-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.7;
+}
+.derivatives-stale-banner svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+@media (max-width: 1100px) {
+  .derivatives-chart-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .derivatives-basis-panel {
+    grid-column: auto;
+  }
+  .derivatives-source-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .derivatives-header-status {
+    width: 100%;
+    order: 3;
+  }
+  .derivatives-flow-grid,
+  .derivatives-source-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .derivatives-chart-kpis {
+    gap: 8px;
+  }
+  .derivatives-chart-kpis strong {
+    font-size: 12px;
+  }
+  .derivatives-top-traders-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
