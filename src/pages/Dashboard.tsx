@@ -168,50 +168,29 @@ export function RegimePanel({
   );
 }
 function Metrics({ data }: { data: OverviewData }) {
-  const { performance: p, signals, liquidations: liq } = data;
+  const { signals, liquidations: liq, regime } = data;
+  const breadth = data.breadth_pct;
   return (
     <div className="overview-metrics">
       <Link className="overview-metric" to="/senales">
-        <div className="metric-label">
-          Señales activas
-          <Zap />
-        </div>
-        <div className="metric-main">
-          <span className="metric-value">
-            {signals.length.toString().padStart(2, "0")}
-          </span>
-          <Tag tone="green" dot>
-            En seguimiento
-          </Tag>
-        </div>
-        <div className="metric-note">
-          <span className="small-dot" style={{ color: "var(--amber)" }} />
-          {signals.filter((s) => s.status === "PENDING").length} pendientes{" "}
-          <span className="separator-dot">·</span>{" "}
-          {signals.filter((s) => s.status === "TOUCHED").length} entradas
-          tocadas
-        </div>
+        <div className="metric-label">Señales activas <Zap /></div>
+        <div className="metric-main"><span className="metric-value">{signals.length.toString().padStart(2, "0")}</span><Tag tone="green" dot>En seguimiento</Tag></div>
+        <div className="metric-note"><span className="small-dot" style={{ color: "var(--amber)" }} />{signals.filter((s) => s.status === "PENDING").length} pendientes <span className="separator-dot">·</span> {signals.filter((s) => s.status === "TOUCHED").length} entradas tocadas</div>
+      </Link>
+      <Link className="overview-metric" to="/regimen">
+        <div className="metric-label">Régimen de mercado <Activity /></div>
+        <div className="metric-main"><span className="metric-value metric-value-text">{regime.trend || "Sin lectura"}</span></div>
+        <div className="metric-note">Contexto de mercado · 4H</div>
+      </Link>
+      <Link className="overview-metric" to="/mercado">
+        <div className="metric-label">Amplitud del mercado <ChartNoAxesCombined /></div>
+        <div className="metric-main"><span className="metric-value">{breadth == null ? "—" : `${number(breadth, 1)}%`}</span></div>
+        <div className="metric-note">Participación alcista de los pares medidos</div>
       </Link>
       <Link className="overview-metric" to="/mercado/liquidaciones">
-        <div className="metric-label">
-          Liquidaciones <span>15 min</span>
-        </div>
-        <div className="metric-main">
-          <span className="metric-value">
-            {liq.total > 0 ? `$${number(liq.total / 1e6, 1)}` : "—"}
-            {liq.total > 0 ? <small>M</small> : null}
-          </span>
-          <span className={`metric-note ${liq.pace == null ? "muted" : liq.pace >= 1 ? "negative" : "positive"}`} style={{ marginTop: 0 }}>
-            {liq.pace == null ? "—" : `${number(liq.pace, 1)}x`}
-            {liq.pace != null ? <Flame size={12} /> : null}
-          </span>
-        </div>
-        <div className="metric-note">
-          <span className={liq.total > 0 ? "negative" : "muted"}>
-            {liq.total > 0 ? `${number((liq.long_usdt / liq.total) * 100, 1)}% longs` : "Sin cobertura suficiente"}
-          </span>
-          <span className="separator-dot">·</span> {liq.status === "ok" ? "Ventana recopilada" : "Recopilando historial"}
-        </div>
+        <div className="metric-label">Liquidaciones <span>15 min</span></div>
+        <div className="metric-main"><span className="metric-value">{liq.total > 0 ? compact(liq.total) : "—"}</span><span className="small muted">USDT</span></div>
+        <div className="metric-note">{liq.status === "unavailable" ? "Datos temporalmente no disponibles" : `${liq.pairs.length} pares · ${liq.orders} eventos`}</div>
       </Link>
     </div>
   );
