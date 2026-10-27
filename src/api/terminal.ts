@@ -66,7 +66,7 @@ export interface LiquidationSummary {
   largest_order: { symbol: string; side: "LONG" | "SHORT"; amount_usdt: number; created_at: string } | null;
   reading: string; updated_at: string; status?: string; message?: string | null; coverage_complete?: boolean; connected?: boolean;
 }
-export interface FlowData { symbol: string; windows: { label: "15m" | "1h" | "4h"; buy_pct: number | null; delta: number | null; delta_usdt: number | null; price: number | null; change_pct: number | null }[]; cvd: Candle[]; volume_ratio: number | null; reading: string; updated_at?: string; status?: string }
+export interface FlowData { symbol: string; windows: { label: "15m" | "1h" | "4h"; buy_pct: number | null; delta: number | null; delta_usdt: number | null; price: number | null; change_pct: number | null; volume_ratio: number | null; volume_usdt: number | null }[]; cvd: Candle[]; volume_ratio: number | null; reading: string; updated_at?: string; status?: string }
 export type RadarTrendState = "up" | "down" | "flat" | "range" | "transition" | "volatile" | null;
 export interface RadarTimeframeTrend {
   "15M": RadarTrendState;
@@ -262,6 +262,7 @@ export async function getOrderFlow(symbol = "BTCUSDT"): Promise<FlowData> {
     label: row.label as "15m" | "1h" | "4h", buy_pct: numberOrNull(row.buy_pct),
     delta: numberOrNull(row.delta), delta_usdt: numberOrNull(row.delta_usdt),
     price: numberOrNull(row.price), change_pct: numberOrNull(row.change_pct),
+    volume_ratio: numberOrNull(row.volume_ratio), volume_usdt: numberOrNull(row.volume_usdt),
   }));
   return { symbol: str(raw.symbol) || normalizeSymbol(symbol), windows, cvd: Array.isArray(raw.cvd) ? raw.cvd : [], volume_ratio: numberOrNull(raw.volume_ratio), reading: str(raw.reading), updated_at: str(raw.updated_at), status: str(raw.status) };
 }
