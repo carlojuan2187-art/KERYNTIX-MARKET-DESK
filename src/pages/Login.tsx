@@ -13,7 +13,7 @@ import { loginPhone, verifyCode, verifyTelegramLink, resendCode } from "@/api";
 import { appConfig } from "@/api/config";
 import { useApp } from "@/context/AppContext";
 import { Brand, Countdown } from "@/components/ui";
-import { Sparkline } from "@/components/Charts";
+import { Sparkline } from "@/components/Sparkline";
 
 type Challenge = Awaited<ReturnType<typeof loginPhone>>;
 export default function LoginPage() {

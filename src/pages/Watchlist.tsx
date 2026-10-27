@@ -33,7 +33,7 @@ import {
   SectionHeader,
   Tag,
 } from "@/components/ui";
-import { Sparkline } from "@/components/Charts";
+import { Sparkline } from "@/components/Sparkline";
 import { Score } from "@/components/SignalTable";
 
 type WatchlistDisplayItem = Omit<AssetQuote, "price" | "trend" | "score" | "liquidity_sweep"> & WatchlistMarketItem & {

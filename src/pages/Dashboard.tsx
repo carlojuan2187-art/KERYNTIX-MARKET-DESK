@@ -37,7 +37,8 @@ import {
   SectionHeader,
   Tag,
 } from "@/components/ui";
-import { HistoryChart, MarketChart, Sparkline } from "@/components/Charts";
+import { HistoryChart, MarketChart } from "@/components/Charts";
+import { Sparkline } from "@/components/Sparkline";
 import { SignalTable } from "@/components/SignalTable";
 import { subscribeWs } from "@/api/events";
 
