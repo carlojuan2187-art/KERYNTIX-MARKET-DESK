@@ -530,27 +530,20 @@ export async function getMarketSummary(): Promise<{ liquidations: { symbol: stri
 }
 
 export async function getOverview(): Promise<OverviewData> {
-  // Dashboard cards are independent data sources. One slow analytics endpoint
-  // (e.g. regime/radar) must not prevent prices and the rest of the homepage
-  // from appearing. apiRequest imposes a 9s timeout; settle every source and
-  // keep unavailable metrics explicitly empty rather than blocking the page.
-  const bounded = <T,>(promise: Promise<T>, label: string, timeoutMs = 3500): Promise<T> =>
-    new Promise<T>((resolve, reject) => {
-      const timer = window.setTimeout(() => reject(new Error(`${label}: fuente lenta; se omitió temporalmente`)), timeoutMs);
-      promise.then(
-        (result) => { window.clearTimeout(timer); resolve(result); },
-        (error) => { window.clearTimeout(timer); reject(error); },
-      );
-    });
+  // Keep dashboard sources independent, but do not reject them after an
+  // arbitrary 2.5-4.5s race: that discarded healthy API responses and left
+  // metrics blank while the underlying requests continued in the background.
+  // Each HTTP request has one real 9s AbortController deadline in apiRequest;
+  // allSettled lets successful modules render even when another source fails.
   const results = await Promise.allSettled([
-    bounded(getQuotes(), "Cotizaciones", 4500),
-    bounded(apiRequest<SignalState[]>("/signals?limit=10", { method: "GET" }), "Señales", 3500),
-    bounded(apiRequest<MarketRegime>("/market/regime", { method: "GET" }), "Régimen", 2500),
-    bounded(getPerformance(), "Resultados", 3000),
-    bounded(getLiquidationSummary(), "Liquidaciones", 2500),
-    bounded(getAlerts(), "Avisos", 2500),
-    bounded(getRadarSnapshot(), "Radar", 2500),
-    bounded(getMoversSnapshot(), "Movimientos", 2500),
+    getQuotes(),
+    apiRequest<SignalState[]>("/signals?limit=10", { method: "GET" }),
+    apiRequest<MarketRegime>("/market/regime", { method: "GET" }),
+    getPerformance(),
+    getLiquidationSummary(),
+    getAlerts(),
+    getRadarSnapshot(),
+    getMoversSnapshot(),
   ] as const);
   const value = <T,>(index: number, fallback: T): T => {
     const result = results[index];

@@ -90,16 +90,24 @@ async function rawRequest<T>(
     if (callerSignal.aborted) abortFromCaller();
     else callerSignal.addEventListener("abort", abortFromCaller, { once: true });
   }
-  let response: Response;
   try {
-    response = await fetch(urlFor(path), {
+    const response = await fetch(urlFor(path), {
       ...init,
       signal: controller.signal,
       headers,
-      // Required for the refresh cookie. The cookie is HttpOnly and is not
-      // exposed to this client.
+      // Required for the refresh cookie. The cookie is HttpOnly and is never read here.
       credentials: "include",
     });
+
+    if (!response.ok) throw await parseError(response);
+    if (response.status === 204) return undefined as T;
+    const text = await response.text();
+    if (!text) return undefined as T;
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      throw new ApiError(response.status, {}, "El servidor devolvió una respuesta no válida.");
+    }
   } catch (error) {
     if (controller.signal.aborted && !callerSignal?.aborted) {
       throw new Error("El servidor tardó demasiado en responder (9 s). Comprueba el backend o vuelve a intentarlo.");
@@ -108,16 +116,6 @@ async function rawRequest<T>(
   } finally {
     window.clearTimeout(timeoutId);
     callerSignal?.removeEventListener("abort", abortFromCaller);
-  }
-
-  if (!response.ok) throw await parseError(response);
-  if (response.status === 204) return undefined as T;
-  const text = await response.text();
-  if (!text) return undefined as T;
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    throw new ApiError(response.status, {}, "El servidor devolvió una respuesta no válida.");
   }
 }
 
