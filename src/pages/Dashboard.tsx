@@ -192,44 +192,6 @@ function Metrics({ data }: { data: OverviewData }) {
           tocadas
         </div>
       </Link>
-      <Link className="overview-metric" to="/resultados">
-        <div className="metric-label">
-          Win rate <span>30 días</span>
-        </div>
-        <div className="metric-main">
-          <span className="metric-value">
-            {p.operations ? number(p.win_rate, 1) : "—"}
-            {p.operations ? <small>%</small> : null}
-          </span>
-          <Sparkline values={p.curve.map((v) => v.r)} width={68} height={25} />
-        </div>
-        <div className="metric-note">
-          <span className="positive">{p.wins} ganadas</span> de {p.operations}{" "}
-          operaciones cerradas
-        </div>
-      </Link>
-      <Link className="overview-metric" to="/resultados">
-        <div className="metric-label">
-          Rendimiento acumulado
-          <ChartNoAxesCombined />
-        </div>
-        <div className="metric-main">
-          <span className={`metric-value ${p.operations && p.total_r < 0 ? "negative" : "positive"}`}>
-            {p.operations ? `${p.total_r > 0 ? "+" : ""}${number(p.total_r)}` : "—"}
-            {p.operations ? <small>R</small> : null}
-          </span>
-          <Sparkline
-            values={p.curve.map((v) => v.r)}
-            width={68}
-            height={25}
-            fill
-          />
-        </div>
-        <div className="metric-note">
-          R medio <span className={p.operations && p.average_r < 0 ? "negative" : "positive"}>{p.operations ? `${p.average_r > 0 ? "+" : ""}${number(p.average_r)}R` : "—"}</span>
-          <span className="separator-dot">·</span> Últimos 30 días
-        </div>
-      </Link>
       <Link className="overview-metric" to="/mercado/liquidaciones">
         <div className="metric-label">
           Liquidaciones <span>15 min</span>
