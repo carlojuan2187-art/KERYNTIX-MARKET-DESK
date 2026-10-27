@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Clock3 } from "lucide-react";
 import { getRegime } from "@/api";
+import type { MarketRegime, MarketRegimeTimeframe, MarketRegimeTimeframeAnalysis } from "@/api/types";
 import { useApi } from "@/hooks/useApi";
 import { compact, dateTime, number, percent } from "@/utils/format";
 import {
@@ -14,8 +15,39 @@ import {
 import { MarketChart } from "@/components/Charts";
 import { RegimePanel } from "./Dashboard";
 
+const REGIME_TIMEFRAMES: { value: MarketRegimeTimeframe; label: string; longLabel: string }[] = [
+  { value: "4h", label: "4H", longLabel: "4 horas" },
+  { value: "1h", label: "1H", longLabel: "1 hora" },
+  { value: "15m", label: "15M", longLabel: "15 minutos" },
+];
+
+function timeframeTrend(analysis: MarketRegimeTimeframeAnalysis): MarketRegime["trend"] {
+  if (analysis.regime === "UP") return "TENDENCIA ALCISTA";
+  if (analysis.regime === "DOWN") return "TENDENCIA BAJISTA";
+  if (analysis.regime === "RANGE" && (analysis.vol_percentile ?? 0) >= 90) {
+    return "ALTA VOLATILIDAD";
+  }
+  if (analysis.regime === "RANGE") return "RANGO";
+  if (analysis.regime === "VOLATILE") return "ALTA VOLATILIDAD";
+  return "TRANSICIÓN";
+}
+
 export default function RegimenPage() {
+  const [timeframe, setTimeframe] = useState<MarketRegimeTimeframe>("4h");
   const { data, loading, error, refresh } = useApi(getRegime);
+  const selectedAnalysis = data?.timeframes?.[timeframe];
+  const displayRegime: MarketRegime | null = data && selectedAnalysis
+    ? {
+        ...data,
+        trend: timeframeTrend(selectedAnalysis),
+        adx: selectedAnalysis.adx,
+        atr_pct: selectedAnalysis.atr_pct,
+        bollinger_state: selectedAnalysis.bandwidth_trend ?? undefined,
+        volume_relative: selectedAnalysis.rel_volume,
+      }
+    : null;
+  const selectedTimeframeLabel = REGIME_TIMEFRAMES.find((item) => item.value === timeframe)?.longLabel ?? "4 horas";
+
   useEffect(() => {
     const timer = setInterval(() => void refresh(), 300000);
     return () => clearInterval(timer);
@@ -25,12 +57,34 @@ export default function RegimenPage() {
       <PageHeader
         eyebrow="ADAPTA TU ESTRATEGIA AL CONTEXTO"
         title="No todos los mercados se operan igual."
-        description="El régimen de BTC ayuda a entender qué tipo de entorno tienes delante."
+        description="Selecciona 4H, 1H o 15M para consultar el régimen de BTC y los indicadores de esa temporalidad."
       >
         <RefreshButton loading={loading} onClick={refresh} />
       </PageHeader>
+      <div className="regime-timeframe-picker">
+        <span>Temporalidad del régimen</span>
+        <div className="timeframes" role="group" aria-label="Temporalidad del régimen de mercado">
+          {REGIME_TIMEFRAMES.map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              className={timeframe === item.value ? "active" : ""}
+              aria-pressed={timeframe === item.value}
+              title={`Ver régimen de ${item.longLabel}`}
+              onClick={() => setTimeframe(item.value)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
       <ResourceState loading={loading} error={error} retry={refresh} />
-      {data && !loading && !error && (
+      {data && !loading && !error && !displayRegime && (
+        <p className="slim-note" role="status">
+          No hay datos suficientes para calcular el régimen de {selectedTimeframeLabel}. Prueba otra temporalidad o actualiza los datos.
+        </p>
+      )}
+      {displayRegime && !loading && !error && (
         <>
           <div className="regime-classifications">
             {[
@@ -41,7 +95,7 @@ export default function RegimenPage() {
               "ALTA VOLATILIDAD",
             ].map((trend) => (
               <span
-                className={data.trend === trend ? "active" : ""}
+                className={displayRegime.trend === trend ? "active" : ""}
                 key={trend}
               >
                 {trend}
@@ -51,35 +105,36 @@ export default function RegimenPage() {
           <div className="dashboard-main-grid">
             <MarketChart />
             <RegimePanel
-              regime={data}
-              breadth={data.market_breadth == null ? null : Math.round(data.market_breadth * 100)}
+              regime={displayRegime}
+              timeframeLabel={timeframe.toUpperCase()}
+              breadth={displayRegime.market_breadth == null ? null : Math.round(displayRegime.market_breadth * 100)}
             />
           </div>
           <section className="panel panel-pad">
             <SectionHeader
-              title="Las piezas del contexto"
-              subtitle="No se trata de un indicador aislado, sino de la confluencia entre ellos."
+              title={`Las piezas del contexto · ${timeframe.toUpperCase()}`}
+              subtitle={`Indicadores calculados sobre velas de ${selectedTimeframeLabel}. El contexto de amplitud y derivados es global.`}
             />
             <div className="regime-factors">
               {[
                 {
                   label: "Fuerza de tendencia",
-                  title: `ADX ${number(data.adx, 1)}`,
+                  title: `ADX ${number(displayRegime.adx, 1)}`,
                   text: "Por encima de 25: tendencia con fuerza. No indica por sí solo la dirección.",
                 },
                 {
                   label: "Volatilidad",
-                  title: `ATR ${number(data.atr_pct)}%`,
+                  title: `ATR ${number(displayRegime.atr_pct)}%`,
                   text: "Rango relativo del precio. Ajusta la distancia del stop al movimiento del mercado.",
                 },
                 {
                   label: "Bandas de Bollinger",
-                  title: data.bollinger_state || "Sin datos",
+                  title: displayRegime.bollinger_state || "Sin datos",
                   text: "El precio se mantiene sobre la media. La expansión acompaña el impulso.",
                 },
                 {
                   label: "Participación",
-                  title: `${number(data.volume_relative, 2)}x volumen`,
+                  title: `${number(displayRegime.volume_relative, 2)}x volumen`,
                   text: "El volumen supera su media: el movimiento tiene participación, no solo precio.",
                 },
               ].map((factor) => (
@@ -94,21 +149,21 @@ export default function RegimenPage() {
               <span>
                 Amplitud{" "}
                 <strong className="positive">
-                  {data.market_breadth == null ? "—" : `${Math.round(data.market_breadth * 100)}% al alza`}
+                  {displayRegime.market_breadth == null ? "—" : `${Math.round(displayRegime.market_breadth * 100)}% al alza`}
                 </strong>
               </span>
               <span>
                 Funding{" "}
                 <strong className="mono">
-                  {data.funding_rate == null ? "—" : percent(data.funding_rate * 100, 4)}
+                  {displayRegime.funding_rate == null ? "—" : percent(displayRegime.funding_rate * 100, 4)}
                 </strong>
               </span>
               <span>
                 Interés abierto{" "}
-                <strong className="mono">${data.oi_value == null ? "—" : compact(data.oi_value)}</strong>
+                <strong className="mono">${displayRegime.oi_value == null ? "—" : compact(displayRegime.oi_value)}</strong>
               </span>
               <span>
-                Sesión <strong>{data.session_now || "—"}</strong>
+                Sesión <strong>{displayRegime.session_now || "—"}</strong>
               </span>
             </div>
             <Reading title="Cómo llevarlo a tu operativa">
@@ -125,7 +180,7 @@ export default function RegimenPage() {
           <p className="slim-note">
             <Clock3 size={12} />
             Refresco automático cada 5 minutos. Última lectura:{" "}
-            {dateTime(data.updated_at)}.
+            {dateTime(displayRegime.updated_at)}.
           </p>
         </>
       )}

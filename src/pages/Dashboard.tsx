@@ -44,9 +44,11 @@ import { subscribeWs } from "@/api/events";
 export function RegimePanel({
   regime,
   breadth: overrideBreadth,
+  timeframeLabel = "4H",
 }: {
   regime: MarketRegime;
   breadth?: number | null;
+  timeframeLabel?: string;
 }) {
   const context = regimeContext(regime);
   const breadth = overrideBreadth ?? (regime.market_breadth == null ? null : Math.round(regime.market_breadth * 100));
@@ -66,7 +68,7 @@ export function RegimePanel({
         )}
         <div>
           <strong>{context.label}</strong>
-          <small>BTC/USDT · Contexto 4H</small>
+          <small>BTC/USDT · Contexto {timeframeLabel}</small>
         </div>
       </div>
       <div className="regime-gauge">
