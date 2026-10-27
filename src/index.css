@@ -202,17 +202,60 @@ p {
   border-right: 1px solid var(--border);
 }
 .sidebar-brand {
-  height: 83px;
+  height: 104px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   padding: 0 25px;
+  min-width: 0;
+  overflow: hidden;
+}
+/* Keep the full wordmark strictly inside the sidebar. On mobile the sidebar
+   slides off-canvas; clipping prevents the wide logo image from covering the
+   dashboard while the menu is closed. */
+.sidebar-brand > a {
+  display: flex;
+  flex: 0 1 174px;
+  width: 174px;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+.sidebar-brand .brand {
+  width: 100%;
+  max-width: 174px;
+  min-width: 0;
+  overflow: hidden;
+}
+.sidebar-brand .brand-image {
+  width: 100%;
+  max-width: 174px;
+  height: 80px;
+  max-height: 80px;
+  object-fit: contain;
+  object-position: left center;
+  flex: 0 1 auto;
 }
 .brand {
   display: inline-flex;
   align-items: center;
   gap: 10px;
   color: var(--accent);
+  min-width: 0;
+}
+.brand .brand-image {
+  display: block;
+  width: 174px;
+  height: 100px;
+  object-fit: contain;
+  object-position: left center;
+  border-radius: 4px;
+}
+.brand.brand-compact .brand-image {
+  width: 30px;
+  height: 30px;
+  object-fit: cover;
+  border-radius: 7px;
 }
 .brand svg {
   width: 31px;
@@ -4988,9 +5031,9 @@ option {
     align-items: center;
     flex-shrink: 0;
   }
-  .mobile-brand .brand svg {
-    width: 23px;
-    height: 23px;
+  .mobile-brand .brand .brand-image {
+    width: 30px;
+    height: 30px;
   }
 }
 @media (max-width: 620px) {
