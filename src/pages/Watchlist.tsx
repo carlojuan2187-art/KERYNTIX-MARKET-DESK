@@ -14,11 +14,14 @@ import {
 } from "lucide-react";
 import {
   addWatchlistItem,
+  getDerivatives,
+  getOrderFlow,
   getSignals,
   getWatchlist,
   removeWatchlistItem,
 } from "@/api";
-import { type AssetQuote, type WatchlistMarketItem, type WatchlistTimeframeAnalysis, type WatchlistTrendState } from "@/api/terminal";
+import { type AssetQuote, type FlowData, type WatchlistMarketItem, type WatchlistTimeframeAnalysis, type WatchlistTrendState } from "@/api/terminal";
+import type { DerivativesData } from "@/api/types";
 import { useApi } from "@/hooks/useApi";
 import { useApp } from "@/context/AppContext";
 import { ago, compact, number, percent, price } from "@/utils/format";
@@ -109,7 +112,38 @@ export default function WatchlistPage() {
   const [selected, setSelected] = useState<WatchlistDisplayItem | null>(null);
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState("");
+  const [detailDerivatives, setDetailDerivatives] = useState<DerivativesData | null>(null);
+  const [detailFlow, setDetailFlow] = useState<FlowData | null>(null);
+  const [detailAnalyticsLoading, setDetailAnalyticsLoading] = useState(false);
+  const [detailAnalyticsUnavailable, setDetailAnalyticsUnavailable] = useState(false);
   const closeDetail = useCallback(() => setSelected(null), []);
+
+  // Load high-cost per-symbol derivatives and flow only when the user opens a pair.
+  // The backend already caches both endpoints, so this avoids burdening every watchlist refresh.
+  useEffect(() => {
+    const symbol = selected?.symbol;
+    if (!symbol) {
+      setDetailDerivatives(null);
+      setDetailFlow(null);
+      setDetailAnalyticsLoading(false);
+      setDetailAnalyticsUnavailable(false);
+      return;
+    }
+    let cancelled = false;
+    setDetailDerivatives(null);
+    setDetailFlow(null);
+    setDetailAnalyticsUnavailable(false);
+    setDetailAnalyticsLoading(true);
+    void Promise.allSettled([getDerivatives(symbol), getOrderFlow(symbol)]).then(([derivatives, flow]) => {
+      if (cancelled) return;
+      setDetailDerivatives(derivatives.status === "fulfilled" ? derivatives.value : null);
+      setDetailFlow(flow.status === "fulfilled" ? flow.value : null);
+      setDetailAnalyticsUnavailable(derivatives.status === "rejected" && flow.status === "rejected");
+    }).finally(() => {
+      if (!cancelled) setDetailAnalyticsLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [selected?.symbol]);
   useEffect(() => {
     const timer = window.setInterval(() => void refresh(), 30000);
     return () => window.clearInterval(timer);
@@ -166,6 +200,30 @@ export default function WatchlistPage() {
     id: selectedScannerSignal.id ?? "", direction: selectedScannerSignal.direction, status: selectedScannerSignal.status,
     score: selectedScannerSignal.score ?? null, entry_price: selectedScannerSignal.entry_price ?? selectedScannerSignal.entry_low ?? null, created_at: selectedScannerSignal.created_at ?? null,
   } : null);
+  const flow15m = detailFlow?.windows.find((row) => row.label === "15m");
+  const selectedFundingRate = detailDerivatives?.funding_rate ?? selected?.funding_rate ?? null;
+  const nextFundingTime = detailDerivatives?.funding_next && Number.isFinite(Date.parse(detailDerivatives.funding_next))
+    ? new Date(detailDerivatives.funding_next).toLocaleTimeString("es-PR", { hour: "2-digit", minute: "2-digit" })
+    : null;
+  const rangePosition = selected && selected.price != null && selected.high_24h != null && selected.low_24h != null && selected.high_24h > selected.low_24h
+    ? Math.max(0, Math.min(100, ((selected.price - selected.low_24h) / (selected.high_24h - selected.low_24h)) * 100))
+    : null;
+  const summaryMetrics = selected ? [
+    { label: "Volumen 24H", display: selected.volume_24h == null ? null : `$${compact(selected.volume_24h)}`, tone: "muted" },
+    { label: "Interés abierto", display: detailAnalyticsLoading ? "Cargando…" : detailDerivatives?.open_interest == null ? null : `$${compact(detailDerivatives.open_interest)}`, tone: "muted" },
+    { label: "Funding rate", display: selectedFundingRate == null ? null : percent(selectedFundingRate * 100, 4), tone: selectedFundingRate == null ? "muted" : selectedFundingRate > 0 ? "negative" : selectedFundingRate < 0 ? "positive" : "muted" },
+    { label: "Compra agresiva 15M", display: detailAnalyticsLoading ? "Cargando…" : flow15m?.buy_pct == null ? null : `${number(flow15m.buy_pct, 1)}%`, tone: flow15m?.buy_pct == null ? "muted" : flow15m.buy_pct >= 50 ? "positive" : "negative" },
+    { label: "Volumen relativo 1H", display: selected.volume_ratio == null ? null : `${number(selected.volume_ratio, 2)}x`, tone: "muted" },
+    { label: "Máximo / mínimo 24H", display: selected.high_24h == null || selected.low_24h == null ? null : `${price(selected.high_24h)} / ${price(selected.low_24h)}`, tone: "muted" },
+  ].filter((metric) => metric.display != null) : [];
+  const derivativeMetrics = detailDerivatives ? [
+    { label: "Cambio OI 1H", display: detailDerivatives.oi_change_1h == null ? null : percent(detailDerivatives.oi_change_1h), tone: detailDerivatives.oi_change_1h == null ? "muted" : detailDerivatives.oi_change_1h >= 0 ? "positive" : "negative" },
+    { label: "Cambio OI 24H", display: detailDerivatives.oi_change_24h == null ? null : percent(detailDerivatives.oi_change_24h), tone: detailDerivatives.oi_change_24h == null ? "muted" : detailDerivatives.oi_change_24h >= 0 ? "positive" : "negative" },
+    { label: "Cuentas long / short", display: detailDerivatives.long_short_ratio?.percent_long == null || detailDerivatives.long_short_ratio?.percent_short == null ? null : `${number(detailDerivatives.long_short_ratio.percent_long, 1)}% / ${number(detailDerivatives.long_short_ratio.percent_short, 1)}%`, tone: "muted" },
+    { label: "Top traders long / short", display: detailDerivatives.top_trader_ratio?.long == null || detailDerivatives.top_trader_ratio?.short == null ? null : `${number(detailDerivatives.top_trader_ratio.long, 1)}% / ${number(detailDerivatives.top_trader_ratio.short, 1)}%`, tone: "muted" },
+    { label: "Prima mark / índice", display: detailDerivatives.mark_index_delta == null ? null : percent(detailDerivatives.mark_index_delta, 3), tone: detailDerivatives.mark_index_delta == null ? "muted" : detailDerivatives.mark_index_delta > 0 ? "negative" : detailDerivatives.mark_index_delta < 0 ? "positive" : "muted" },
+    { label: "Próximo funding", display: nextFundingTime, tone: "muted" },
+  ].filter((metric) => metric.display != null) : [];
   return (
     <div>
       <PageHeader
@@ -374,14 +432,45 @@ export default function WatchlistPage() {
             height={85}
             fill
           />
-          <div className="watchlist-detail-grid">
-            <div className="watchlist-detail-metric"><small>Volumen 24h</small><strong>${compact(selected.volume_24h)}</strong></div>
-            <div className="watchlist-detail-metric"><small>Interés abierto</small><strong>{selected.open_interest == null ? "—" : `$${compact(selected.open_interest)}`}</strong></div>
-            <div className="watchlist-detail-metric"><small>Funding rate</small><strong className={selected.funding_rate == null ? "muted" : selected.funding_rate > 0 ? "negative" : selected.funding_rate < 0 ? "positive" : "muted"}>{selected.funding_rate == null ? "—" : percent(selected.funding_rate * 100, 4)}</strong></div>
-            <div className="watchlist-detail-metric"><small>Compra agresiva</small><strong>{selected.buy_pct == null ? "—" : `${number(selected.buy_pct, 1)}%`}</strong></div>
-            <div className="watchlist-detail-metric"><small>Volumen relativo 1H</small><strong>{selected.volume_ratio == null ? "—" : `${number(selected.volume_ratio, 2)}x`}</strong></div>
-            <div className="watchlist-detail-metric"><small>Máximo / mínimo 24h</small><strong>{price(selected.high_24h)} / {price(selected.low_24h)}</strong></div>
-          </div>
+          {summaryMetrics.length > 0 && <div className="watchlist-detail-grid">
+            {summaryMetrics.map((metric) => <div className="watchlist-detail-metric" key={metric.label}><small>{metric.label}</small><strong className={metric.tone}>{metric.display}</strong></div>)}
+          </div>}
+          {rangePosition != null && (
+            <section className="watchlist-range-section">
+              <div className="watchlist-detail-section-head"><div><h3>Posición dentro del rango de 24H</h3><p>Ubicación del último precio entre el mínimo y el máximo del día; no es una señal por sí sola.</p></div><strong>{number(rangePosition, 0)}%</strong></div>
+              <div className="watchlist-range-track" role="img" aria-label={`Precio al ${number(rangePosition, 0)} por ciento del rango de 24 horas`}><span style={{ left: `${rangePosition}%` }} /></div>
+              <div className="watchlist-range-labels"><span>Mín. {price(selected.low_24h)}</span><span>Máx. {price(selected.high_24h)}</span></div>
+            </section>
+          )}
+          <section className="watchlist-timeframe-section">
+            <div className="watchlist-detail-section-head"><div><h3>Derivados y posicionamiento</h3><p>Interés abierto, cambios de exposición y sesgo de participantes en futuros.</p></div></div>
+            {detailAnalyticsLoading ? <p className="slim-note">Consultando métricas reales de Binance Futures…</p> : derivativeMetrics.length ? (
+              <div className="watchlist-derivatives-grid">
+                {derivativeMetrics.map((metric) => <div className="watchlist-detail-metric" key={metric.label}><small>{metric.label}</small><strong className={metric.tone}>{metric.display}</strong></div>)}
+              </div>
+            ) : <p className="slim-note">{detailAnalyticsUnavailable ? "Binance no proporcionó métricas de derivados para este par en esta consulta." : "No hay métricas de derivados disponibles para este par."}</p>}
+            {detailDerivatives?.reading && <p className="watchlist-analytics-reading">{detailDerivatives.reading}</p>}
+            {detailDerivatives?.updated_at && <p className="watchlist-data-stamp">Derivados actualizados {ago(detailDerivatives.updated_at)}</p>}
+          </section>
+          <section className="watchlist-timeframe-section">
+            <div className="watchlist-detail-section-head"><div><h3>Flujo comprador y vendedor</h3><p>Agresión compradora, delta y volumen relativo calculados a partir de velas recientes.</p></div></div>
+            {detailAnalyticsLoading ? <p className="slim-note">Calculando flujo por temporalidad…</p> : detailFlow?.windows.some((row) => row.buy_pct != null || row.delta_usdt != null || row.volume_ratio != null) ? (
+              <div className="watchlist-flow-grid">
+                {(["15m", "1h", "4h"] as const).map((label) => {
+                  const row = detailFlow?.windows.find((window) => window.label === label);
+                  if (!row || (row.buy_pct == null && row.delta_usdt == null && row.volume_ratio == null)) return null;
+                  return <article className="watchlist-flow-card" key={label}>
+                    <strong>{label.toUpperCase()}</strong>
+                    {row.buy_pct != null && <div><span>Agresión compradora</span><b className={row.buy_pct >= 50 ? "positive" : "negative"}>{number(row.buy_pct, 1)}%</b></div>}
+                    {row.delta_usdt != null && <div><span>Delta neto</span><b className={row.delta_usdt >= 0 ? "positive" : "negative"}>{row.delta_usdt >= 0 ? "+" : "−"}${compact(Math.abs(row.delta_usdt))}</b></div>}
+                    {row.volume_ratio != null && <div><span>Volumen vs. normal</span><b>{number(row.volume_ratio, 2)}x</b></div>}
+                  </article>;
+                })}
+              </div>
+            ) : <p className="slim-note">No hay suficientes velas recientes para calcular el flujo de este par.</p>}
+            {detailFlow?.reading && <p className="watchlist-analytics-reading">{detailFlow.reading}</p>}
+            {detailFlow?.updated_at && <p className="watchlist-data-stamp">Flujo actualizado {ago(detailFlow.updated_at)}</p>}
+          </section>
           <section className="watchlist-timeframe-section">
             <div className="watchlist-detail-section-head"><div><h3>Análisis por temporalidad</h3><p>Indicadores calculados con velas cerradas de Binance Futures.</p></div></div>
             <div className="watchlist-analysis-grid">
