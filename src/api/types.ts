@@ -165,22 +165,118 @@ export interface AlertItem {
   created_at: string;
 }
 
+export interface DerivativesSourceMeta {
+  status: "available" | "partial" | "stale" | "unavailable" | "api_key_missing" | string;
+  updated_at?: string | null;
+  age_seconds?: number | null;
+  points?: number | null;
+  coverage_hours?: number | null;
+  source?: string | null;
+}
+
+export interface DerivativesHistoryPoint {
+  timestamp: number;
+  time: string | null;
+  value_usdt?: number | null;
+  open_interest?: number | null;
+  funding_rate?: number | null;
+  funding_rate_pct?: number | null;
+  basis_rate_pct?: number | null;
+  annualized_basis_pct?: number | null;
+  basis_usdt?: number | null;
+  futures_price?: number | null;
+  index_price?: number | null;
+  mark_price?: number | null;
+  ratio?: number | null;
+  percent_long?: number | null;
+  percent_short?: number | null;
+  percentages_derived?: boolean;
+}
+
 export interface DerivativesData {
   symbol: string;
   funding_rate: number | null;
   funding_next: string | null;
+  funding_updated_at?: string | null;
+  funding_history?: DerivativesHistoryPoint[];
+  basis_history?: DerivativesHistoryPoint[];
+  basis_rate_pct?: number | null;
+  annualized_basis_pct?: number | null;
+  basis_observed_at?: string | null;
+  basis_coverage_hours?: number | null;
+  funding_interval_hours?: number | null;
+  funding_annualized_pct?: number | null;
+  mark_price?: number | null;
+  index_price?: number | null;
+  basis_usdt?: number | null;
   mark_index_delta: number | null;
+  price_change_24h_pct?: number | null;
   open_interest: number | null;
+  open_interest_contracts?: number | null;
+  open_interest_updated_at?: string | null;
   oi_change_1h: number | null;
   oi_change_24h: number | null;
+  oi_history?: DerivativesHistoryPoint[];
+  oi_history_latest_at?: string | null;
+  oi_history_coverage_hours?: number | null;
   long_short_ratio: {
+    ratio?: number | null;
     percent_long: number | null;
     percent_short: number | null;
+    ratio_24h_ago?: number | null;
+    percent_long_24h_ago?: number | null;
+    percent_short_24h_ago?: number | null;
     value_24h_ago?: number | null;
+    history?: DerivativesHistoryPoint[];
+    updated_at?: string | null;
+    coverage_hours?: number | null;
   };
-  top_trader_ratio: { long: number | null; short: number | null };
+  top_trader_accounts?: {
+    ratio?: number | null;
+    long: number | null;
+    short: number | null;
+    percentages_derived?: boolean;
+    history?: DerivativesHistoryPoint[];
+    updated_at?: string | null;
+  };
+  top_trader_positions?: {
+    ratio?: number | null;
+    long: number | null;
+    short: number | null;
+    percentages_derived?: boolean;
+    history?: DerivativesHistoryPoint[];
+    updated_at?: string | null;
+  };
+  top_trader_ratio: { long: number | null; short: number | null; ratio?: number | null };
+  taker_flow?: {
+    windows: {
+      label: "15m" | "1h" | "4h" | string;
+      minutes: number;
+      buy_volume: number | null;
+      sell_volume: number | null;
+      delta_volume: number | null;
+      buy_sell_ratio: number | null;
+      buy_pct: number | null;
+      sell_pct: number | null;
+      points: number;
+      required_points: number;
+      coverage_minutes: number;
+      updated_at: string | null;
+      age_seconds: number | null;
+      status: "available" | "partial" | "unavailable" | string;
+    }[];
+    history?: DerivativesHistoryPoint[];
+  };
+  market_reading?: {
+    bias: "comprador" | "vendedor" | "mixto" | "insuficiente" | string;
+    summary: string;
+    factors: string[];
+    factor_count: number;
+  };
+  sources?: Record<string, DerivativesSourceMeta>;
   reading?: string;
   updated_at?: string;
+  raw?: Record<string, unknown>;
 }
 
 export interface CalendarEventItem {
