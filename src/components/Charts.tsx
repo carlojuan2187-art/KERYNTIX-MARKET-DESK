@@ -205,7 +205,7 @@ function Candles({ data, livePrice, timeframe, view, indicators, tradeLevels }: 
   const container = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(700);
   const [height, setHeight] = useState(320);
-  const [visibleCount, setVisibleCount] = useState(60);
+  const [visibleCount, setVisibleCount] = useState<number | null>(null);
   const [requestedStart, setRequestedStart] = useState<number | null>(null);
   const [verticalZoom, setVerticalZoom] = useState(1);
   const [verticalPan, setVerticalPan] = useState(0);
@@ -221,7 +221,9 @@ function Candles({ data, livePrice, timeframe, view, indicators, tradeLevels }: 
   }, []);
 
   if (!data.length) return null;
-  const count = clamp(visibleCount, Math.min(12, data.length), data.length);
+  // Auto zoom: aim for ~7px per candle so bodies stay readable on narrow phone screens.
+  const autoCount = clamp(Math.round((width - 94 - 18) / 7), 24, 60);
+  const count = clamp(visibleCount ?? autoCount, Math.min(12, data.length), data.length);
   const maxStart = Math.max(0, data.length - count);
   const viewStart = requestedStart == null ? maxStart : clamp(requestedStart, 0, maxStart);
   const visibleData = data.slice(viewStart, viewStart + count);
@@ -266,7 +268,7 @@ function Candles({ data, livePrice, timeframe, view, indicators, tradeLevels }: 
   const volumeHeight = Math.max(12, volumeBottom - volumeTop);
   const y = (value: number) => plotTop + (1 - (value - min) / (max - min || 1)) * (plotBottom - plotTop);
   const step = (chartWidth - 18) / visibleData.length;
-  const xFor = (index: number) => 9 + step * index + step * 0.275;
+  const xFor = (index: number) => 9 + step * index + step * 0.35;
   const volumeMax = Math.max(1, ...visibleData.map((item) => item.volume));
   const hoverIndex = hover == null ? visibleData.length - 1 : clamp(hover, 0, visibleData.length - 1);
   const selected = visibleData[hoverIndex];
@@ -278,7 +280,7 @@ function Candles({ data, livePrice, timeframe, view, indicators, tradeLevels }: 
   const linePoints = visibleData.map((item, index) => `${xFor(index)},${y(item.close)}`).join(" ");
   const activeCandle = latest.timestamp === activeStart;
   const resetView = () => {
-    setVisibleCount(Math.min(60, data.length));
+    setVisibleCount(null);
     setRequestedStart(null);
     setVerticalZoom(1);
     setVerticalPan(0);
@@ -407,8 +409,8 @@ function Candles({ data, livePrice, timeframe, view, indicators, tradeLevels }: 
       onKeyDown={(event) => {
         if (event.key === "ArrowLeft") { event.preventDefault(); setRequestedStart(clamp(viewStart - 3, 0, maxStart)); }
         if (event.key === "ArrowRight") { event.preventDefault(); setRequestedStart(clamp(viewStart + 3, 0, maxStart)); }
-        if (event.key === "+" || event.key === "=") { event.preventDefault(); setVisibleCount((n) => Math.max(Math.min(12, data.length), Math.round(n * 0.85))); }
-        if (event.key === "-") { event.preventDefault(); setVisibleCount((n) => Math.min(data.length, Math.round(n * 1.18))); }
+        if (event.key === "+" || event.key === "=") { event.preventDefault(); setVisibleCount(Math.max(Math.min(12, data.length), Math.round(count * 0.85))); }
+        if (event.key === "-") { event.preventDefault(); setVisibleCount(Math.min(data.length, Math.round(count * 1.18))); }
         if (event.key === "Home") { event.preventDefault(); resetView(); }
       }}
       onPointerDown={beginChartPointer}
@@ -420,12 +422,12 @@ function Candles({ data, livePrice, timeframe, view, indicators, tradeLevels }: 
       {[0, 1, 2, 3, 4].map((tick) => { const value = min + (max - min) * tick / 4; return <g key={tick}><line x1="0" x2={chartWidth} y1={y(value)} y2={y(value)} className="chart-grid" /><text x={chartWidth + 13} y={y(value) + 3} className="chart-axis">{price(value)}</text></g>; })}
       {ticks.map((index) => <g key={index}><line x1={xFor(index)} x2={xFor(index)} y1="8" y2={height - 22} className="chart-grid chart-grid-vertical" /><text x={xFor(index)} y={height - 4} textAnchor={index === 0 ? "start" : index === visibleData.length - 1 ? "end" : "middle"} className="chart-axis">{timeframe === "1D" ? visibleData[index]?.time.slice(5, 10) : visibleData[index]?.time.slice(-5)}</text></g>)}
       <text x={chartWidth * 0.27} y={(plotTop + plotBottom) / 2} className="chart-watermark" style={{ fontSize: width < 450 ? 25 : 41 }}>FTRADE</text>
-      {indicators.volume && visibleData.map((candle, index) => { const barHeight = candle.volume / volumeMax * Math.min(30, volumeHeight); const x = 9 + step * index; return <rect key={`vol-${candle.timestamp}`} x={x} y={volumeBottom - barHeight} width={Math.max(0.45, step * 0.55)} height={barHeight} fill={candle.close >= candle.open ? "var(--green)" : "var(--red)"} opacity=".34" rx=".5" />; })}
-      {view === "candles" ? visibleData.map((candle, index) => { const x = 9 + step * index, up = candle.close >= candle.open; return <g key={candle.timestamp} className={up ? "candle-up" : "candle-down"}><line x1={x + step * 0.275} x2={x + step * 0.275} y1={y(candle.high)} y2={y(candle.low)} stroke="currentColor" strokeWidth="1" /><rect x={x} y={Math.min(y(candle.open), y(candle.close))} width={Math.max(0.45, step * 0.55)} height={Math.max(1.2, Math.abs(y(candle.open) - y(candle.close)))} fill="currentColor" rx=".7" /></g>; }) : <polyline points={linePoints} fill="none" stroke="var(--accent)" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round" />}
-      {indicators.ema9 && path("ema9").map((points, i) => <polyline key={`ema9-${i}`} points={points} fill="none" stroke="var(--accent)" strokeWidth="1.25" />)}
-      {indicators.ema21 && path("ema21").map((points, i) => <polyline key={`ema21-${i}`} points={points} fill="none" stroke="var(--blue)" strokeWidth="1.25" />)}
-      {indicators.ema50 && path("ema50").map((points, i) => <polyline key={`ema50-${i}`} points={points} fill="none" stroke="var(--amber)" strokeWidth="1.25" />)}
-      {indicators.ema200 && path("ema200").map((points, i) => <polyline key={`ema200-${i}`} points={points} fill="none" stroke="var(--red)" strokeWidth="1.4" />)}
+      {indicators.volume && visibleData.map((candle, index) => { const barHeight = candle.volume / volumeMax * Math.min(30, volumeHeight); const x = 9 + step * index; return <rect key={`vol-${candle.timestamp}`} x={x} y={volumeBottom - barHeight} width={Math.max(0.45, step * 0.7)} height={barHeight} fill={candle.close >= candle.open ? "var(--green)" : "var(--red)"} opacity=".34" rx=".5" />; })}
+      {view === "candles" ? visibleData.map((candle, index) => { const x = 9 + step * index, up = candle.close >= candle.open; return <g key={candle.timestamp} className={up ? "candle-up" : "candle-down"}><line x1={x + step * 0.35} x2={x + step * 0.35} y1={y(candle.high)} y2={y(candle.low)} stroke="currentColor" strokeWidth="1" /><rect x={x} y={Math.min(y(candle.open), y(candle.close))} width={Math.max(0.6, step * 0.7)} height={Math.max(1.2, Math.abs(y(candle.open) - y(candle.close)))} fill="currentColor" rx=".7" /></g>; }) : <polyline points={linePoints} fill="none" stroke="var(--accent)" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round" />}
+      {indicators.ema9 && path("ema9").map((points, i) => <polyline key={`ema9-${i}`} points={points} fill="none" stroke="var(--accent)" strokeWidth="1.6" />)}
+      {indicators.ema21 && path("ema21").map((points, i) => <polyline key={`ema21-${i}`} points={points} fill="none" stroke="var(--blue)" strokeWidth="1.6" />)}
+      {indicators.ema50 && path("ema50").map((points, i) => <polyline key={`ema50-${i}`} points={points} fill="none" stroke="var(--amber)" strokeWidth="1.6" />)}
+      {indicators.ema200 && path("ema200").map((points, i) => <polyline key={`ema200-${i}`} points={points} fill="none" stroke="var(--red)" strokeWidth="1.6" />)}
       {indicators.vwap && path("vwap").map((points, i) => <polyline key={`vwap-${i}`} points={points} fill="none" stroke="var(--text-secondary)" strokeWidth="1.3" strokeDasharray="4 3" />)}
       {indicators.bollinger && <>{path("bbUpper").map((points, i) => <polyline key={`bb-u-${i}`} points={points} fill="none" stroke="var(--text-muted)" strokeWidth="1" strokeDasharray="3 3" />)}{path("bbLower").map((points, i) => <polyline key={`bb-l-${i}`} points={points} fill="none" stroke="var(--text-muted)" strokeWidth="1" strokeDasharray="3 3" />)}</>}
       {tradeLevels && <>
