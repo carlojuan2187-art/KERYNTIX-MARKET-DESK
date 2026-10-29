@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
+  RotateCcw,
   Search,
   ShieldAlert,
   ShieldCheck,
@@ -16,6 +17,9 @@ import {
   adminUnbanUser,
   getAdminOverview,
   getAdminUsers,
+  getStatsBaseline,
+  resetStats,
+  restoreStats,
 } from "@/api/account";
 import type { User } from "@/api/types";
 import { useApi } from "@/hooks/useApi";
@@ -48,6 +52,35 @@ export default function AdminPage() {
     () => getAdminUsers(query, filter, page),
     [query, filter, page],
   );
+  const baseline = useApi(getStatsBaseline);
+  const [resetReason, setResetReason] = useState("");
+  const [resetConfirmed, setResetConfirmed] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetError, setResetError] = useState("");
+  async function runStatsReset(action: "reset" | "restore") {
+    setResetBusy(true);
+    setResetError("");
+    try {
+      if (action === "reset") {
+        if (resetReason.trim().length < 5)
+          throw new Error("Indica el motivo del reinicio (mínimo 5 caracteres).");
+        if (!resetConfirmed)
+          throw new Error("Confirma que quieres reiniciar las estadísticas.");
+        await resetStats(resetReason.trim());
+        toast("Estadísticas reiniciadas: se medirán desde cero");
+      } else {
+        await restoreStats();
+        toast("Histórico completo restaurado");
+      }
+      setResetReason("");
+      setResetConfirmed(false);
+      void baseline.refresh();
+    } catch (err) {
+      setResetError((err as Error).message);
+    } finally {
+      setResetBusy(false);
+    }
+  }
   const closeDetail = useCallback(() => setSelected(null), []);
   async function run(action: "activate" | "ban" | "unban") {
     if (!selected) return;
@@ -104,6 +137,7 @@ export default function AdminPage() {
           onClick={() => {
             void users.refresh();
             void stats.refresh();
+            void baseline.refresh();
           }}
         />
       </PageHeader>
@@ -150,6 +184,97 @@ export default function AdminPage() {
           </button>
         ))}
       </div>
+      <section className="panel panel-pad" style={{ marginBottom: 22 }}>
+        <SectionHeader
+          title="Reiniciar estadísticas"
+          subtitle="Empieza a medir la estrategia desde cero tras modificarla. No se borra ninguna operación."
+        >
+          <Tag tone={baseline.data?.active ? "amber" : "blue"}>
+            {baseline.data?.active ? "Reiniciadas" : "Histórico completo"}
+          </Tag>
+        </SectionHeader>
+        <ResourceState
+          loading={baseline.loading}
+          error={baseline.error}
+          retry={baseline.refresh}
+        />
+        {baseline.data && !baseline.loading && !baseline.error && (
+          <div className="form-stack">
+            <div className="detail-row">
+              <span>Contando desde</span>
+              <strong>
+                {baseline.data.reset_at
+                  ? dateTime(baseline.data.reset_at)
+                  : "El inicio (sin reinicios)"}
+              </strong>
+            </div>
+            <div className="detail-row">
+              <span>Operaciones que cuentan ahora</span>
+              <strong className="mono">{baseline.data.trades_counted}</strong>
+            </div>
+            <div className="detail-row">
+              <span>Operaciones archivadas (ocultas de las estadísticas)</span>
+              <strong className="mono">{baseline.data.trades_archived}</strong>
+            </div>
+            {baseline.data.reason && (
+              <div className="detail-row">
+                <span>Motivo del último reinicio</span>
+                <span>{baseline.data.reason}</span>
+              </div>
+            )}
+            <label className="input-field">
+              <span>Motivo (por ejemplo, el cambio de estrategia)</span>
+              <textarea
+                value={resetReason}
+                onChange={(e) => setResetReason(e.target.value)}
+                rows={2}
+                maxLength={500}
+                placeholder="Ej.: Ajuste de filtros de liquidez"
+              />
+            </label>
+            <label className="terms-check">
+              <input
+                type="checkbox"
+                checked={resetConfirmed}
+                onChange={(e) => setResetConfirmed(e.target.checked)}
+              />
+              <span>
+                Entiendo que Resultados y la Vista general empezarán desde cero
+                para todos los usuarios.
+              </span>
+            </label>
+            {resetError && (
+              <p className="form-error" role="alert">
+                {resetError}
+              </p>
+            )}
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button
+                className="btn btn-danger"
+                disabled={resetBusy || !resetReason.trim() || !resetConfirmed}
+                onClick={() => void runStatsReset("reset")}
+              >
+                <RotateCcw size={13} />
+                Reiniciar estadísticas
+              </button>
+              {baseline.data.active && (
+                <button
+                  className="btn btn-secondary"
+                  disabled={resetBusy}
+                  onClick={() => void runStatsReset("restore")}
+                >
+                  Restaurar histórico completo
+                </button>
+              )}
+            </div>
+            <p className="slim-note" style={{ padding: 0 }}>
+              Solo cuentan las operaciones cerradas después del reinicio. Las
+              anteriores se conservan y se pueden recuperar con “Restaurar
+              histórico completo”.
+            </p>
+          </div>
+        )}
+      </section>
       <div className="filter-row">
         <div className="search-field admin-search">
           <Search size={14} />
