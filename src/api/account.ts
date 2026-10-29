@@ -196,4 +196,29 @@ export async function adminUnbanUser(user_id: string) {
   });
 }
 
+export interface StatsBaseline {
+  active: boolean;
+  reset_at: string | null;
+  reset_by: string | null;
+  reason: string | null;
+  trades_counted: number;
+  trades_archived: number;
+  trades_total: number;
+}
+
+export async function getStatsBaseline() {
+  return apiRequest<StatsBaseline>("/admin/performance/baseline", { method: "GET" });
+}
+
+export async function resetStats(reason: string) {
+  return apiRequest<StatsBaseline>("/admin/performance/reset", {
+    method: "POST",
+    body: JSON.stringify({ reason, confirm: true }),
+  });
+}
+
+export async function restoreStats() {
+  return apiRequest<StatsBaseline>("/admin/performance/restore", { method: "POST" });
+}
+
 export { appConfig };
