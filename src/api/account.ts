@@ -1,6 +1,6 @@
 import type { PaymentRecord, User } from "./types";
 import { appConfig } from "./config";
-import { apiRequest, clearAccessToken, restoreApiSession, setAccessToken } from "./client";
+import { apiRequest, clearAccessToken, restoreApiSession, setAccessToken, setStoredRefreshToken } from "./client";
 
 export interface PhoneChallenge {
   token: string;
@@ -33,11 +33,12 @@ export async function resendCode(token: string) {
 }
 
 export async function verifyCode(phone: string, code: string) {
-  const session = await apiRequest<{ access_token: string; user: User; is_new: boolean }>(
+  const session = await apiRequest<{ access_token: string; refresh_token?: string | null; user: User; is_new: boolean }>(
     "/auth/verify",
     { method: "POST", body: JSON.stringify({ phone: phone.replace(/\s+/g, ""), code }) },
   );
   setAccessToken(session.access_token);
+  setStoredRefreshToken(session.refresh_token);
   sessionStorage.removeItem("ftrade.signedOut");
   sessionStorage.removeItem("ftrade.referrer");
   return session;
@@ -48,14 +49,24 @@ export async function restoreAuthSession(): Promise<User | null> {
 }
 
 export async function logout() {
+  let stored: string | null = null;
   try {
-    await apiRequest<void>("/auth/logout", { method: "POST" });
+    stored = window.localStorage.getItem("ftrade.rt");
+  } catch {
+    // ignore unavailable storage
+  }
+  try {
+    await apiRequest<void>("/auth/logout", {
+      method: "POST",
+      ...(stored ? { body: JSON.stringify({ refresh_token: stored }) } : {}),
+    });
   } catch (error) {
-    clearAccessToken();
     if ((error as { status?: number })?.status === 401) return;
     throw error;
+  } finally {
+    clearAccessToken();
+    setStoredRefreshToken(null);
   }
-  clearAccessToken();
 }
 
 export async function getAccountRestriction() {
