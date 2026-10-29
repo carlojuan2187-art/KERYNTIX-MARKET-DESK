@@ -48,7 +48,7 @@ La CI de GitHub ejecuta el type-check y el build en Node 22, además de la suite
 
 ## Integración real
 
-- **Autenticación:** el navegador crea el desafío por teléfono, espera la verificación del contacto en el bot y valida el código con el backend. El access token vive en memoria y la cookie de renovación es `HttpOnly`.
+- **Autenticación:** el navegador crea el desafío por teléfono, espera la verificación del contacto en el bot y valida el código con el backend. El access token vive en memoria y la cookie de renovación es `HttpOnly`; como web y API están en sitios distintos, se guarda además una copia del refresh token en `localStorage` (clave `ftrade.rt`) para que Safari/Brave/navegadores in-app que bloquean cookies de terceros no pidan Telegram en cada recarga.
 - **Mercado y análisis:** cotizaciones, símbolos, velas, régimen, derivados, flujo, liquidaciones, movers, radar, calendario y resultados vienen de endpoints reales del backend.
 - **Tiempo real:** se solicita un ticket de un solo uso a `POST /events/ticket` y se conecta a `/ws/events`. La aplicación conserva refresco REST como respaldo.
 - **Cuenta y preferencias:** watchlist, sesiones, perfil, alertas, notificaciones y soporte se guardan mediante endpoints del backend.
