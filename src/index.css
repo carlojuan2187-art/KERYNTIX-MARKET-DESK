@@ -254,7 +254,7 @@ p {
 .brand.brand-compact .brand-image {
   width: 30px;
   height: 30px;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 7px;
 }
 .brand svg {
