@@ -18,7 +18,7 @@ export function Brand({ compact = false }: { compact?: boolean }) {
     <span className={`brand${compact ? " brand-compact" : ""}`}>
       <img
         src={compact ? ftradeBrandIcon : ftradeBrandLogo}
-        alt={compact ? "FTrade" : "FTrade — Analiza, opera, avanza"}
+        alt={compact ? "Símbolo de FTrade" : "FTrade — Analiza, opera, avanza"}
         className="brand-image"
         loading="eager"
         decoding="async"
