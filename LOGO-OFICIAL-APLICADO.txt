@@ -1,3 +1,14 @@
-Se sustituyó el logo anterior por la imagen exacta suministrada por el usuario (1000103171.jpg).
-Assets: public/ftrade-logo-brand.jpg, public/ftrade-social.jpg, public/ftrade-icon.png.
-Open Graph/Twitter metadata in index.html point to https://ftrade-web-production.up.railway.app/ftrade-social.jpg.
+FTRADE — SISTEMA DE LOGOS UNIFICADO (30-10-2026)
+
+- Wordmark: toro + FTRADE + lema, sin la franja inferior de descripciones diminutas.
+- Símbolo compacto: cabeza de toro y gráfico, sin letras recortadas.
+- La navegación compacta usa object-fit: contain para evitar recortes.
+- Favicon, icono de 192 px y Apple Touch Icon utilizan el mismo símbolo.
+- La tarjeta social Open Graph/Twitter se conserva en 1200 x 630.
+
+Archivos principales:
+- src/assets/ftrade-logo-brand.webp (wordmark de la interfaz)
+- src/assets/ftrade-icon.webp (símbolo compacto de la interfaz)
+- public/ftrade-icon.png, public/ftrade-icon-192.png, public/ftrade-icon-32.png
+- public/apple-touch-icon.png
+- public/ftrade-social.jpg (tarjeta para compartir; no modificada)

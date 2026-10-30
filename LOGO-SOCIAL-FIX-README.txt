@@ -1,13 +1,16 @@
-FTRADE — CORRECCIÓN DEL LOGO Y VISTA PREVIA SOCIAL
+FTRADE — LOGOS, FAVICON Y VISTA PREVIA SOCIAL
 
-Cambios:
-- El logo principal ahora se importa desde src/assets para que Vite lo empaquete con el frontend y no dependa de una ruta absoluta a public.
-- El icono compacto también se importa desde src/assets.
-- public/ftrade-social.jpg contiene el logo exacto ajustado a 1200x630 sin recortar el diseño.
-- index.html conserva Open Graph/Twitter Card y añade ?v=2 para ayudar a invalidar caché antigua del scraper.
+Cambios aplicados el 30-10-2026:
+- Se separó el wordmark (toro + FTRADE + lema) del símbolo compacto.
+- Se eliminó de la versión de navegación la franja inferior de descripciones que no era legible a tamaño pequeño.
+- Se sustituyó el icono recortado por el símbolo cuadrado centrado, sin letras.
+- El icono de la navegación usa object-fit: contain.
+- Favicon de 32 px, icono de 192 px, PNG de 512 px y Apple Touch Icon de 180 px utilizan el mismo arte.
+- La tarjeta social de 1200 x 630 permanece intacta.
 
 Para desplegar:
-1. Sustituye el contenido del frontend por FTrade-Web-main de este ZIP (no subas el ZIP anidado como un archivo dentro del repositorio).
-2. Ejecuta un nuevo build/deploy en Railway.
-3. Comprueba públicamente https://ftrade-web-production.up.railway.app/ftrade-social.jpg?v=2 y https://ftrade-web-production.up.railway.app/ftrade-icon.png.
-4. En WhatsApp, pega el enlace completo en un chat de prueba. La vista previa depende de que el servidor devuelva el index.html con metadatos y la imagen sea accesible sin iniciar sesión.
+1. Publica el contenido de FTrade-Web-main en el servicio frontend de Railway.
+2. Ejecuta un build/deploy nuevo.
+3. Comprueba /ftrade-icon.png, /ftrade-icon-192.png, /apple-touch-icon.png y /ftrade-social.jpg.
+4. Borra caché del navegador/PWA o reinstala el acceso directo si conserva el icono previo.
+5. Comprueba la cabecera, el menú móvil y la pantalla de inicio de sesión.
