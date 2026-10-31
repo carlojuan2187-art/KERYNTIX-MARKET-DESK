@@ -25,13 +25,13 @@ test.beforeEach(async ({ page }) => {
 
 test("la pantalla separa el inicio de sesión del registro", async ({ page }) => {
   await page.goto("/login");
-  await expect(page.getByRole("heading", { name: "Bienvenido de nuevo." })).toBeVisible();
-  await expect(page.getByRole("tab", { name: /Iniciar sesión/i })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("tab", { name: /Crear cuenta/i })).toBeVisible();
-  await expect(page.getByLabel("Número de teléfono")).toBeVisible();
-  await expect(page.getByLabel("Contraseña")).toBeVisible();
-  await expect(page.getByRole("button", { name: /Abrir bot de Telegram/i })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /demo|simular vinculación/i })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
+  await expect(page.getByRole("tab", { name: /Sign in/i })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tab", { name: /Create account/i })).toBeVisible();
+  await expect(page.getByLabel("Phone number")).toBeVisible();
+  await expect(page.getByLabel("Password")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Open Telegram bot/i })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /demo|simulate connection/i })).toHaveCount(0);
   await expect(page.getByText("123456", { exact: true })).toHaveCount(0);
 });
 
@@ -43,7 +43,7 @@ test("el inicio de sesión usa teléfono y contraseña sin solicitar Telegram", 
     await route.fulfill({
       status: 401,
       contentType: "application/json",
-      body: JSON.stringify({ detail: { code: "INVALID_CREDENTIALS", message: "Número o contraseña incorrectos." } }),
+      body: JSON.stringify({ detail: { code: "INVALID_CREDENTIALS", message: "Incorrect phone number or password." } }),
     });
   });
   await page.route(`${apiBase}/auth/telegram-check**`, async (route) => {
@@ -56,11 +56,11 @@ test("el inicio de sesión usa teléfono y contraseña sin solicitar Telegram", 
   });
 
   await page.goto("/login");
-  await page.getByLabel("Número de teléfono").fill("7875551234");
-  await page.getByLabel("Contraseña").fill("ContraseñaSegura123");
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await page.getByLabel("Phone number").fill("7875551234");
+  await page.getByLabel("Password").fill("ContraseñaSegura123");
+  await page.getByRole("button", { name: "Sign in" }).click();
 
-  await expect(page.getByRole("alert")).toContainText("Número o contraseña incorrectos.");
+  await expect(page.getByRole("alert")).toContainText("Incorrect phone number or password.");
   expect(postedPayload).toEqual({ phone: "+17875551234", password: "ContraseñaSegura123" });
   expect(telegramRequests).toBe(0);
 });
@@ -86,15 +86,15 @@ test("crear cuenta solicita Telegram y envía una contraseña", async ({ page })
   });
 
   await page.goto("/login");
-  await page.getByRole("tab", { name: /Crear cuenta/i }).click();
-  await page.getByLabel("Número de teléfono").fill("7875551234");
-  await page.getByLabel("Crear contraseña").fill("ContraseñaSegura123");
-  await page.getByLabel("Confirmar contraseña").fill("ContraseñaSegura123");
+  await page.getByRole("tab", { name: /Create account/i }).click();
+  await page.getByLabel("Phone number").fill("7875551234");
+  await page.getByLabel("Create password").fill("ContraseñaSegura123");
+  await page.getByLabel("Confirm password").fill("ContraseñaSegura123");
   await page.locator(".terms-check input").check();
-  await page.getByRole("button", { name: "Continuar con Telegram" }).click();
+  await page.getByRole("button", { name: "Continue with Telegram" }).click();
 
-  await expect(page.getByRole("heading", { name: "Verifica tu número." })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Abrir bot de Telegram/ })).toHaveAttribute(
+  await expect(page.getByRole("heading", { name: "Verify your number." })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open Telegram bot/ })).toHaveAttribute(
     "href",
     "https://t.me/ftrade_test_bot?start=verify_challenge-token",
   );
@@ -160,9 +160,22 @@ test("Mi Plan se muestra aunque no haya un teléfono de WhatsApp configurado", a
   });
 
   await page.goto("/planes");
-  await expect(page.getByRole("heading", { name: "Invierte en una mejor perspectiva." })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Tu historial de pagos" })).toBeVisible();
-  await expect(page.getByText("El contacto de WhatsApp del administrador todavía no está configurado.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "No se pudo mostrar esta sección" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Invest in a better perspective." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your payment history" })).toBeVisible();
+  await expect(page.getByText("The administrator's WhatsApp contact has not been configured yet.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "This section could not be displayed" })).toHaveCount(0);
 });
 
+
+
+test("English is the default and the language selector persists Spanish across refreshes", async ({ page }) => {
+  await page.goto("/login");
+  await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
+  await expect(page.getByRole("button", { name: "English" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Spanish" }).click();
+  await expect(page.getByRole("heading", { name: "Bienvenido de nuevo." })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Español" })).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("ftrade.language"))).toBe("es");
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Bienvenido de nuevo." })).toBeVisible();
+});
