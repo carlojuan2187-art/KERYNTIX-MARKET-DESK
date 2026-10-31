@@ -6,6 +6,25 @@ const validBot = configuredBot && !/(replace|your[-_ ]|placeholder|change[-_ ]?m
   ? configuredBot
   : "";
 
+function normalizePublicPhone(value: unknown): string {
+  const raw = String(value ?? "").trim();
+  if (!raw || !/^\+?[0-9\s().-]+$/.test(raw)) return "";
+  const digits = raw.replace(/\D/g, "");
+  // WhatsApp click-to-chat requires an international number without +, spaces or punctuation.
+  return digits.length >= 8 && digits.length <= 15 ? digits : "";
+}
+
+const publicWhatsappContacts = [
+  // Preferred single public contact shared by Plans, Support and account notices.
+  import.meta.env.VITE_SUPPORT_WHATSAPP,
+  // Backwards compatibility with existing deployments that still use the legacy variables.
+  import.meta.env.VITE_ADMIN_WHATSAPP_1,
+  import.meta.env.VITE_ADMIN_WHATSAPP_2,
+  import.meta.env.VITE_ADMIN_WHATSAPP_3,
+]
+  .map(normalizePublicPhone)
+  .filter((phone, index, all) => Boolean(phone) && all.indexOf(phone) === index);
+
 export const appConfig = {
   apiUrl: String(import.meta.env.VITE_API_URL || "").trim().replace(/\/+$/, ""),
   websocketUrl: String(import.meta.env.VITE_WS_URL || "").trim().replace(/\/+$/, ""),
@@ -13,9 +32,5 @@ export const appConfig = {
   alertDuration: Math.max(15, Number(import.meta.env.VITE_ALERT_DURATION_SECONDS) || 180),
   botUsername: validBot,
   domain: import.meta.env.VITE_APP_DOMAIN || window.location.host,
-  whatsapp: [
-    import.meta.env.VITE_ADMIN_WHATSAPP_1,
-    import.meta.env.VITE_ADMIN_WHATSAPP_2,
-    import.meta.env.VITE_ADMIN_WHATSAPP_3,
-  ].filter((phone): phone is string => Boolean(phone && String(phone).trim())),
+  whatsapp: publicWhatsappContacts,
 };
