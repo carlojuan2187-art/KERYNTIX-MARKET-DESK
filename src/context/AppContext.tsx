@@ -199,11 +199,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     void getSignals()
       .then((signals) => { if (!disposed && hasAccess(user)) setSignalCount(signals.filter((s) => s.status !== "CANCELLED").length); })
       .catch(() => undefined);
-    void getNotifications()
-      .then((items) => { if (!disposed && hasAccess(user)) setNotifications(items); })
-      .catch(() => undefined);
+    if (user.alert_prefs?.in_app === false) {
+      setNotifications([]);
+    } else {
+      void getNotifications()
+        .then((items) => { if (!disposed && hasAccess(user)) setNotifications(items); })
+        .catch(() => undefined);
+    }
     return () => { disposed = true; };
-  }, [user?.user_id, user?.plan, user?.plan_end, user?.trial_end, user?.is_admin, user?.banned, user?.ban_until]);
+  }, [user?.user_id, user?.plan, user?.plan_end, user?.trial_end, user?.is_admin, user?.banned, user?.ban_until, user?.alert_prefs?.in_app]);
   useEffect(() => {
     if (!user) return;
     const deadline = nextAccountDeadline(user);
@@ -221,6 +225,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("ftrade.theme", theme);
     localStorage.setItem("ftrade.variant", variant);
   }, [theme, variant]);
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.title = language === "es"
+      ? "FTrade | Una perspectiva más clara del mercado"
+      : "FTrade | A clearer view of the market";
+  }, [language]);
   useEffect(() => {
     if (!user?.user_id) return;
     let disposed = false;
@@ -273,18 +283,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const signal = event.payload as SignalState;
           void getSignals().then((signals) => setSignalCount(signals.filter((s) => s.status !== "CANCELLED").length)).catch(() => undefined);
           // Keep live counters current, but honor the user's notification switches
-          // before showing an in-app toast or a native browser notification.
+          // before showing an in-app toast. OS notifications are delivered by the
+          // backend Web Push worker to avoid duplicates while the tab is open.
           const signalAlertsEnabled = Boolean(
             user && hasAccess(user) && user.alert_prefs?.on && user.alert_prefs?.signals !== false,
           );
           if (!signalAlertsEnabled) return;
-          void getNotifications().then(setNotifications).catch(() => undefined);
+          const signalPrefs = user?.alert_prefs;
+          const showInApp = Boolean(signalPrefs && signalPrefs.in_app !== false);
+          if (showInApp) void getNotifications().then(setNotifications).catch(() => undefined);
           const label = event.event === "signal.new" ? t("Nuevo setup") : event.event === "signal.touched" ? t("Entrada tocada") : event.event === "signal.tp1" ? t("TP1 alcanzado") : event.event === "signal.cancelled" ? t("Señal cancelada") : `${t("Operación cerrada")} ${signal.event?.result || ""}`;
           const title = `${signal.symbol} · ${label}`;
-          toast(title, "info", 7000);
-          if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-            try { new Notification(title, { body: `${signal.direction} · ${t("evento confirmado por el backend")}`, tag: `${signal.id || signal.symbol}-${event.event}` }); } catch { /* Browser support varies. */ }
-          }
+          if (showInApp) toast(title, "info", 7000);
+          // OS notifications are sent by the backend Web Push worker through
+          // public/sw.js. Do not create a second Notification from the open tab:
+          // that would duplicate the same push when this browser is active.
           return;
         }
         if (event.channel === "prices") {
@@ -380,13 +393,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           if (!user || (!accessActive && !isPlanNotice)) return;
           // Expired users can receive renewal notices, but the protected inbox is
           // intentionally unavailable until access is restored.
-          if (accessActive) void getNotifications().then(setNotifications).catch(() => undefined);
           if (!user.alert_prefs.on || !user.alert_prefs[alert.kind]) return;
+          const showInApp = user.alert_prefs.in_app !== false;
+          if (accessActive && showInApp) void getNotifications().then(setNotifications).catch(() => undefined);
           const title = `${t("AVISO ·")} ${alert.symbol || t("Mercado")}`;
-          toast(title, "info", appConfig.alertDuration * 1000);
-          if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-            try { new Notification(title, { body: t(alert.text), tag: alert.id }); } catch { /* Browser support varies. */ }
-          }
+          if (showInApp) toast(title, "info", appConfig.alertDuration * 1000);
+          // Web Push delivery is centralized in the service worker so a push
+          // received with the tab open is not duplicated by a page notification.
         }
       }),
     [user, toast, t],
