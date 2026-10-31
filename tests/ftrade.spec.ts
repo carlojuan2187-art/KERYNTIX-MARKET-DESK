@@ -137,7 +137,7 @@ test("Mi Plan se muestra aunque no haya un teléfono de WhatsApp configurado", a
       body: JSON.stringify({
         plans: [{
           plan: "premium",
-          price_usdt: "40.000",
+          price_usdt: "10.000",
           duration_days: 30,
           network: "BNB Smart Chain (BEP20)",
           token: "USDT",
@@ -161,6 +161,8 @@ test("Mi Plan se muestra aunque no haya un teléfono de WhatsApp configurado", a
 
   await page.goto("/planes");
   await expect(page.getByRole("heading", { name: "Invest in a better perspective." })).toBeVisible();
+  await expect(page.locator(".premium-plan .plan-price")).toContainText("10");
+  await expect(page.locator(".premium-plan .plan-price")).not.toContainText("10.000");
   await expect(page.getByRole("heading", { name: "Your payment history" })).toBeVisible();
   await expect(page.getByText("The administrator's WhatsApp contact has not been configured yet.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "This section could not be displayed" })).toHaveCount(0);
