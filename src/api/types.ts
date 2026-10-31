@@ -231,23 +231,6 @@ export interface DerivativesData {
     updated_at?: string | null;
     coverage_hours?: number | null;
   };
-  top_trader_accounts?: {
-    ratio?: number | null;
-    long: number | null;
-    short: number | null;
-    percentages_derived?: boolean;
-    history?: DerivativesHistoryPoint[];
-    updated_at?: string | null;
-  };
-  top_trader_positions?: {
-    ratio?: number | null;
-    long: number | null;
-    short: number | null;
-    percentages_derived?: boolean;
-    history?: DerivativesHistoryPoint[];
-    updated_at?: string | null;
-  };
-  top_trader_ratio: { long: number | null; short: number | null; ratio?: number | null };
   taker_flow?: {
     windows: {
       label: "15m" | "1h" | "4h" | string;
