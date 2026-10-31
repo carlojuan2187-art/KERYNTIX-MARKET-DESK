@@ -18,7 +18,7 @@ import type { PaymentSession } from "@/api/account";
 import { appConfig } from "@/api/config";
 import { useApi } from "@/hooks/useApi";
 import { useApp } from "@/context/AppContext";
-import { dateTime, number } from "@/utils/format";
+import { dateTime, numberTrimmed } from "@/utils/format";
 import {
   CopyButton,
   Countdown,
@@ -38,7 +38,7 @@ const statusLabels = {
 export default function PlanesPage() {
   const { user, toast } = useApp();
   // WhatsApp contact variables are optional; never let a missing contact crash the whole page.
-  const adminWhatsapp = appConfig.whatsapp[0]?.replace(/\D/g, "") ?? "";
+  const adminWhatsapp = appConfig.whatsapp[0] ?? "";
   const [payment, setPayment] = useState<PaymentSession | null>(null);
   const [wallet, setWallet] = useState("");
   const [busy, setBusy] = useState(false);
@@ -135,7 +135,7 @@ export default function PlanesPage() {
           </div>
           <h2>PREMIUM</h2>
           <div className="plan-price">
-            {premiumPlan?.price_usdt ? number(Number(premiumPlan.price_usdt), 3) : "—"}
+            {premiumPlan?.price_usdt ? numberTrimmed(Number(premiumPlan.price_usdt), 3) : "—"}
             <span>{premiumPlan ? `USDT / ${premiumPlan.duration_days} días` : "USDT · plan no disponible"}</span>
           </div>
           <p>
@@ -335,7 +335,7 @@ export default function PlanesPage() {
             <a
               className="btn btn-secondary"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               href={`https://wa.me/${adminWhatsapp}`}
             >
               <MessageCircle size={14} />

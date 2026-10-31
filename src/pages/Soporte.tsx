@@ -81,21 +81,27 @@ export default function SoportePage() {
           <h2>{t("Una conversación directa.")}</h2>
           <p>
             {t("Para ayuda con pagos o acceso, puedes contactar por WhatsApp con el equipo administrador.")}</p>
-          {appConfig.whatsapp.map((phone, index) => (
-            <a
-              className="support-admin"
-              key={phone}
-              href={`https://wa.me/${phone.replace(/\D/g, "")}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <div>
-                <strong>{t("Administrador ")}{index + 1}</strong>
-                <span>+{phone.replace(/^\+/, "")}</span>
-              </div>
-              <ArrowUpRight size={16} />
-            </a>
-          ))}
+          {appConfig.whatsapp.length ? (
+            appConfig.whatsapp.map((phone, index) => (
+              <a
+                className="support-admin"
+                key={phone}
+                href={`https://wa.me/${phone}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div>
+                  <strong>{t("Administrador ")}{index + 1}</strong>
+                  <span>+{phone}</span>
+                </div>
+                <ArrowUpRight size={16} />
+              </a>
+            ))
+          ) : (
+            <p className="slim-note" role="status">
+              {t("El contacto de WhatsApp del administrador todavía no está configurado.")}
+            </p>
+          )}
           <div className="support-safety">
             <CheckCircle2 size={15} />
             <span>
