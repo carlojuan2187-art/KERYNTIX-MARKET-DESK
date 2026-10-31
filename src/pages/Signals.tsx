@@ -1,3 +1,4 @@
+import { t } from "@/i18n/translation";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -69,16 +70,16 @@ export default function SignalsPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="SEÑALES DEL BACKEND · ACTUALIZACIÓN CADA 15 S"
-        title="Señales con un plan."
-        description="Una entrada, un riesgo definido y objetivos claros. Tú mantienes el control."
+        eyebrow={t("SEÑALES DEL BACKEND · ACTUALIZACIÓN CADA 15 S")}
+        title={t("Señales con un plan.")}
+        description={t("Una entrada, un riesgo definido y objetivos claros. Tú mantienes el control.")}
       >
         <RefreshButton onClick={refresh} loading={loading} />
       </PageHeader>
       <div className="signal-top-notice">
         <ShieldCheck size={16} />
-        <span>No persigas el precio; espera la zona indicada.</span>
-        <span className="muted">Máximo 10 señales vigentes</span>
+        <span>{t("No persigas el precio; espera la zona indicada.")}</span>
+        <span className="muted">{t("Máximo 10 señales vigentes")}</span>
       </div>
       <div className="tabs">
         {[
@@ -95,7 +96,7 @@ export default function SignalsPage() {
               setParams({});
             }}
           >
-            {tab.label}
+            {t(tab.label)}
             <span className="muted small">
               {data?.filter((s) => tab.key === "all" || s.status === tab.key)
                 .length || 0}
@@ -108,7 +109,7 @@ export default function SignalsPage() {
         error={error}
         retry={refresh}
         empty={!loading && !error && !filtered.length}
-        emptyText="No hay señales registradas en este estado. Cuando el backend publique señales, aparecerán aquí."
+        emptyText={t("No hay señales registradas en este estado. Cuando el backend publique señales, aparecerán aquí.")}
       />
       {!loading && !error && signal && filtered.length > 0 && (
         <div className="signals-layout">
@@ -138,12 +139,12 @@ export default function SignalsPage() {
                   </div>
                   <div className="signal-select-status">
                     <Tag tone={status.tone} dot>
-                      {status.label}
+                      {t(status.label)}
                     </Tag>
                     <span>{ago(s.created_at)}</span>
                   </div>
                   <div className="signal-select-entry">
-                    <span>Zona de entrada</span>
+                    <span>{t("Zona de entrada")}</span>
                     <strong className="mono">
                       {price(s.entry_low ?? s.entry_price ?? (metrics.hasEntry ? metrics.entry : null))}
                       {s.entry_high ? ` - ${price(s.entry_high)}` : ""}
@@ -152,8 +153,7 @@ export default function SignalsPage() {
                   {s.status === "PENDING" && (
                     <div className="signal-countdown">
                       <Clock3 size={11} />
-                      Ventana de entrada
-                      <Countdown until={s.expires_at} />
+                      {t("Ventana de entrada")}<Countdown until={s.expires_at} />
                     </div>
                   )}
                 </button>
@@ -161,9 +161,7 @@ export default function SignalsPage() {
             })}
             <div className="slim-note">
               <Info size={12} />
-              Una señal cancelada no cuenta como pérdida. Las operaciones
-              abiertas siguen activas hasta resolverse.
-            </div>
+              {t("Una señal cancelada no cuenta como pérdida. Las operaciones abiertas siguen activas hasta resolverse.")}</div>
           </div>
           <SignalDetail
             signal={signal}
@@ -198,7 +196,7 @@ function SignalDetail({
           <AssetIcon symbol={s.symbol} size={39} />
           <div>
             <h2>{s.symbol.replace("USDT", " / USDT")}</h2>
-            <p>Binance USDT-M · {s.timeframes?.join(" / ")}</p>
+            <p>{t("Binance USDT-M · ")}{s.timeframes?.join(" / ")}</p>
           </div>
         </div>
         <Tag tone={s.direction === "LONG" ? "green" : "red"}>
@@ -212,23 +210,23 @@ function SignalDetail({
       </div>
       <div className="signal-detail-state">
         <Tag tone={status.tone} dot>
-          {status.label}
+          {t(status.label)}
         </Tag>
         <span>
           {s.status === "PENDING"
-            ? "Esperando un toque en la zona indicada"
+            ? t("Esperando un toque en la zona indicada")
             : s.status === "CANCELLED"
-              ? "Setup invalidado. Sin impacto en resultados."
-              : "Entrada confirmada. Seguimiento sin vencimiento."}
+              ? t("Setup invalidado. Sin impacto en resultados.")
+              : t("Entrada confirmada. Seguimiento sin vencimiento.")}
         </span>
       </div>
       {s.status === "CANCELLED" && (
         <div className="cancel-reading">
           <Info size={16} />
           <p>
-            {cancelReasons[s.cancel_reason as CancelReason] ||
-              "El setup ya no cumple las condiciones de entrada."}
-            <strong>No cuenta como pérdida.</strong>
+            {t(cancelReasons[s.cancel_reason as CancelReason] ||
+              "El setup ya no cumple las condiciones de entrada.")}
+            <strong>{t("No cuenta como pérdida.")}</strong>
           </p>
         </div>
       )}
@@ -236,43 +234,41 @@ function SignalDetail({
         <div className="tp-reading">
           <CheckCircle2 size={16} />
           <p>
-            TP1 alcanzado: asegura beneficios o mueve el SL a breakeven. Si el
-            precio retrocede al stop, el cierre seguirá contando como TP1.
-          </p>
+            {t("TP1 alcanzado: asegura beneficios o mueve el SL a breakeven. Si el precio retrocede al stop, el cierre seguirá contando como TP1.")}</p>
         </div>
       )}
       <div className="signal-key-metrics">
         <div>
-          <span>Riesgo / Beneficio</span>
+          <span>{t("Riesgo / Beneficio")}</span>
           <strong className="positive mono">{metrics.rr == null ? "—" : `1 : ${number(metrics.rr, 1)}`}</strong>
         </div>
         <div>
-          <span>Apalancamiento sugerido</span>
+          <span>{t("Apalancamiento sugerido")}</span>
           <strong className="mono">
-            {s.leverage == null ? "—" : `${s.leverage}x`} {s.leverage != null && <small className="muted">aislado</small>}
+            {s.leverage == null ? "—" : `${s.leverage}x`} {s.leverage != null && <small className="muted">{t("aislado")}</small>}
           </strong>
         </div>
         <div>
-          <span>Score del setup</span>
+          <span>{t("Score del setup")}</span>
           <strong className="mono">
             {s.score == null ? "—" : s.score}
             <small className="muted"> / 100</small>
           </strong>
         </div>
       </div>
-      <SectionHeader title="Tu plan de operación">
-        <span className="small muted">Precios en USDT</span>
+      <SectionHeader title={t("Tu plan de operación")}>
+        <span className="small muted">{t("Precios en USDT")}</span>
       </SectionHeader>
       <div className="trade-levels">
         <div className="trade-level">
           <span className="level-marker level-entry" />
-          <span>Entrada</span>
+          <span>{t("Entrada")}</span>
           <strong className="mono">{metrics.hasEntry ? price(metrics.entry) : "—"}</strong>
-          <span className="muted">Referencia</span>
+          <span className="muted">{t("Referencia")}</span>
         </div>
         <div className="trade-level">
           <span className="level-marker level-stop" />
-          <span>Stop Loss</span>
+          <span>{t("Stop Loss")}</span>
           <strong className="mono negative">{metrics.hasStop ? price(s.stop_loss) : "—"}</strong>
           <span className="mono negative">
             {percent(metrics.stop_distance_pct)}
@@ -281,7 +277,7 @@ function SignalDetail({
         {metrics.targets.map((target) => (
           <div className="trade-level" key={target.label}>
             <span className="level-marker level-target" />
-            <span>{target.label}</span>
+            <span>{t(target.label)}</span>
             <strong className="mono positive">{price(target.price)}</strong>
             <span className="mono positive">
               {percent(target.distance_pct)}{" "}
@@ -293,32 +289,28 @@ function SignalDetail({
       <div className="signal-detail-actions">
         <CopyButton
           text={allPrices}
-          label="Copiar precios"
+          label={t("Copiar precios")}
           className="btn btn-secondary"
         />
         <Link className="btn btn-primary" to={`/calculadora?senal=${s.symbol}`}>
           <Calculator size={13} />
-          Calcular tamaño
-          <ArrowRight size={12} />
+          {t("Calcular tamaño")}<ArrowRight size={12} />
         </Link>
         <button
           className={`btn ${showChart ? "btn-blue" : "btn-secondary"}`}
           onClick={onChart}
         >
           <ChartCandlestick size={13} />
-          Gráfico
-        </button>
+          {t("Gráfico")}</button>
       </div>
       <div className="signal-crosslinks">
         <Link to={`/derivados/${s.symbol}?direccion=${s.direction}`}>
           <Zap size={13} />
-          Derivados del par
-          <ArrowUpRight size={12} />
+          {t("Derivados del par")}<ArrowUpRight size={12} />
         </Link>
         <Link to={`/mercado/flujo/${s.symbol}`}>
           <Waves size={13} />
-          Ver flujo agresivo
-          <ArrowUpRight size={12} />
+          {t("Ver flujo agresivo")}<ArrowUpRight size={12} />
         </Link>
       </div>
       {showChart && (
@@ -327,7 +319,7 @@ function SignalDetail({
         </div>
       )}
       <div className="score-breakdown">
-        <SectionHeader title="Qué hay detrás del score" />
+        <SectionHeader title={t("Qué hay detrás del score")} />
         {Object.entries(
           s.score_breakdown && Object.keys(s.score_breakdown).length > 0
             ? s.score_breakdown
@@ -351,30 +343,30 @@ function SignalDetail({
           </div>
         ))}
         {(!s.score_breakdown || Object.keys(s.score_breakdown).length === 0) && (
-          <p className="slim-note">El backend no proporcionó un desglose del score para esta señal.</p>
+          <p className="slim-note">{t("El backend no proporcionó un desglose del score para esta señal.")}</p>
         )}
       </div>
       <details className="signal-engine-raw">
-        <summary>Ver datos completos del motor</summary>
+        <summary>{t("Ver datos completos del motor")}</summary>
         <pre>{JSON.stringify(s, null, 2)}</pre>
       </details>
       <div className="signal-timestamps">
         <span>
-          Creada <b>{dateTime(s.created_at, tz)}</b>
+          {t("Creada ")}<b>{dateTime(s.created_at, tz)}</b>
         </span>
         {s.expires_at && (
           <span>
-            Vence <b>{dateTime(s.expires_at, tz)}</b>
+            {t("Vence ")}<b>{dateTime(s.expires_at, tz)}</b>
           </span>
         )}
         {s.touched_at && (
           <span>
-            Entrada tocada <b>{dateTime(s.touched_at, tz)}</b>
+            {t("Entrada tocada ")}<b>{dateTime(s.touched_at, tz)}</b>
           </span>
         )}
         {s.cancelled_at && (
           <span>
-            Cancelada <b>{dateTime(s.cancelled_at, tz)}</b>
+            {t("Cancelada ")}<b>{dateTime(s.cancelled_at, tz)}</b>
           </span>
         )}
       </div>

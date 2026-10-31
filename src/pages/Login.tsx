@@ -1,3 +1,4 @@
+import { getIntlLocale, t } from "@/i18n/translation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -24,7 +25,7 @@ import {
 import { appConfig } from "@/api/config";
 import { PHONE_COUNTRIES } from "@/api/countries";
 import { useApp } from "@/context/AppContext";
-import { Brand, Countdown } from "@/components/ui";
+import { Brand, Countdown, LanguageSwitch } from "@/components/ui";
 import { Sparkline } from "@/components/Sparkline";
 
 type AuthMode = "login" | "register" | "recover";
@@ -39,7 +40,7 @@ function makeE164(countryIso2: string, rawPhone: string): string {
 }
 
 export default function LoginPage() {
-  const { setUser, toast, quotes, user, loading } = useApp();
+  const { setUser, toast, quotes, user, loading, t, language } = useApp();
   const navigate = useNavigate();
   const [mode, setMode] = useState<AuthMode>("login");
   const [step, setStep] = useState<AuthStep>("form");
@@ -55,6 +56,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const countryNames = new Intl.DisplayNames([getIntlLocale(language)], { type: "region" });
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -79,7 +81,7 @@ export default function LoginPage() {
         })
         .catch((err) => {
           if (disposed) return;
-          setError((err as Error).message);
+          setError(t((err as Error).message));
           const status = (err as { status?: number }).status;
           if (status === 404 || status === 410) setStep("form");
         });
@@ -112,7 +114,7 @@ export default function LoginPage() {
 
   function requireTelegramBot() {
     if (!appConfig.botUsername) {
-      throw new Error("El registro y la recuperación necesitan configurar VITE_TELEGRAM_BOT_USERNAME con el nombre del bot de autenticación.");
+      throw new Error(t("El registro y la recuperación necesitan configurar VITE_TELEGRAM_BOT_USERNAME con el nombre del bot de autenticación."));
     }
   }
 
@@ -130,11 +132,11 @@ export default function LoginPage() {
           return;
         }
         if (mode === "register") {
-          if (!accepted) throw new Error("Acepta las condiciones de uso para crear tu cuenta.");
-          if (password.length < 10) throw new Error("La contraseña debe tener al menos 10 caracteres.");
-          if (password !== confirmPassword) throw new Error("Las contraseñas no coinciden.");
+          if (!accepted) throw new Error(t("Acepta las condiciones de uso para crear tu cuenta."));
+          if (password.length < 10) throw new Error(t("La contraseña debe tener al menos 10 caracteres."));
+          if (password !== confirmPassword) throw new Error(t("Las contraseñas no coinciden."));
           requireTelegramBot();
-          const value = await registerPhone(fullPhone, password);
+          const value = await registerPhone(fullPhone, password, language);
           setChallenge(value);
           setStep("telegram");
           return;
@@ -155,25 +157,25 @@ export default function LoginPage() {
           return;
         }
         if (session.is_new) {
-          toast(`¡Tu acceso GRATIS de ${appConfig.trialDays} días ha comenzado!`);
+          toast(`${t("¡Tu acceso GRATIS de")} ${appConfig.trialDays} ${t("días ha comenzado!")}`);
         }
         navigate("/", { replace: true });
         return;
       }
 
       if (step === "set-password") {
-        if (newPassword.length < 10) throw new Error("La contraseña debe tener al menos 10 caracteres.");
-        if (newPassword !== confirmNewPassword) throw new Error("Las contraseñas no coinciden.");
+        if (newPassword.length < 10) throw new Error(t("La contraseña debe tener al menos 10 caracteres."));
+        if (newPassword !== confirmNewPassword) throw new Error(t("Las contraseñas no coinciden."));
         await setAccountPassword(newPassword);
-        toast("Contraseña configurada. La próxima vez podrás entrar sin Telegram.");
+        toast(t("Contraseña configurada. La próxima vez podrás entrar sin Telegram."));
         navigate("/", { replace: true });
       }
     } catch (err) {
       const authError = err as Error & { code?: string };
       if (authError.code === "PASSWORD_SETUP_REQUIRED") {
-        setError("Esta cuenta todavía no tiene contraseña. Configúrala una sola vez mediante la opción «Olvidé mi contraseña / configurar acceso».");
+        setError(t("Esta cuenta todavía no tiene contraseña. Configúrala una sola vez mediante la opción «Olvidé mi contraseña / configurar acceso»."));
       } else {
-        setError(authError.message || "No se pudo completar la solicitud.");
+        setError(t(authError.message || "No se pudo completar la solicitud."));
       }
     } finally {
       setBusy(false);
@@ -187,44 +189,39 @@ export default function LoginPage() {
     <div className="login-page">
       <header className="login-header">
         <Brand />
+        <LanguageSwitch />
       </header>
       <main className="login-layout">
         <section className="login-story">
-          <div className="eyebrow">FUTUROS CRIPTO. UNA NUEVA PERSPECTIVA.</div>
+          <div className="eyebrow">{t("FUTUROS CRIPTO. UNA NUEVA PERSPECTIVA.")}</div>
           <h1>
-            Menos ruido.
-            <br />
-            Más <span>contexto.</span>
+            {t("Menos ruido.")}<br />
+            {t("Más ")}<span>{t("contexto.")}</span>
           </h1>
           <p>
-            Señales con un plan, datos que conectan y una forma más clara de
-            leer el mercado.
-          </p>
+            {t("Señales con un plan, datos que conectan y una forma más clara de leer el mercado.")}</p>
           <div className="login-market">
             <div className="status-row">
               <span className="live-dot" />
-              EL MERCADO NO SE DETIENE
-            </div>
+              {t("EL MERCADO NO SE DETIENE")}</div>
             {quotes[0]?.sparkline?.length ? (
               <Sparkline values={quotes[0].sparkline} width={360} height={115} fill />
             ) : (
-              <div className="chart-loading">Esperando cotizaciones del backend…</div>
+              <div className="chart-loading">{t("Esperando cotizaciones del backend…")}</div>
             )}
-            <span>Precio · Volumen · Liquidez · Disciplina</span>
+            <span>{t("Precio · Volumen · Liquidez · Disciplina")}</span>
           </div>
           <div className="login-trust">
             <ShieldCheck size={17} />
             <span>
-              Registro protegido con Telegram.
-              <br />
-              En tus próximas visitas entra con tu contraseña.
-            </span>
+              {t("Registro protegido con Telegram.")}<br />
+              {t("En tus próximas visitas entra con tu contraseña.")}</span>
           </div>
         </section>
 
         <section className="login-form-area">
           {showAuthTabs && (
-            <div className="auth-tabs" role="tablist" aria-label="Tipo de acceso">
+            <div className="auth-tabs" role="tablist" aria-label={t("Tipo de acceso")}>
               <button
                 type="button"
                 role="tab"
@@ -232,8 +229,7 @@ export default function LoginPage() {
                 className={mode === "login" ? "active" : ""}
                 onClick={() => changeMode("login")}
               >
-                <LogIn size={14} /> Iniciar sesión
-              </button>
+                <LogIn size={14} /> {t("Iniciar sesión")}</button>
               <button
                 type="button"
                 role="tab"
@@ -241,8 +237,7 @@ export default function LoginPage() {
                 className={mode === "register" ? "active" : ""}
                 onClick={() => changeMode("register")}
               >
-                <UserPlus size={14} /> Crear cuenta
-              </button>
+                <UserPlus size={14} /> {t("Crear cuenta")}</button>
             </div>
           )}
 
@@ -251,7 +246,7 @@ export default function LoginPage() {
               {["Tu teléfono", "Telegram", "Código"].map((label, index) => (
                 <span key={label} className={index <= (step === "telegram" ? 1 : 2) ? "active" : ""}>
                   <i>{index < (step === "telegram" ? 1 : 2) ? <Check size={11} /> : index + 1}</i>
-                  {label}
+                  {t(label)}
                 </span>
               ))}
             </div>
@@ -259,45 +254,45 @@ export default function LoginPage() {
 
           <h2>
             {step === "telegram"
-              ? "Verifica tu número."
+              ? t("Verifica tu número.")
               : step === "code"
-                ? "Confirma el código."
+                ? t("Confirma el código.")
                 : step === "set-password"
-                  ? "Crea tu contraseña."
+                  ? t("Crea tu contraseña.")
                   : mode === "login"
-                    ? "Bienvenido de nuevo."
+                    ? t("Bienvenido de nuevo.")
                     : mode === "register"
-                      ? "Crea tu cuenta FTrade."
-                      : "Recupera tu acceso."}
+                      ? t("Crea tu cuenta FTrade.")
+                      : t("Recupera tu acceso.")}
           </h2>
           <p className="login-description">
             {step === "telegram"
-              ? "Abre el bot de Telegram, comparte tu contacto y espera el código de verificación."
+              ? t("Abre el bot de Telegram, comparte tu contacto y espera el código de verificación.")
               : step === "code"
-                ? `Introduce el código de 6 dígitos enviado por Telegram a ${challenge?.phone}.`
+                ? `${t("Introduce el código de 6 dígitos enviado por Telegram a")} ${challenge?.phone}.`
                 : step === "set-password"
-                  ? "Esta será la contraseña de tu cuenta. Después podrás iniciar sesión directamente sin repetir la verificación de Telegram."
+                  ? t("Esta será la contraseña de tu cuenta. Después podrás iniciar sesión directamente sin repetir la verificación de Telegram.")
                   : mode === "login"
-                    ? "Entra con tu número de teléfono y contraseña. No necesitas verificar con Telegram para iniciar sesión."
+                    ? t("Entra con tu número de teléfono y contraseña. No necesitas verificar con Telegram para iniciar sesión.")
                     : mode === "register"
-                      ? `Regístrate con tu teléfono y crea una contraseña. Telegram verificará el número una sola vez. Recibirás ${appConfig.trialDays} días gratis.`
-                      : "Para proteger tu cuenta, verifica tu número con Telegram y establece una contraseña nueva."}
+                      ? `${t("Regístrate con tu teléfono y crea una contraseña. Telegram verificará el número una sola vez. Recibirás")} ${appConfig.trialDays} ${t("días gratis.")}`
+                      : t("Para proteger tu cuenta, verifica tu número con Telegram y establece una contraseña nueva.")}
           </p>
 
           <form className="form-stack" onSubmit={submit}>
             {step === "form" && (
               <>
                 <label className="input-field">
-                  <span>Número de teléfono</span>
+                  <span>{t("Número de teléfono")}</span>
                   <div className="phone-field">
                     <select
-                      aria-label="País y prefijo telefónico"
+                      aria-label={t("País y prefijo telefónico")}
                       value={country}
                       onChange={(e) => setCountry(e.target.value)}
                     >
                       {PHONE_COUNTRIES.map((item) => (
                         <option key={item.iso2} value={item.iso2}>
-                          {item.flag} {item.name} ({item.dialCode})
+                          {item.flag} {countryNames.of(item.iso2) || item.name} ({item.dialCode})
                         </option>
                       ))}
                     </select>
@@ -305,7 +300,7 @@ export default function LoginPage() {
                       type="tel"
                       inputMode="tel"
                       autoComplete="tel-national"
-                      aria-label="Número de teléfono"
+                      aria-label={t("Número de teléfono")}
                       placeholder="787 555 1234"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
@@ -313,17 +308,16 @@ export default function LoginPage() {
                     />
                   </div>
                   <small>
-                    Prefijo seleccionado: {selectedCountry?.dialCode}. Puedes introducir el número completo comenzando por +.
-                  </small>
+                    {t("Prefijo seleccionado: ")}{selectedCountry?.dialCode}{t(". Puedes introducir el número completo comenzando por +.")}</small>
                 </label>
 
                 {mode === "login" && (
                   <label className="input-field">
-                    <span>Contraseña</span>
+                    <span>{t("Contraseña")}</span>
                     <input
                       type="password"
                       autoComplete="current-password"
-                      placeholder="Tu contraseña"
+                      placeholder={t("Tu contraseña")}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -334,26 +328,26 @@ export default function LoginPage() {
                 {mode === "register" && (
                   <>
                     <label className="input-field">
-                      <span>Crear contraseña</span>
+                      <span>{t("Crear contraseña")}</span>
                       <input
                         type="password"
                         autoComplete="new-password"
                         minLength={10}
                         maxLength={128}
-                        placeholder="Mínimo 10 caracteres"
+                        placeholder={t("Mínimo 10 caracteres")}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
                       />
                     </label>
                     <label className="input-field">
-                      <span>Confirmar contraseña</span>
+                      <span>{t("Confirmar contraseña")}</span>
                       <input
                         type="password"
                         autoComplete="new-password"
                         minLength={10}
                         maxLength={128}
-                        placeholder="Repite tu contraseña"
+                        placeholder={t("Repite tu contraseña")}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
@@ -366,16 +360,14 @@ export default function LoginPage() {
                         onChange={(e) => setAccepted(e.target.checked)}
                       />
                       <span>
-                        Acepto las condiciones de uso y entiendo que operar futuros implica riesgo de pérdida. FTrade no es asesoría financiera.
-                      </span>
+                        {t("Acepto las condiciones de uso y entiendo que operar futuros implica riesgo de pérdida. FTrade no es asesoría financiera.")}</span>
                     </label>
                   </>
                 )}
 
                 {mode === "recover" && (
                   <p className="auth-recovery-note">
-                    Telegram solo se utilizará para recuperar o configurar el acceso. No tendrás que repetir este paso en los inicios de sesión normales.
-                  </p>
+                    {t("Telegram solo se utilizará para recuperar o configurar el acceso. No tendrás que repetir este paso en los inicios de sesión normales.")}</p>
                 )}
               </>
             )}
@@ -390,17 +382,15 @@ export default function LoginPage() {
                     href={`https://t.me/${appConfig.botUsername}?start=verify_${challenge.token}`}
                   >
                     <Send size={15} />
-                    Abrir bot de Telegram
-                    <ExternalLink size={12} />
+                    {t("Abrir bot de Telegram")}<ExternalLink size={12} />
                   </a>
                 ) : (
                   <p className="form-error" role="alert">
-                    Falta configurar VITE_TELEGRAM_BOT_USERNAME con el nombre del bot de autenticación.
-                  </p>
+                    {t("Falta configurar VITE_TELEGRAM_BOT_USERNAME con el nombre del bot de autenticación.")}</p>
                 )}
                 <div className="telegram-wait">
                   <LoaderCircle className="spin" size={15} />
-                  <span>Esperando que vincules Telegram…</span>
+                  <span>{t("Esperando que vincules Telegram…")}</span>
                 </div>
               </>
             )}
@@ -412,7 +402,7 @@ export default function LoginPage() {
                     <input
                       key={index}
                       ref={(node) => { inputs.current[index] = node; }}
-                      aria-label={`Dígito ${index + 1}`}
+                      aria-label={`${t("Dígito")} ${index + 1}`}
                       value={digit}
                       maxLength={1}
                       type="text"
@@ -438,7 +428,7 @@ export default function LoginPage() {
                   ))}
                 </div>
                 <div className="otp-meta">
-                  <span>Vence en <Countdown until={challenge?.expires_at} /></span>
+                  <span>{t("Vence en ")}<Countdown until={challenge?.expires_at} /></span>
                   <button
                     type="button"
                     disabled={resendRemaining > 0 || busy}
@@ -449,11 +439,11 @@ export default function LoginPage() {
                         setChallenge({ ...challenge, ...dates });
                         setError("");
                       } catch (err) {
-                        setError((err as Error).message);
+                        setError(t((err as Error).message));
                       }
                     }}
                   >
-                    {resendRemaining ? `Reenviar en ${resendRemaining}s` : "Reenviar código"}
+                    {resendRemaining ? `${t("Reenviar en")} ${resendRemaining}s` : t("Reenviar código")}
                   </button>
                 </div>
               </>
@@ -462,7 +452,7 @@ export default function LoginPage() {
             {step === "set-password" && (
               <>
                 <label className="input-field">
-                  <span>Nueva contraseña</span>
+                  <span>{t("Nueva contraseña")}</span>
                   <input
                     type="password"
                     autoComplete="new-password"
@@ -470,12 +460,12 @@ export default function LoginPage() {
                     maxLength={128}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Mínimo 10 caracteres"
+                    placeholder={t("Mínimo 10 caracteres")}
                     required
                   />
                 </label>
                 <label className="input-field">
-                  <span>Confirmar contraseña</span>
+                  <span>{t("Confirmar contraseña")}</span>
                   <input
                     type="password"
                     autoComplete="new-password"
@@ -483,7 +473,7 @@ export default function LoginPage() {
                     maxLength={128}
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    placeholder="Repite tu contraseña"
+                    placeholder={t("Repite tu contraseña")}
                     required
                   />
                 </label>
@@ -516,13 +506,11 @@ export default function LoginPage() {
 
             {step === "form" && mode === "login" && (
               <button className="auth-text-link" type="button" onClick={() => changeMode("recover")}>
-                ¿Olvidaste tu contraseña o tienes una cuenta anterior? Configurar acceso con Telegram
-              </button>
+                {t("¿Olvidaste tu contraseña o tienes una cuenta anterior? Configurar acceso con Telegram")}</button>
             )}
             {step === "form" && mode === "recover" && (
               <button className="auth-text-link" type="button" onClick={() => changeMode("login")}>
-                <ArrowLeft size={12} /> Volver al inicio de sesión
-              </button>
+                <ArrowLeft size={12} /> {t("Volver al inicio de sesión")}</button>
             )}
             {step !== "form" && step !== "set-password" && (
               <button
@@ -535,20 +523,17 @@ export default function LoginPage() {
                   setError("");
                 }}
               >
-                <ArrowLeft size={12} /> Cambiar número
-              </button>
+                <ArrowLeft size={12} /> {t("Cambiar número")}</button>
             )}
           </form>
 
           <p className="login-privacy">
             <ShieldCheck size={12} />
-            El inicio de sesión normal utiliza contraseña. Telegram se reserva para verificar registros y recuperar el acceso.
-          </p>
+            {t("El inicio de sesión normal utiliza contraseña. Telegram se reserva para verificar registros y recuperar el acceso.")}</p>
         </section>
       </main>
       <footer className="login-footer">
-        Informativo. No es asesoría financiera ni garantía de resultados.
-      </footer>
+        {t("Informativo. No es asesoría financiera ni garantía de resultados.")}</footer>
     </div>
   );
 }

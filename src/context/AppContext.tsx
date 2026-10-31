@@ -21,6 +21,7 @@ import {
 import type { AlertItem, SignalState, User } from "@/api/types";
 import { hasAccess, nextAccountDeadline } from "@/api/access";
 import { appConfig } from "@/api/config";
+import { getStoredLanguage, translate, type Language } from "@/i18n/translation";
 
 type Variant = "terminal" | "panorama";
 type Theme = "dark" | "light";
@@ -42,12 +43,17 @@ interface AppState {
   readNotification: (id: string) => void;
   toast: (title: string, kind?: Toast["kind"], duration?: number) => void;
   loading: boolean;
+  language: Language;
+  setLanguage: (language: Language) => Promise<void>;
+  t: (value: string) => string;
 }
 const Context = createContext<AppState | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [language, setLanguageState] = useState<Language>(() => getStoredLanguage());
+  const t = useCallback((value: string) => translate(value, language), [language]);
   const [variant, updateVariant] = useState<Variant>(() =>
     localStorage.getItem("ftrade.variant") === "panorama"
       ? "panorama"
@@ -71,14 +77,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const toast = useCallback(
     (title: string, kind: Toast["kind"] = "success", duration = 7000) => {
       const id = Date.now() + Math.random();
-      setToasts((items) => [...items.slice(-2), { id, title, kind }]);
+      setToasts((items) => [...items.slice(-2), { id, title: translate(title, language), kind }]);
       window.setTimeout(
         () => setToasts((items) => items.filter((t) => t.id !== id)),
         duration,
       );
     },
-    [],
+    [language],
   );
+  const setLanguage = useCallback(async (next: Language) => {
+    setLanguageState(next);
+    try { window.localStorage.setItem("ftrade.language", next); } catch { /* Browser storage may be disabled. */ }
+    if (!user?.user_id) return;
+    try {
+      const updated = await apiRequest<User>("/auth/me", { method: "PATCH", body: JSON.stringify({ language: next }) });
+      setUser(updated);
+    } catch {
+      // Keep the local preference even when account synchronization is temporarily unavailable.
+    }
+  }, [user?.user_id]);
+  useEffect(() => {
+    if (user?.language === "en" || user?.language === "es") {
+      setLanguageState(user.language);
+      try { window.localStorage.setItem("ftrade.language", user.language); } catch { /* Browser storage may be disabled. */ }
+    }
+  }, [user?.user_id, user?.language]);
   useEffect(() => {
     if (!user?.user_id) return;
     // Keep slower, non-price account counters refreshed independently. Price data
@@ -255,11 +278,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const signal = event.payload as SignalState;
           void getSignals().then((signals) => setSignalCount(signals.filter((s) => s.status !== "CANCELLED").length)).catch(() => undefined);
           void getNotifications().then(setNotifications).catch(() => undefined);
-          const label = event.event === "signal.new" ? "Nuevo setup" : event.event === "signal.touched" ? "Entrada tocada" : event.event === "signal.tp1" ? "TP1 alcanzado" : event.event === "signal.cancelled" ? "Señal cancelada" : `Operación cerrada ${signal.event?.result || ""}`;
+          const label = event.event === "signal.new" ? t("Nuevo setup") : event.event === "signal.touched" ? t("Entrada tocada") : event.event === "signal.tp1" ? t("TP1 alcanzado") : event.event === "signal.cancelled" ? t("Señal cancelada") : `${t("Operación cerrada")} ${signal.event?.result || ""}`;
           const title = `${signal.symbol} · ${label}`;
           toast(title, "info", 7000);
           if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-            try { new Notification(title, { body: `${signal.direction} · evento confirmado por el backend`, tag: `${signal.id || signal.symbol}-${event.event}` }); } catch { /* Browser support varies. */ }
+            try { new Notification(title, { body: `${signal.direction} · ${t("evento confirmado por el backend")}`, tag: `${signal.id || signal.symbol}-${event.event}` }); } catch { /* Browser support varies. */ }
           }
           return;
         }
@@ -352,19 +375,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const alert = event.payload as AlertItem;
           void getNotifications().then(setNotifications).catch(() => undefined);
           if (!user || !hasAccess(user) || !user.alert_prefs.on || !user.alert_prefs[alert.kind]) return;
-          const title = `AVISO · ${alert.symbol || "Mercado"}`;
+          const title = `${t("AVISO ·")} ${alert.symbol || t("Mercado")}`;
           toast(title, "info", appConfig.alertDuration * 1000);
           if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-            try { new Notification(title, { body: alert.text, tag: alert.id }); } catch { /* Browser support varies. */ }
+            try { new Notification(title, { body: t(alert.text), tag: alert.id }); } catch { /* Browser support varies. */ }
           }
         }
       }),
-    [user, toast],
+    [user, toast, t],
   );
   function readNotification(id: string) {
     void markNotificationRead(id)
       .then(() => setNotifications((items) => items.map((item) => item.id === id ? { ...item, read: true } : item)))
-      .catch((error) => toast((error as Error).message || "No se pudo marcar como leída.", "error"));
+      .catch((error) => toast(t((error as Error).message || "No se pudo marcar como leída."), "error"));
   }
   return (
     <Context.Provider
@@ -381,6 +404,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         notifications,
         readNotification,
         toast,
+        language,
+        setLanguage,
+        t,
       }}
     >
       {children}
@@ -390,7 +416,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             {item.kind === "success" ? <Check size={17} /> : <Info size={17} />}
             <span>{item.title}</span>
             <button
-              aria-label="Cerrar notificación"
+              aria-label={t("Cerrar notificación")}
               onClick={() =>
                 setToasts((items) => items.filter((t) => t.id !== item.id))
               }

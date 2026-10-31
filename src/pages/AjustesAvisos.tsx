@@ -1,3 +1,4 @@
+import { t } from "@/i18n/translation";
 import { useState } from "react";
 import { Bell, BellRing, Info, ShieldCheck } from "lucide-react";
 import { updateAlertPrefs } from "@/api";
@@ -7,7 +8,7 @@ import { useApp } from "@/context/AppContext";
 import { PageHeader, SectionHeader, Tag } from "@/components/ui";
 
 export default function AjustesAvisosPage() {
-  const { user, setUser, toast } = useApp();
+  const { user, setUser, toast, t } = useApp();
   const [busy, setBusy] = useState(false);
   const [permission, setPermission] = useState(
     typeof Notification === "undefined"
@@ -43,13 +44,13 @@ export default function AjustesAvisosPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="LO IMPORTANTE, CUANDO IMPORTA"
-        title="Menos avisos. Más relevancia."
-        description="Recibe contexto cuando el mercado se sale de lo habitual, no con cada fluctuación."
+        eyebrow={t("LO IMPORTANTE, CUANDO IMPORTA")}
+        title={t("Menos avisos. Más relevancia.")}
+        description={t("Recibe contexto cuando el mercado se sale de lo habitual, no con cada fluctuación.")}
       />
       <div className="two-col">
         <section className="panel panel-pad">
-          <SectionHeader title="Tus preferencias de mercado">
+          <SectionHeader title={t("Tus preferencias de mercado")}>
             <Bell size={15} className="muted" />
           </SectionHeader>
           {[
@@ -83,13 +84,13 @@ export default function AjustesAvisosPage() {
           ].map((item) => (
             <div className="preference-row" key={item.key}>
               <div>
-                <h3>{item.title}</h3>
-                <p>{item.description}</p>
+                <h3>{t(item.title)}</h3>
+                <p>{t(item.description)}</p>
               </div>
               <button
                 role="switch"
                 aria-checked={prefs[item.key]}
-                aria-label={item.title}
+                aria-label={t(item.title)}
                 className={`switch ${prefs[item.key] ? "on" : ""}`}
                 disabled={busy || (item.key !== "on" && !prefs.on)}
                 onClick={() => void toggle(item.key)}
@@ -99,20 +100,19 @@ export default function AjustesAvisosPage() {
         </section>
         <div className="stack">
           <section className="panel panel-pad">
-            <SectionHeader title="Notificaciones del navegador">
+            <SectionHeader title={t("Notificaciones del navegador")}>
               <BellRing size={16} className="muted" />
             </SectionHeader>
             <p className="account-explainer">
-              Permite que el navegador muestre notificaciones de eventos recibidos del backend mientras la web está abierta. Las notificaciones con la web cerrada requieren que el servicio Web Push esté configurado.
-            </p>
+              {t("Permite que el navegador muestre notificaciones de eventos recibidos del backend mientras la web está abierta. Las notificaciones con la web cerrada requieren que el servicio Web Push esté configurado.")}</p>
             <Tag tone={permission === "granted" ? "green" : "muted"} dot>
               {permission === "granted"
-                ? "Permiso concedido"
+                ? t("Permiso concedido")
                 : permission === "denied"
-                  ? "Permiso bloqueado"
+                  ? t("Permiso bloqueado")
                   : permission === "unsupported"
-                    ? "No compatible"
-                    : "Permiso pendiente"}
+                    ? t("No compatible")
+                    : t("Permiso pendiente")}
             </Tag>
             <button
               className="btn btn-secondary"
@@ -124,27 +124,22 @@ export default function AjustesAvisosPage() {
             >
               <Bell size={13} />
               {permission === "granted"
-                ? "Notificaciones activadas"
-                : "Activar notificaciones"}
+                ? t("Notificaciones activadas")
+                : t("Activar notificaciones")}
             </button>
           </section>
           <section className="notification-rules">
-            <SectionHeader title="Un filtro pensado para tu atención" />
+            <SectionHeader title={t("Un filtro pensado para tu atención")} />
             <div>
               <ShieldCheck size={17} />
               <p>
-                Máximo 8 avisos por hora en total. No se repite el mismo par
-                durante 45 minutos, salvo que la magnitud se duplique.
-              </p>
+                {t("Máximo 8 avisos por hora en total. No se repite el mismo par durante 45 minutos, salvo que la magnitud se duplique.")}</p>
             </div>
             <div>
               <Info size={17} />
               <p>
-                Los avisos de mercado desaparecen de pantalla a los{" "}
-                {appConfig.alertDuration} segundos y los estados de señales a
-                los 7 segundos. Todos permanecen en el centro de notificaciones,
-                incluso después de leerlos.
-              </p>
+                {t("Los avisos de mercado desaparecen de pantalla a los")}{" "}
+                {appConfig.alertDuration} {t("segundos y los estados de señales a los 7 segundos. Todos permanecen en el centro de notificaciones, incluso después de leerlos.")}</p>
             </div>
           </section>
         </div>

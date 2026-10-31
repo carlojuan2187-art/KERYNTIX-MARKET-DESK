@@ -1,3 +1,4 @@
+import { t } from "@/i18n/translation";
 import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import {
@@ -93,49 +94,43 @@ export default function PlanesPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="UNA SOLA SEÑAL. TODO EL CONTEXTO."
-        title="Invierte en una mejor perspectiva."
-        description="FREE para empezar. PREMIUM para mantener tu acceso completo al mercado."
+        eyebrow={t("UNA SOLA SEÑAL. TODO EL CONTEXTO.")}
+        title={t("Invierte en una mejor perspectiva.")}
+        description={t("FREE para empezar. PREMIUM para mantener tu acceso completo al mercado.")}
       >
         <Tag tone={user?.plan === "premium" ? "green" : "blue"} dot>
-          Tu plan: {(user?.plan || "free").toUpperCase()}
+          {t("Tu plan: ")}{(user?.plan || "free").toUpperCase()}
         </Tag>
       </PageHeader>
       <div className="plans-grid">
         <section className="plan-option">
-          <div className="eyebrow">EXPLORA LA PLATAFORMA</div>
+          <div className="eyebrow">{t("EXPLORA LA PLATAFORMA")}</div>
           <h2>FREE</h2>
           <div className="plan-price">
             0<span>USDT</span>
           </div>
           <p>
-            {appConfig.trialDays} días de prueba gratuita para cuentas nuevas.
-          </p>
+            {appConfig.trialDays} {t("días de prueba gratuita para cuentas nuevas.")}</p>
           <ul>
             <li>
               <Check size={14} />
-              La misma señal Premium durante tu prueba
-            </li>
+              {t("La misma señal Premium durante tu prueba")}</li>
             <li>
               <Check size={14} />
-              Radar, mercado en vivo y avisos
-            </li>
+              {t("Radar, mercado en vivo y avisos")}</li>
             <li>
               <Check size={14} />
-              Watchlist de hasta 10 pares
-            </li>
+              {t("Watchlist de hasta 10 pares")}</li>
             <li>
               <Check size={14} />
-              Calculadora y guía del trader
-            </li>
+              {t("Calculadora y guía del trader")}</li>
           </ul>
           <span className="slim-note">
-            La prueba comienza al verificar tu teléfono.
-          </span>
+            {t("La prueba comienza al verificar tu teléfono.")}</span>
         </section>
         <section className="plan-option premium-plan">
           <div className="premium-heading">
-            <span className="eyebrow">TU VENTAJA, SIN INTERRUPCIONES</span>
+            <span className="eyebrow">{t("TU VENTAJA, SIN INTERRUPCIONES")}</span>
             <Sparkles size={17} />
           </div>
           <h2>PREMIUM</h2>
@@ -144,26 +139,20 @@ export default function PlanesPage() {
             <span>{premiumPlan ? `USDT / ${premiumPlan.duration_days} días` : "USDT · plan no disponible"}</span>
           </div>
           <p>
-            Todos los módulos. El mismo criterio. Más tiempo para operar con
-            contexto.
-          </p>
+            {t("Todos los módulos. El mismo criterio. Más tiempo para operar con contexto.")}</p>
           <ul>
             <li>
               <Check size={14} />
-              Acceso continuo a la señal Premium
-            </li>
+              {t("Acceso continuo a la señal Premium")}</li>
             <li>
               <Check size={14} />
-              Seguimiento de entrada, TP1, TP2 y SL
-            </li>
+              {t("Seguimiento de entrada, TP1, TP2 y SL")}</li>
             <li>
               <Check size={14} />
-              Datos de flujo, derivados y liquidaciones
-            </li>
+              {t("Datos de flujo, derivados y liquidaciones")}</li>
             <li>
               <Check size={14} />
-              Avisos web y Telegram según tus preferencias
-            </li>
+              {t("Avisos web y Telegram según tus preferencias")}</li>
           </ul>
           <button
             className="btn btn-primary"
@@ -181,17 +170,15 @@ export default function PlanesPage() {
         </section>
       </div>
       {billing.data && !billing.data.payment_configured && (
-        <p className="form-error" role="status">Los pagos no están habilitados porque el backend no tiene configurada la verificación y la wallet receptora. No transfieras fondos.</p>
+        <p className="form-error" role="status">{t("Los pagos no están habilitados porque el backend no tiene configurada la verificación y la wallet receptora. No transfieras fondos.")}</p>
       )}
-      {billing.error && <p className="form-error" role="alert">No se pudo consultar la configuración de pagos: {billing.error}</p>}
+      {billing.error && <p className="form-error" role="alert">{t("No se pudo consultar la configuración de pagos: ")}{billing.error}</p>}
       <p className="slim-note">
         <Info size={12} />
-        Si ya tienes Premium, los 30 días se suman a tu vencimiento actual. No
-        pierdes los días restantes.
-      </p>
+        {t("Si ya tienes Premium, los 30 días se suman a tu vencimiento actual. No pierdes los días restantes.")}</p>
       {payment && (
         <section className="panel panel-pad payment-panel">
-          <SectionHeader title="Tu solicitud de pago en USDT">
+          <SectionHeader title={t("Tu solicitud de pago en USDT")}>
             <Tag
               tone={
                 payment.record.status === "confirmed"
@@ -208,54 +195,54 @@ export default function PlanesPage() {
           </SectionHeader>
           <div className="payment-real-notice">
             <Info size={15} />
-            <span>La verificación se realiza en la red configurada por el backend. Revisa la red, el token y el monto antes de transferir.</span>
+            <span>{t("La verificación se realiza en la red configurada por el backend. Revisa la red, el token y el monto antes de transferir.")}</span>
           </div>
           {payment.record.status === "confirmed" ? (
             <div className="payment-confirmed">
               <CheckCircle2 size={45} />
-              <h2>Tu acceso Premium está activo.</h2>
-              <p>El backend confirmó la transferencia. Tu estado de suscripción debe reflejar la activación.</p>
+              <h2>{t("Tu acceso Premium está activo.")}</h2>
+              <p>{t("El backend confirmó la transferencia. Tu estado de suscripción debe reflejar la activación.")}</p>
             </div>
           ) : (
             <div className="payment-grid">
               <div className="payment-qr">
                 {payment.wallet_dest ? (
-                  <QRCodeSVG value={payment.wallet_dest} size={160} marginSize={4} title="Dirección receptora de pago USDT" />
+                  <QRCodeSVG value={payment.wallet_dest} size={160} marginSize={4} title={t("Dirección receptora de pago USDT")} />
                 ) : (
-                  <div className="payment-qr-empty">Sin dirección configurada</div>
+                  <div className="payment-qr-empty">{t("Sin dirección configurada")}</div>
                 )}
                 <span>{premiumPlan?.network || "Red configurada por el backend"} · {premiumPlan?.token || "USDT"}</span>
               </div>
               <div className="form-stack">
                 <div className="payment-amount">
-                  <span>Monto exacto solicitado por el backend</span>
+                  <span>{t("Monto exacto solicitado por el backend")}</span>
                   <strong className="mono">
                     {payment.price}
                     <small>USDT</small>
                   </strong>
-                  <CopyButton text={payment.price} label="Copiar monto" />
+                  <CopyButton text={payment.price} label={t("Copiar monto")} />
                 </div>
                 <div className="payment-destination">
-                  <span>Dirección receptora</span>
+                  <span>{t("Dirección receptora")}</span>
                   <code>{payment.wallet_dest || "No configurada por el backend"}</code>
-                  {payment.wallet_dest && <CopyButton text={payment.wallet_dest} label="Copiar dirección" />}
+                  {payment.wallet_dest && <CopyButton text={payment.wallet_dest} label={t("Copiar dirección")} />}
                 </div>
                 <div className="status-row">
                   <Clock3 size={12} />
-                  La solicitud vence en{" "}
+                  {t("La solicitud vence en")}{" "}
                   <Countdown until={payment.expires_at} long />
                 </div>
                 <label className="input-field">
-                  <span>Wallet desde la que realizaste el depósito</span>
+                  <span>{t("Wallet desde la que realizaste el depósito")}</span>
                   <input
                     value={wallet}
                     onChange={(e) => setWallet(e.target.value)}
-                    placeholder="0x seguido de 40 caracteres"
+                    placeholder={t("0x seguido de 40 caracteres")}
                     disabled={payment.record.status === "verifying"}
                   />
                 </label>
                 {payment.record.status === "verifying" && payment.record.confirmations != null && (
-                  <span className="slim-note">Confirmaciones reportadas por la red: {payment.record.confirmations}</span>
+                  <span className="slim-note">{t("Confirmaciones reportadas por la red: ")}{payment.record.confirmations}</span>
                 )}
                 <button
                   className="btn btn-blue"
@@ -294,22 +281,22 @@ export default function PlanesPage() {
       )}
       <div className="two-col" style={{ marginTop: 25 }}>
         <section>
-          <SectionHeader title="Tu historial de pagos" />
+          <SectionHeader title={t("Tu historial de pagos")} />
           <ResourceState
             loading={history.loading}
             error={history.error}
             retry={history.refresh}
             empty={!history.loading && !history.error && !history.data?.length}
-            emptyText="Tus pagos aparecerán aquí cuando crees una solicitud."
+            emptyText={t("Tus pagos aparecerán aquí cuando crees una solicitud.")}
           />
           {history.data && (
             <div className="table-scroll">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Fecha</th>
-                    <th>Monto USDT</th>
-                    <th>Estado</th>
+                    <th>{t("Fecha")}</th>
+                    <th>{t("Monto USDT")}</th>
+                    <th>{t("Estado")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -341,11 +328,9 @@ export default function PlanesPage() {
           )}
         </section>
         <section className="manual-payment">
-          <SectionHeader title="¿Prefieres ayuda con tu pago?" />
+          <SectionHeader title={t("¿Prefieres ayuda con tu pago?")} />
           <p>
-            Contacta con un administrador para coordinar la alternativa manual.
-            Nunca compartas claves privadas ni frases semilla.
-          </p>
+            {t("Contacta con un administrador para coordinar la alternativa manual. Nunca compartas claves privadas ni frases semilla.")}</p>
           {adminWhatsapp ? (
             <a
               className="btn btn-secondary"
@@ -354,13 +339,11 @@ export default function PlanesPage() {
               href={`https://wa.me/${adminWhatsapp}`}
             >
               <MessageCircle size={14} />
-              Contactar por WhatsApp
-              <ArrowRight size={13} />
+              {t("Contactar por WhatsApp")}<ArrowRight size={13} />
             </a>
           ) : (
             <p className="slim-note" role="status">
-              El contacto de WhatsApp del administrador todavía no está configurado.
-            </p>
+              {t("El contacto de WhatsApp del administrador todavía no está configurado.")}</p>
           )}
         </section>
       </div>

@@ -25,6 +25,7 @@ export interface WatchlistItem {
 
 export interface User {
   user_id: string;
+  language?: "en" | "es";
   phone: string; // E.164
   telegram_chat_id?: string;
   username?: string;

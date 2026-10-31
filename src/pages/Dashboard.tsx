@@ -1,3 +1,5 @@
+import { getIntlLocale } from "@/i18n/translation";
+import { t } from "@/i18n/translation";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -56,7 +58,7 @@ export function RegimePanel({
   return (
     <section className="context-panel panel">
       <div className="context-heading">
-        <h2>Régimen de mercado</h2>
+        <h2>{t("Régimen de mercado")}</h2>
         <Gauge size={13} className="muted" />
       </div>
       <div className="context-trend" style={{ color: context.color }}>
@@ -68,8 +70,8 @@ export function RegimePanel({
           <Activity size={19} />
         )}
         <div>
-          <strong>{context.label}</strong>
-          <small>BTC/USDT · Contexto {timeframeLabel}</small>
+          <strong>{t(context.label)}</strong>
+          <small>{t("BTC/USDT · Contexto ")}{timeframeLabel}</small>
         </div>
       </div>
       <div className="regime-gauge">
@@ -124,17 +126,17 @@ export function RegimePanel({
         </svg>
         <div className="gauge-value">
           {breadth == null ? "—" : breadth}
-          <span>Amplitud alcista del mercado (%)</span>
+          <span>{t("Amplitud alcista del mercado (%)")}</span>
         </div>
       </div>
       <div className="gauge-labels">
-        <span>Bajista</span>
-        <span>Neutral</span>
-        <span>Alcista</span>
+        <span>{t("Bajista")}</span>
+        <span>{t("Neutral")}</span>
+        <span>{t("Alcista")}</span>
       </div>
       <div className="context-stats">
         <div>
-          <span>Fuerza · ADX</span>
+          <span>{t("Fuerza · ADX")}</span>
           <strong className="mono">
             {number(regime.adx, 1)}{" "}
             <span
@@ -144,24 +146,23 @@ export function RegimePanel({
                 color: regime.adx >= 25 ? "var(--green)" : "var(--amber)",
               }}
             >
-              {context.strength}
+              {t(context.strength)}
             </span>
           </strong>
         </div>
         <div>
-          <span>Volatilidad · ATR</span>
+          <span>{t("Volatilidad · ATR")}</span>
           <strong className="mono">{number(regime.atr_pct)}%</strong>
         </div>
       </div>
-      <p className="context-reading">{context.reading}</p>
+      <p className="context-reading">{t(context.reading)}</p>
       <div className="context-footer">
         <span>
           <span className="live-dot" />
           {regime.session_now}
         </span>
         <Link to="/regimen" className="link-accent">
-          Ver análisis
-          <ChevronRight size={11} />
+          {t("Ver análisis")}<ChevronRight size={11} />
         </Link>
       </div>
     </section>
@@ -173,24 +174,24 @@ function Metrics({ data }: { data: OverviewData }) {
   return (
     <div className="overview-metrics">
       <Link className="overview-metric" to="/senales">
-        <div className="metric-label">Señales activas <Zap /></div>
-        <div className="metric-main"><span className="metric-value">{signals.length.toString().padStart(2, "0")}</span><Tag tone="green" dot>En seguimiento</Tag></div>
-        <div className="metric-note"><span className="small-dot" style={{ color: "var(--amber)" }} />{signals.filter((s) => s.status === "PENDING").length} pendientes <span className="separator-dot">·</span> {signals.filter((s) => s.status === "TOUCHED").length} entradas tocadas</div>
+        <div className="metric-label">{t("Señales activas ")}<Zap /></div>
+        <div className="metric-main"><span className="metric-value">{signals.length.toString().padStart(2, "0")}</span><Tag tone="green" dot>{t("En seguimiento")}</Tag></div>
+        <div className="metric-note"><span className="small-dot" style={{ color: "var(--amber)" }} />{signals.filter((s) => s.status === "PENDING").length} {t("pendientes ")}<span className="separator-dot">·</span> {signals.filter((s) => s.status === "TOUCHED").length} {t("entradas tocadas")}</div>
       </Link>
       <Link className="overview-metric" to="/regimen">
-        <div className="metric-label">Régimen de mercado <Activity /></div>
-        <div className="metric-main"><span className="metric-value metric-value-text">{regime.trend || "Sin lectura"}</span></div>
-        <div className="metric-note">Contexto de mercado · 4H</div>
+        <div className="metric-label">{t("Régimen de mercado ")}<Activity /></div>
+        <div className="metric-main"><span className="metric-value metric-value-text">{t(regime.trend || "Sin lectura")}</span></div>
+        <div className="metric-note">{t("Contexto de mercado · 4H")}</div>
       </Link>
       <Link className="overview-metric" to="/mercado">
-        <div className="metric-label">Amplitud del mercado <ChartNoAxesCombined /></div>
+        <div className="metric-label">{t("Amplitud del mercado ")}<ChartNoAxesCombined /></div>
         <div className="metric-main"><span className="metric-value">{breadth == null ? "—" : `${number(breadth, 1)}%`}</span></div>
-        <div className="metric-note">Participación alcista de los pares medidos</div>
+        <div className="metric-note">{t("Participación alcista de los pares medidos")}</div>
       </Link>
       <Link className="overview-metric" to="/mercado/liquidaciones">
-        <div className="metric-label">Liquidaciones <span>15 min</span></div>
+        <div className="metric-label">{t("Liquidaciones ")}<span>{t("15 min")}</span></div>
         <div className="metric-main"><span className="metric-value">{liq.total > 0 ? compact(liq.total) : "—"}</span><span className="small muted">USDT</span></div>
-        <div className="metric-note">{liq.status === "unavailable" ? "Datos temporalmente no disponibles" : `${liq.pairs.length} pares · ${liq.orders} eventos`}</div>
+        <div className="metric-note">{liq.status === "unavailable" ? t("Datos temporalmente no disponibles") : `${liq.pairs.length} ${t("pares")} · ${liq.orders} ${t("eventos")}`}</div>
       </Link>
     </div>
   );
@@ -200,27 +201,25 @@ function SignalsPreview({ data }: { data: OverviewData }) {
     <section className="signals-preview panel">
       <div className="section-padding">
         <SectionHeader
-          title="Señales en tu radar"
-          subtitle="Setups con entrada definida. Sin perseguir el precio."
+          title={t("Señales en tu radar")}
+          subtitle={t("Setups con entrada definida. Sin perseguir el precio.")}
         >
           <Link to="/senales" className="link-subtle">
-            Ver todas
-            <ArrowUpRight size={13} />
+            {t("Ver todas")}<ArrowUpRight size={13} />
           </Link>
         </SectionHeader>
       </div>
       <SignalTable signals={data.signals.slice(0, 3)} />
       <div className="signal-disclaimer">
         <ShieldCheck size={12} />
-        No persigas el precio; espera la zona indicada.
-      </div>
+        {t("No persigas el precio; espera la zona indicada.")}</div>
     </section>
   );
 }
 function ActivityPreview({ data }: { data: OverviewData }) {
   return (
     <section className="activity-panel panel">
-      <SectionHeader title="El mercado se mueve">
+      <SectionHeader title={t("El mercado se mueve")}>
         <Bell size={13} className="muted" />
       </SectionHeader>
       <div className="activity-list">
@@ -248,8 +247,8 @@ function ActivityPreview({ data }: { data: OverviewData }) {
               )}
             </span>
             <div>
-              <h3>{alert.title || (alert.kind === "liq" ? "Liquidaciones" : alert.kind === "mov" ? "Movimiento de mercado" : "Aviso de volumen")}{alert.symbol ? ` · ${alert.symbol.replace("USDT", "")}` : ""}</h3>
-              <p>{alert.text}</p>
+              <h3>{t(alert.title || (alert.kind === "liq" ? "Liquidaciones" : alert.kind === "mov" ? "Movimiento de mercado" : "Aviso de volumen"))}{alert.symbol ? ` · ${alert.symbol.replace("USDT", "")}` : ""}</h3>
+              <p>{t(alert.text)}</p>
               <time>
                 {ago(alert.created_at)}
                 <ArrowUpRight
@@ -293,14 +292,12 @@ function WatchlistPreview({ data }: { data: OverviewData }) {
               className={mode === "watchlist" ? "active" : ""}
               onClick={() => setMode("watchlist")}
             >
-              Mi watchlist
-            </button>
+              {t("Mi watchlist")}</button>
             <button
               className={mode === "movers" ? "active" : ""}
               onClick={() => setMode("movers")}
             >
-              En movimiento
-            </button>
+              {t("En movimiento")}</button>
           </div>
         </SectionHeader>
       </div>
@@ -308,11 +305,11 @@ function WatchlistPreview({ data }: { data: OverviewData }) {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Activo</th>
-              <th>Precio</th>
-              <th>Cambio 24h</th>
-              <th>Últimas 24h</th>
-              <th>Volumen 24h</th>
+              <th>{t("Activo")}</th>
+              <th>{t("Precio")}</th>
+              <th>{t("Cambio 24h")}</th>
+              <th>{t("Últimas 24h")}</th>
+              <th>{t("Volumen 24h")}</th>
               <th />
             </tr>
           </thead>
@@ -362,10 +359,9 @@ function WatchlistPreview({ data }: { data: OverviewData }) {
       </div>
       {!selected.length && (
         <p className="slim-note" style={{ padding: 20 }}>
-          Agrega tus primeros pares desde{" "}
+          {t("Agrega tus primeros pares desde")}{" "}
           <Link to="/watchlist" className="positive">
-            Mi watchlist
-          </Link>
+            {t("Mi watchlist")}</Link>
           .
         </p>
       )}
@@ -377,7 +373,7 @@ function CalendarPreview() {
   const { data: events } = useApi(() => getCalendarEvents());
   return (
     <section className="calendar-preview panel">
-      <SectionHeader title="En el horizonte">
+      <SectionHeader title={t("En el horizonte")}>
         <Link to="/calendario" className="link-subtle">
           <CalendarDays size={13} />
         </Link>
@@ -387,24 +383,24 @@ function CalendarPreview() {
           <div className="calendar-date">
             <span>
               {new Date(event.date)
-                .toLocaleDateString("es", {
+                .toLocaleDateString(getIntlLocale(), {
                   month: "short",
                   timeZone: user?.tz,
                 })
                 .toUpperCase()}
             </span>
             <strong>
-              {new Date(event.date).toLocaleDateString("es", {
+              {new Date(event.date).toLocaleDateString(getIntlLocale(), {
                 day: "2-digit",
                 timeZone: user?.tz,
               })}
             </strong>
           </div>
           <div>
-            <h3>{event.title}</h3>
+            <h3>{t(event.title)}</h3>
             <p>{dateTime(event.date, user?.tz)}</p>
             <Tag tone={event.impact === "alto" ? "red" : "amber"} dot>
-              Impacto {event.impact}
+              {t("Impacto ")}{event.impact}
             </Tag>
           </div>
         </Link>
@@ -416,8 +412,8 @@ function MarketMap({ quotes }: { quotes: AssetQuote[] }) {
   return (
     <section className="market-map-section">
       <SectionHeader
-        title="Mapa del mercado"
-        subtitle="Variación en 24h. Selecciona un activo para leer su flujo."
+        title={t("Mapa del mercado")}
+        subtitle={t("Variación en 24h. Selecciona un activo para leer su flujo.")}
       >
         <Tag tone="muted">USDT-M</Tag>
       </SectionHeader>
@@ -457,11 +453,10 @@ function PanoramaView({ data }: { data: OverviewData }) {
       <div className="panorama-first-grid">
         <MarketMap quotes={data.quotes} />
         <section className="panorama-brief">
-          <div className="eyebrow">RÉGIMEN REPORTADO POR EL BACKEND</div>
-          <h2>{regimeContext(data.regime).label}<span>.</span></h2>
+          <div className="eyebrow">{t("RÉGIMEN REPORTADO POR EL BACKEND")}</div>
+          <h2>{t(regimeContext(data.regime).label)}<span>.</span></h2>
           <p>
-            Esta lectura resume el régimen que informó el backend. Confirma la cobertura, el flujo y el precio antes de decidir una operación.
-          </p>
+            {t("Esta lectura resume el régimen que informó el backend. Confirma la cobertura, el flujo y el precio antes de decidir una operación.")}</p>
           <div className="breadth-visual">
             <svg
               viewBox="0 0 130 130"
@@ -494,50 +489,46 @@ function PanoramaView({ data }: { data: OverviewData }) {
               <strong>
                 {data.breadth_pct == null ? "—" : number(data.breadth_pct, 1)}{data.breadth_pct == null ? null : <span>%</span>}
               </strong>
-              <span>del mercado al alza</span>
+              <span>{t("del mercado al alza")}</span>
             </div>
           </div>
           <div className="panorama-breadth-labels">
             <span>
               <i className="small-dot positive" />
-              {data.breadth.up == null ? "—" : data.breadth.up} suben
-            </span>
+              {data.breadth.up == null ? "—" : data.breadth.up} {t("suben")}</span>
             <span>
               <i className="small-dot negative" />
-              {data.breadth.down == null ? "—" : data.breadth.down} bajan
-            </span>
+              {data.breadth.down == null ? "—" : data.breadth.down} {t("bajan")}</span>
           </div>
           <Link to="/regimen" className="btn btn-secondary">
-            Entender el contexto
-            <ArrowRight size={13} />
+            {t("Entender el contexto")}<ArrowRight size={13} />
           </Link>
         </section>
       </div>
       <div className="panorama-second-grid">
         <MarketChart panorama />
         <section className="panorama-performance panel panel-pad">
-          <SectionHeader title="Disciplina que se puede medir">
+          <SectionHeader title={t("Disciplina que se puede medir")}>
             <ChartNoAxesCombined size={15} className="muted" />
           </SectionHeader>
           <div className={`performance-big ${data.performance.total_r < 0 ? "negative" : "positive"}`}>
             {data.performance.operations ? `${data.performance.total_r > 0 ? "+" : ""}${number(data.performance.total_r)}` : "—"}
             {data.performance.operations ? <span>R</span> : null}
           </div>
-          <p className="small muted">Rendimiento acumulado · 30 días</p>
+          <p className="small muted">{t("Rendimiento acumulado · 30 días")}</p>
           <HistoryChart data={data.performance.curve} height={145} hideAxis />
           <div className="detail-row">
-            <span>Operaciones cerradas</span>
+            <span>{t("Operaciones cerradas")}</span>
             <strong className="mono">{data.performance.operations}</strong>
           </div>
           <div className="detail-row">
-            <span>Win rate</span>
+            <span>{t("Win rate")}</span>
             <strong className="mono positive">
               {data.performance.operations ? `${number(data.performance.win_rate, 1)}%` : "—"}
             </strong>
           </div>
           <Link className="link-accent" to="/resultados">
-            Explorar los resultados
-            <ArrowUpRight size={13} />
+            {t("Explorar los resultados")}<ArrowUpRight size={13} />
           </Link>
         </section>
       </div>
@@ -608,15 +599,13 @@ export default function DashboardPage() {
       >
         <RefreshButton onClick={refresh} loading={loading} />
         <Link to="/senales" className="btn btn-primary">
-          Explorar señales
-          <ArrowUpRight size={14} />
+          {t("Explorar señales")}<ArrowUpRight size={14} />
         </Link>
       </PageHeader>
       <ResourceState loading={loading} error={error} retry={refresh} />
       {displayData && !loading && !error && displayData.partial && (
         <div className="slim-note" role="status" style={{ margin: "0 0 12px" }}>
-          Algunos módulos están tardando en responder. Mostramos los datos disponibles y volverán a consultarse al actualizar.
-        </div>
+          {t("Algunos módulos están tardando en responder. Mostramos los datos disponibles y volverán a consultarse al actualizar.")}</div>
       )}
       {displayData && !loading && !error && (
         <>
@@ -642,11 +631,10 @@ export default function DashboardPage() {
           <div className="dashboard-bottom-note">
             <span>
               <Info size={11} />
-              "Cotizaciones, velas y métricas proceden de los servicios conectados. Si un servicio no dispone de datos, el módulo mostrará su error o estado de recopilación."
+              {t("Cotizaciones, velas y métricas proceden de los servicios conectados. Si un servicio no dispone de datos, el módulo mostrará su error o estado de recopilación.")}
             </span>
             <Link to="/guia">
-              Aprende a interpretar los datos
-              <CircleHelp size={11} />
+              {t("Aprende a interpretar los datos")}<CircleHelp size={11} />
             </Link>
           </div>
         </>

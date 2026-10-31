@@ -1,3 +1,4 @@
+import { t } from "@/i18n/translation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   AlertCircle,
@@ -5,6 +6,7 @@ import {
   Check,
   Copy,
   Info,
+  Languages,
   RefreshCw,
   Sparkles,
   X,
@@ -18,12 +20,27 @@ export function Brand({ compact = false }: { compact?: boolean }) {
     <span className={`brand${compact ? " brand-compact" : ""}`}>
       <img
         src={compact ? ftradeBrandIcon : ftradeBrandLogo}
-        alt={compact ? "Símbolo de FTrade" : "FTrade — Analiza, opera, avanza"}
+        alt={compact ? t("Símbolo de FTrade") : t("FTrade — Analiza, opera, avanza")}
         className="brand-image"
         loading="eager"
         decoding="async"
       />
     </span>
+  );
+}
+
+
+export function LanguageSwitch({ className = "" }: { className?: string }) {
+  const { language, setLanguage, t } = useApp();
+  return (
+    <div className={`language-switch ${className}`} role="group" aria-label={t("Idioma")}>
+      <button type="button" className={language === "en" ? "active" : ""} aria-pressed={language === "en"} aria-label={t("English")} onClick={() => void setLanguage("en")}>
+        <Languages size={13} /> EN
+      </button>
+      <button type="button" className={language === "es" ? "active" : ""} aria-pressed={language === "es"} aria-label={t("Español")} onClick={() => void setLanguage("es")}>
+        ES
+      </button>
+    </div>
   );
 }
 
@@ -155,7 +172,7 @@ export function Countdown({
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
-  if (!until) return <span>Sin vencimiento</span>;
+  if (!until) return <span>{t("Sin vencimiento")}</span>;
   const seconds = Math.max(0, Math.floor((Date.parse(until) - now) / 1000));
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor(seconds / 3600) % 24;
@@ -188,7 +205,7 @@ export function CopyButton({
       window.setTimeout(() => setCopied(false), 2200);
     } catch {
       toast(
-        "No se pudo copiar. Selecciona el texto y cópialo manualmente.",
+        t("No se pudo copiar. Selecciona el texto y cópialo manualmente."),
         "error",
       );
     }
@@ -235,7 +252,7 @@ export function ResourceState({
       <div
         className="resource-skeleton"
         role="status"
-        aria-label="Cargando datos"
+        aria-label={t("Cargando datos")}
       >
         <div className="skeleton-shine skeleton-title" />
         <div className="skeleton-shine skeleton-chart" />
@@ -247,14 +264,13 @@ export function ResourceState({
       <div className="resource-state">
         {error ? <AlertCircle size={30} /> : <Info size={30} />}
         <h3>
-          {error ? "No pudimos cargar los datos" : "Todo tranquilo por aquí"}
+          {t(error ? "No pudimos cargar los datos" : "Todo tranquilo por aquí")}
         </h3>
-        <p>{error || emptyText}</p>
+        <p>{t(error || emptyText)}</p>
         {error && retry && (
           <button className="btn btn-secondary" onClick={retry}>
             <RefreshCw size={15} />
-            Reintentar
-          </button>
+            {t("Reintentar")}</button>
         )}
       </div>
     );
@@ -270,7 +286,7 @@ export function RefreshButton({
   return (
     <button className="btn btn-secondary" disabled={loading} onClick={onClick}>
       <RefreshCw size={14} className={loading ? "spin" : ""} />
-      <span>Actualizar</span>
+      <span>{t("Actualizar")}</span>
     </button>
   );
 }
@@ -340,7 +356,7 @@ export function Modal({
       >
         <div className="modal-heading">
           <h2>{title}</h2>
-          <button className="icon-button" aria-label="Cerrar" onClick={onClose}>
+          <button className="icon-button" aria-label={t("Cerrar")} onClick={onClose}>
             <X size={19} />
           </button>
         </div>

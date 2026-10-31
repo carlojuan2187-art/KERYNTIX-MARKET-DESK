@@ -1,3 +1,4 @@
+import { t } from "@/i18n/translation";
 import { useEffect, useRef, useState } from "react";
 import {
   Link,
@@ -291,13 +292,13 @@ export default function MercadoPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="DETRÁS DE CADA MOVIMIENTO"
-        title="El mercado, en tiempo real."
-        description="Entiende quién compra, quién vende y dónde se concentra la actividad."
+        eyebrow={t("DETRÁS DE CADA MOVIMIENTO")}
+        title={t("El mercado, en tiempo real.")}
+        description={t("Entiende quién compra, quién vende y dónde se concentra la actividad.")}
       >
         <RefreshButton loading={active.loading || (tab === "flujo" && orderBook.loading)} onClick={refreshCurrent} />
       </PageHeader>
-      <nav className="tabs" aria-label="Vistas del mercado">
+      <nav className="tabs" aria-label={t("Vistas del mercado")}>
         {[
           {
             key: "flujo",
@@ -324,7 +325,7 @@ export default function MercadoPage() {
             className={`tab ${tab === item.key ? "active" : ""}`}
           >
             <item.icon size={14} />
-            {item.label}
+            {t(item.label)}
           </Link>
         ))}
       </nav>
@@ -345,13 +346,11 @@ export default function MercadoPage() {
               onClick={() => setSearching((value) => !value)}
             >
               <Search size={11} />
-              Otro par
-            </button>
+              {t("Otro par")}</button>
           </div>
         ) : (
           <span className="slim-note" style={{ padding: 0 }}>
-            Solo pares de Binance USDT-M Futures
-          </span>
+            {t("Solo pares de Binance USDT-M Futures")}</span>
         )}
         <div className="window-controls">
           {tab !== "flujo" && (
@@ -383,8 +382,8 @@ export default function MercadoPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Busca por nombre o símbolo"
-              aria-label="Buscar otro par"
+              placeholder={t("Busca por nombre o símbolo")}
+              aria-label={t("Buscar otro par")}
             />
           </div>
           <div className="pair-chips">
@@ -421,7 +420,7 @@ export default function MercadoPage() {
               <AssetIcon symbol={simbolo} size={37} />
               <div>
                 <h2>{simbolo.replace("USDT", " / USDT")}</h2>
-                <small>Compra agresiva frente a venta agresiva</small>
+                <small>{t("Compra agresiva frente a venta agresiva")}</small>
               </div>
             </div>
             <div className="flow-quote">
@@ -442,16 +441,16 @@ export default function MercadoPage() {
             <Tag tone={flow.data.quality?.volume_ratio_4h_ready ? "green" : "amber"}>
               {flow.data.quality?.volume_ratio_4h_ready ? "Referencia de volumen 4H disponible" : "Referencia de volumen 4H en recopilación"}
             </Tag>
-            <span>Actualizado {flow.data.updated_at ? ago(flow.data.updated_at) : "—"}</span>
+            <span>{t("Actualizado ")}{flow.data.updated_at ? ago(flow.data.updated_at) : "—"}</span>
             <span>{flow.data.quality?.history_hours == null ? "Historial —" : `${number(flow.data.quality.history_hours, 1)} h de velas`}</span>
-            <span>Última vela cerrada {flow.data.quality?.last_closed_candle_at ? ago(flow.data.quality.last_closed_candle_at) : "—"}</span>
+            <span>{t("Última vela cerrada ")}{flow.data.quality?.last_closed_candle_at ? ago(flow.data.quality.last_closed_candle_at) : "—"}</span>
           </div>
           {flow.data.quality?.message && <p className="slim-note" role="status">{flow.data.quality.message}</p>}
           <div className="flow-windows">
             {flowWindows.map((item) => (
               <section className="flow-window panel panel-pad" key={item.label}>
                 <div className="section-heading">
-                  <h2>Ventana {item.label}</h2>
+                  <h2>{t("Ventana ")}{item.label}</h2>
                   <Tag tone={item.buy_pct == null ? "muted" : item.buy_pct > 50 ? "green" : item.buy_pct < 50 ? "red" : "amber"}>
                     {item.buy_pct == null ? "Sin datos" : item.buy_pct > 50 ? "Compra dominante" : item.buy_pct < 50 ? "Venta dominante" : "Flujo equilibrado"}
                   </Tag>
@@ -459,14 +458,14 @@ export default function MercadoPage() {
                 <div className="flow-buy-value positive">
                   {number(item.buy_pct, 1)}
                   {item.buy_pct == null ? null : <small>%</small>}
-                  <span>compra agresiva</span>
+                  <span>{t("compra agresiva")}</span>
                 </div>
                 <div className="buy-sell-labels">
                   <span className="positive">
-                    Compras {item.buy_pct == null ? "—" : `${number(item.buy_pct, 1)}%`}
+                    {t("Compras ")}{item.buy_pct == null ? "—" : `${number(item.buy_pct, 1)}%`}
                   </span>
                   <span className="negative">
-                    Ventas {item.buy_pct == null ? "—" : `${number(100 - item.buy_pct, 1)}%`}
+                    {t("Ventas ")}{item.buy_pct == null ? "—" : `${number(100 - item.buy_pct, 1)}%`}
                   </span>
                 </div>
                 <div className="bar-track">
@@ -477,7 +476,7 @@ export default function MercadoPage() {
                   />
                 </div>
                 <div className="detail-row">
-                  <span>Delta en {simbolo.replace("USDT", "")}</span>
+                  <span>{t("Delta en ")}{simbolo.replace("USDT", "")}</span>
                   <strong
                     className={`mono ${item.delta == null ? "" : item.delta >= 0 ? "positive" : "negative"}`}
                   >
@@ -486,7 +485,7 @@ export default function MercadoPage() {
                   </strong>
                 </div>
                 <div className="detail-row">
-                  <span>Delta en USDT</span>
+                  <span>{t("Delta en USDT")}</span>
                   <strong
                     className={`mono ${item.delta_usdt == null ? "" : item.delta_usdt >= 0 ? "positive" : "negative"}`}
                   >
@@ -494,20 +493,20 @@ export default function MercadoPage() {
                   </strong>
                 </div>
                 <div className="detail-row">
-                  <span>Precio · {item.label}</span>
+                  <span>{t("Precio · ")}{item.label}</span>
                   <strong className="mono">{price(item.price)}</strong>
                 </div>
                 <div className="detail-row">
-                  <span>Cambio del precio</span>
+                  <span>{t("Cambio del precio")}</span>
                   <strong className={`mono ${item.change_pct == null ? "" : item.change_pct >= 0 ? "positive" : "negative"}`}>{percent(item.change_pct)}</strong>
                 </div>
                 <div className="detail-row">
-                  <span>Volumen negociado</span>
+                  <span>{t("Volumen negociado")}</span>
                   <strong className="mono">{item.volume_usdt == null ? "—" : `$${compact(item.volume_usdt)}`}</strong>
                 </div>
                 {item.volume_ratio != null && (
                   <div className="detail-row">
-                    <span>Volumen vs. normal</span>
+                    <span>{t("Volumen vs. normal")}</span>
                     <strong className="mono">{number(item.volume_ratio, 2)}x</strong>
                   </div>
                 )}
@@ -517,14 +516,14 @@ export default function MercadoPage() {
           <div className="two-col-wide" style={{ marginTop: 22 }}>
             <section className="panel panel-pad">
               <SectionHeader
-                title="Lo que revela el volumen"
-                subtitle="Delta acumulado (CVD) · 48 velas de 5 minutos · Últimas 4 horas"
+                title={t("Lo que revela el volumen")}
+                subtitle={t("Delta acumulado (CVD) · 48 velas de 5 minutos · Últimas 4 horas")}
               >
                 <Tag
                   tone={flowWindows.find((item) => item.label === "4h")?.buy_pct == null ? "muted" : (flowWindows.find((item) => item.label === "4h")?.buy_pct ?? 50) > 50 ? "green" : "red"}
                 >
                   {flowWindows.find((item) => item.label === "4h")?.buy_pct == null ? null : (flowWindows.find((item) => item.label === "4h")!.buy_pct! >= 50 ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />)}
-                  Tendencia{" "}
+                  {t("Tendencia")}{" "}
                   {flowWindows.find((item) => item.label === "4h")?.buy_pct == null
                     ? "—"
                     : (flowWindows.find((item) => item.label === "4h")!.buy_pct! > 50 ? "compradora" : flowWindows.find((item) => item.label === "4h")!.buy_pct! < 50 ? "vendedora" : "equilibrada")}
@@ -534,27 +533,27 @@ export default function MercadoPage() {
                 data={flow.data.cvd}
                 dataKey="cvd"
                 xKey="time"
-                label="CVD (USDT)"
+                label={t("CVD (USDT)")}
                 height={230}
               />
             </section>
             <section className="panel panel-pad">
-              <SectionHeader title="Más allá del precio" subtitle="Flujo, divergencia y actividad relativa" />
+              <SectionHeader title={t("Más allá del precio")} subtitle={t("Flujo, divergencia y actividad relativa")} />
               {flow.data.price_cvd && (
                 <div className={`flow-divergence ${flow.data.price_cvd.status}`}>
                   <div className="flow-divergence-header">
-                    <strong>{flow.data.price_cvd.label}</strong>
+                    <strong>{t(flow.data.price_cvd.label)}</strong>
                     <Tag tone={flow.data.price_cvd.status === "bearish_divergence" || flow.data.price_cvd.status === "sellers_confirmed" ? "red" : flow.data.price_cvd.status === "bullish_divergence" || flow.data.price_cvd.status === "buyers_confirmed" ? "green" : "amber"}>
                       {flow.data.price_cvd.price_change_pct == null ? "Sin lectura" : percent(flow.data.price_cvd.price_change_pct)}
                     </Tag>
                   </div>
                   <p>{flow.data.price_cvd.message}</p>
                   <div className="detail-row">
-                    <span>Delta neto · última hora</span>
+                    <span>{t("Delta neto · última hora")}</span>
                     <strong className={`mono ${flow.data.price_cvd.delta_usdt == null ? "" : flow.data.price_cvd.delta_usdt >= 0 ? "positive" : "negative"}`}>{flow.data.price_cvd.delta_usdt == null ? "—" : `${flow.data.price_cvd.delta_usdt >= 0 ? "+" : "−"}$${compact(Math.abs(flow.data.price_cvd.delta_usdt))}`}</strong>
                   </div>
                   <div className="detail-row">
-                    <span>Delta / volumen cotizado</span>
+                    <span>{t("Delta / volumen cotizado")}</span>
                     <strong className="mono">{percent(flow.data.price_cvd.delta_share_pct)}</strong>
                   </div>
                 </div>
@@ -563,22 +562,21 @@ export default function MercadoPage() {
                 {flow.data.volume_ratio != null ? (
                   <>
                     <span className="mono">{number(flow.data.volume_ratio, 1)}<small>x</small></span>
-                    <p>Volumen de 15m frente a su ritmo normal.</p>
+                    <p>{t("Volumen de 15m frente a su ritmo normal.")}</p>
                   </>
                 ) : (
-                  <p>El ratio de volumen de 15m aparecerá cuando exista una referencia histórica fiable.</p>
+                  <p>{t("El ratio de volumen de 15m aparecerá cuando exista una referencia histórica fiable.")}</p>
                 )}
               </div>
               <Reading>{flow.data.reading}</Reading>
               <Link className="btn btn-blue" to={`/derivados/${simbolo}`}>
                 <Zap size={13} />
-                Contrastar con derivados
-                <ArrowUpRight size={12} />
+                {t("Contrastar con derivados")}<ArrowUpRight size={12} />
               </Link>
             </section>
           </div>
           <section className="panel panel-pad order-book-panel" style={{ marginTop: 22 }}>
-            <SectionHeader title={`Libro de órdenes · ${simbolo.replace("USDT", " / USDT")}`} subtitle="Top 20 niveles · Binance USDⓈ-M Futures · Stream de profundidad en directo">
+            <SectionHeader title={`Libro de órdenes · ${simbolo.replace("USDT", " / USDT")}`} subtitle={t("Top 20 niveles · Binance USDⓈ-M Futures · Stream de profundidad en directo")}>
               <div className="order-book-live-status">
                 <Tag tone={effectiveOrderBookStreamStatus === "live" && currentLiveOrderBook ? "green" : effectiveOrderBookStreamStatus === "stale" || effectiveOrderBookStreamStatus === "disconnected" ? "red" : "amber"} dot>
                   {orderBookConnectionLabel[effectiveOrderBookStreamStatus]}
@@ -586,44 +584,43 @@ export default function MercadoPage() {
                 {displayedOrderBook?.updated_at && <Tag tone="muted">{currentLiveOrderBook ? "Último tick" : "Snapshot REST"} · {ago(displayedOrderBook.updated_at)}</Tag>}
               </div>
             </SectionHeader>
-            {orderBook.loading && !displayedOrderBook && <p className="slim-note">Cargando snapshot inicial mientras se conecta el WebSocket de Binance…</p>}
+            {orderBook.loading && !displayedOrderBook && <p className="slim-note">{t("Cargando snapshot inicial mientras se conecta el WebSocket de Binance…")}</p>}
             {!currentLiveOrderBook && displayedOrderBook && effectiveOrderBookStreamStatus !== "live" && (
               <p className="slim-note order-book-feed-warning" role="status">
-                La tabla mostrada es una instantánea REST de respaldo, no un libro en vivo. Se marcará como en vivo solo después de recibir un mensaje válido del WebSocket.
-              </p>
+                {t("La tabla mostrada es una instantánea REST de respaldo, no un libro en vivo. Se marcará como en vivo solo después de recibir un mensaje válido del WebSocket.")}</p>
             )}
             {currentLiveOrderBook && effectiveOrderBookStreamStatus !== "live" && (
               <p className="slim-note order-book-feed-warning" role="status">
-                El feed no está actualizando la profundidad. Se conserva la última lectura recibida hace {ago(currentLiveOrderBook.updated_at)} y no debe tratarse como dato en vivo. {orderBookStreamError || "Intentando reconectar automáticamente."}
+                {t("El feed no está actualizando la profundidad. Se conserva la última lectura recibida hace ")}{ago(currentLiveOrderBook.updated_at)} {t("y no debe tratarse como dato en vivo. ")}{t(orderBookStreamError || "Intentando reconectar automáticamente.")}
               </p>
             )}
-            {orderBookStreamError && !displayedOrderBook && <p className="slim-note" role="status">{orderBookStreamError} El libro no está disponible hasta recibir datos válidos.</p>}
-            {orderBook.error && !displayedOrderBook && <p className="slim-note" role="status">No se pudo obtener la instantánea REST inicial: {orderBook.error}</p>}
+            {orderBookStreamError && !displayedOrderBook && <p className="slim-note" role="status">{t(orderBookStreamError)} {t("El libro no está disponible hasta recibir datos válidos.")}</p>}
+            {orderBook.error && !displayedOrderBook && <p className="slim-note" role="status">{t("No se pudo obtener la instantánea REST inicial: ")}{orderBook.error}</p>}
             {displayedOrderBook && (
               <>
                 <div className="order-book-metrics">
-                  <div className="overview-metric"><div className="metric-label">Mejor bid</div><div className="metric-value positive mono">{price(displayedOrderBook.best_bid)}</div></div>
-                  <div className="overview-metric"><div className="metric-label">Mejor ask</div><div className="metric-value negative mono">{price(displayedOrderBook.best_ask)}</div></div>
-                  <div className="overview-metric"><div className="metric-label">Spread</div><div className="metric-value mono">{price(displayedOrderBook.spread)}</div><div className="metric-note">{percent(displayedOrderBook.spread_pct, 4)}</div></div>
-                  <div className="overview-metric"><div className="metric-label">Desequilibrio por profundidad</div><div className={`metric-value mono ${(displayedOrderBook.imbalance_pct ?? 0) > 0 ? "positive" : (displayedOrderBook.imbalance_pct ?? 0) < 0 ? "negative" : ""}`}>{percent(displayedOrderBook.imbalance_pct, 1)}</div><div className="metric-note">Solo los niveles visibles</div></div>
+                  <div className="overview-metric"><div className="metric-label">{t("Mejor bid")}</div><div className="metric-value positive mono">{price(displayedOrderBook.best_bid)}</div></div>
+                  <div className="overview-metric"><div className="metric-label">{t("Mejor ask")}</div><div className="metric-value negative mono">{price(displayedOrderBook.best_ask)}</div></div>
+                  <div className="overview-metric"><div className="metric-label">{t("Spread")}</div><div className="metric-value mono">{price(displayedOrderBook.spread)}</div><div className="metric-note">{percent(displayedOrderBook.spread_pct, 4)}</div></div>
+                  <div className="overview-metric"><div className="metric-label">{t("Desequilibrio por profundidad")}</div><div className={`metric-value mono ${(displayedOrderBook.imbalance_pct ?? 0) > 0 ? "positive" : (displayedOrderBook.imbalance_pct ?? 0) < 0 ? "negative" : ""}`}>{percent(displayedOrderBook.imbalance_pct, 1)}</div><div className="metric-note">{t("Solo los niveles visibles")}</div></div>
                 </div>
                 <div className="order-book-depth-bars">
-                  <div><span className="positive">Bids · ${compact(displayedOrderBook.bid_depth_usdt)}</span><span className="negative">Asks · ${compact(displayedOrderBook.ask_depth_usdt)}</span></div>
+                  <div><span className="positive">{t("Bids · $")}{compact(displayedOrderBook.bid_depth_usdt)}</span><span className="negative">{t("Asks · $")}{compact(displayedOrderBook.ask_depth_usdt)}</span></div>
                   <div className="bar-track"><span className="buy" style={{ width: `${displayedOrderBook.bid_share_pct ?? 50}%` }} /><span className="sell" style={{ width: `${displayedOrderBook.bid_share_pct == null ? 50 : 100 - displayedOrderBook.bid_share_pct}%` }} /></div>
                 </div>
                 <div className="order-book-columns">
                   <div>
-                    <h3 className="order-book-side positive">Compras límite (Bid)</h3>
-                    <div className="order-book-head"><span>Precio</span><span>Cantidad</span><span>Valor USDT</span></div>
+                    <h3 className="order-book-side positive">{t("Compras límite (Bid)")}</h3>
+                    <div className="order-book-head"><span>{t("Precio")}</span><span>{t("Cantidad")}</span><span>{t("Valor USDT")}</span></div>
                     {displayedOrderBook.bids.slice(0, 5).map((level) => <div className="order-book-row bid" key={`bid-${level.price}`}><span className="mono">{price(level.price)}</span><span className="mono">{compact(level.quantity)}</span><span className="mono">${compact(level.notional_usdt)}</span></div>)}
                   </div>
                   <div>
-                    <h3 className="order-book-side negative">Ventas límite (Ask)</h3>
-                    <div className="order-book-head"><span>Precio</span><span>Cantidad</span><span>Valor USDT</span></div>
+                    <h3 className="order-book-side negative">{t("Ventas límite (Ask)")}</h3>
+                    <div className="order-book-head"><span>{t("Precio")}</span><span>{t("Cantidad")}</span><span>{t("Valor USDT")}</span></div>
                     {displayedOrderBook.asks.slice(0, 5).map((level) => <div className="order-book-row ask" key={`ask-${level.price}`}><span className="mono">{price(level.price)}</span><span className="mono">{compact(level.quantity)}</span><span className="mono">${compact(level.notional_usdt)}</span></div>)}
                   </div>
                 </div>
-                <p className="slim-note">{currentLiveOrderBook && effectiveOrderBookStreamStatus === "live" ? "Actualización directa desde el WebSocket público de Binance Futures; top 20 niveles, con actualización cuando cambia la profundidad." : "Datos de respaldo. No son cotizaciones en vivo hasta que el estado indique WebSocket Binance conectado."} El desequilibrio refleja únicamente los niveles visibles. Las órdenes pueden cancelarse o cambiar antes de ejecutarse; no implica que el precio vaya a dirigirse a esa zona.</p>
+                <p className="slim-note">{currentLiveOrderBook && effectiveOrderBookStreamStatus === "live" ? "Actualización directa desde el WebSocket público de Binance Futures; top 20 niveles, con actualización cuando cambia la profundidad." : "Datos de respaldo. No son cotizaciones en vivo hasta que el estado indique WebSocket Binance conectado."} {t("El desequilibrio refleja únicamente los niveles visibles. Las órdenes pueden cancelarse o cambiar antes de ejecutarse; no implica que el precio vaya a dirigirse a esa zona.")}</p>
               </>
             )}
           </section>
@@ -658,34 +655,34 @@ export default function MercadoPage() {
               },
             ].map((metric) => (
               <div className="overview-metric" key={metric.label}>
-                <div className="metric-label">{metric.label}</div>
+                <div className="metric-label">{t(metric.label)}</div>
                 <div className={`metric-value ${metric.tone || ""}`}>
                   {metric.value}
                 </div>
-                <div className="metric-note">{metric.note}</div>
+                <div className="metric-note">{t(metric.note)}</div>
               </div>
             ))}
           </div>
           <div className="market-data-status" aria-live="polite">
             <Tag tone={liq.data.connected ? "green" : "red"}>{liq.data.connected ? "Feed de liquidaciones conectado" : "Feed de liquidaciones desconectado"}</Tag>
             <Tag tone={liq.data.coverage_complete ? "green" : "amber"}>{liq.data.coverage_complete ? "Ventana cubierta" : "Recopilando historial"}</Tag>
-            <span>Ventana observada: {liq.data.coverage_seconds == null ? "—" : `${number(liq.data.coverage_seconds / 60, 1)} min`}</span>
-            <span>Actualizado {liq.data.updated_at ? ago(liq.data.updated_at) : "—"}</span>
+            <span>{t("Ventana observada: ")}{liq.data.coverage_seconds == null ? "—" : `${number(liq.data.coverage_seconds / 60, 1)} min`}</span>
+            <span>{t("Actualizado ")}{liq.data.updated_at ? ago(liq.data.updated_at) : "—"}</span>
             <span>{liq.data.last_event_at ? `Última liquidación ${ago(liq.data.last_event_at)}` : "Sin evento de liquidación observado todavía"}</span>
           </div>
           <div className="two-col-wide">
             <section className="panel panel-pad">
               <SectionHeader
-                title="Dónde está la presión"
+                title={t("Dónde está la presión")}
                 subtitle={`Liquidaciones por par · Ventana ${window === 60 ? "1h" : `${window}m`}`}
               />
               <div className="buy-sell-labels">
                 <span className="negative">
-                  Longs {number((liq.data.long_usdt / liq.data.total) * 100, 1)}
+                  {t("Longs ")}{number((liq.data.long_usdt / liq.data.total) * 100, 1)}
                   %
                 </span>
                 <span className="positive">
-                  Shorts{" "}
+                  {t("Shorts")}{" "}
                   {number((liq.data.short_usdt / liq.data.total) * 100, 1)}%
                 </span>
               </div>
@@ -736,7 +733,7 @@ export default function MercadoPage() {
               </div>
             </section>
             <section className="panel panel-pad">
-              <SectionHeader title="La mayor orden" />
+              <SectionHeader title={t("La mayor orden")} />
               {liq.data.largest_order ? (
                 <>
                   <div className="largest-order">
@@ -744,42 +741,40 @@ export default function MercadoPage() {
                     <span className="mono negative">${compact(liq.data.largest_order.amount_usdt)}</span>
                   </div>
                   <div className="detail-row">
-                    <span>Par</span>
+                    <span>{t("Par")}</span>
                     <strong>{liq.data.largest_order.symbol.replace("USDT", " / USDT")}</strong>
                   </div>
                   <div className="detail-row">
-                    <span>Posición liquidada</span>
+                    <span>{t("Posición liquidada")}</span>
                     <Tag tone={liq.data.largest_order.side === "LONG" ? "red" : "green"}>{liq.data.largest_order.side}</Tag>
                   </div>
                   <div className="detail-row">
-                    <span>Detectada</span>
+                    <span>{t("Detectada")}</span>
                     <span>{liq.data.largest_order.created_at ? ago(liq.data.largest_order.created_at) : "—"}</span>
                   </div>
                   <Link to={`/mercado/flujo/${liq.data.largest_order.symbol}`} className="btn btn-blue">
-                    Ver flujo de {liq.data.largest_order.symbol.replace("USDT", "")}
+                    {t("Ver flujo de ")}{liq.data.largest_order.symbol.replace("USDT", "")}
                     <ArrowRight size={13} />
                   </Link>
                 </>
               ) : (
-                <p className="slim-note">No hay una orden de liquidación destacada disponible en esta ventana.</p>
+                <p className="slim-note">{t("No hay una orden de liquidación destacada disponible en esta ventana.")}</p>
               )}
               {liq.data.reading && <Reading>{liq.data.reading}</Reading>}
             </section>
           </div>
           <p className="slim-note">
             <Info size={12} />
-            Binance reporta solo la última liquidación por símbolo cada segundo:
-            las cifras son un mínimo, no el total real.
-          </p>
+            {t("Binance reporta solo la última liquidación por símbolo cada segundo: las cifras son un mínimo, no el total real.")}</p>
         </>
       )}
       {tab === "movers" && movers.data && !movers.loading && !movers.error && (
         <>
           <div className="market-data-status" aria-live="polite">
             <Tag tone={movers.data.status === "ok" ? "green" : "amber"}>{movers.data.status === "ok" ? "Cobertura suficiente" : "Historial en recopilación"}</Tag>
-            <span>Historial {number(movers.data.collected_minutes, 1)} / {number(movers.data.required_minutes, 1)} min</span>
-            <span>Universo elegible: {movers.data.eligible_count ?? "—"} pares</span>
-            <span>Actualizado {movers.data.updated_at ? ago(movers.data.updated_at) : "—"}</span>
+            <span>{t("Historial ")}{number(movers.data.collected_minutes, 1)} / {number(movers.data.required_minutes, 1)} {t("min")}</span>
+            <span>{t("Universo elegible: ")}{movers.data.eligible_count ?? "—"} {t("pares")}</span>
+            <span>{t("Actualizado ")}{movers.data.updated_at ? ago(movers.data.updated_at) : "—"}</span>
           </div>
           <div className="movers-context">
             <span>
@@ -790,22 +785,21 @@ export default function MercadoPage() {
             </span>
             <span>
               <i className="small-dot positive" />
-              {movers.data.breadth_pct == null ? "—" : `${number(movers.data.breadth_pct, 1)}%`} de pares al alza
-            </span>
-            <span className="muted">Volumen diario superior a 20 M USDT</span>
+              {movers.data.breadth_pct == null ? "—" : `${number(movers.data.breadth_pct, 1)}%`} {t("de pares al alza")}</span>
+            <span className="muted">{t("Volumen diario superior a 20 M USDT")}</span>
           </div>
           <div className="two-col">
             <MoverList
-              title="Los que más suben"
+              title={t("Los que más suben")}
               rows={movers.data.gainers}
               positive
             />
-            <MoverList title="Los que más bajan" rows={Array.isArray(movers.data.losers) ? movers.data.losers : []} />
+            <MoverList title={t("Los que más bajan")} rows={Array.isArray(movers.data.losers) ? movers.data.losers : []} />
           </div>
           <section className="panel panel-pad" style={{ marginTop: 22 }}>
             <SectionHeader
-              title="Volumen anormal, precio en calma"
-              subtitle="Actividad elevada que todavía no se traduce en movimiento."
+              title={t("Volumen anormal, precio en calma")}
+              subtitle={t("Actividad elevada que todavía no se traduce en movimiento.")}
             />
             {(Array.isArray(movers.data.volume_flat) ? movers.data.volume_flat : []).map((q) => (
               <Link
@@ -818,21 +812,19 @@ export default function MercadoPage() {
                   <strong>{q.symbol}</strong>
                 </div>
                 <span className="mono">{percent(q.change_pct)}</span>
-                <Tag tone={q.volume_ratio_source === "exact" ? "green" : "amber"}>Volumen {q.volume_ratio == null ? "—" : `${q.volume_ratio_source === "exact" ? "" : "~"}${number(q.volume_ratio, 1)}x ${q.volume_ratio_source === "exact" ? "medido" : "estimado"}`}</Tag>
+                <Tag tone={q.volume_ratio_source === "exact" ? "green" : "amber"}>{t("Volumen ")}{q.volume_ratio == null ? "—" : `${q.volume_ratio_source === "exact" ? "" : "~"}${number(q.volume_ratio, 1)}x ${q.volume_ratio_source === "exact" ? "medido" : "estimado"}`}</Tag>
                 <span className={q.buy_pct == null ? "muted" : "positive"}>{q.buy_pct == null ? "—" : `${q.buy_pct}% compra`}</span>
                 <ArrowUpRight size={14} />
               </Link>
             ))}
             {(!Array.isArray(movers.data.volume_flat) || !movers.data.volume_flat.length) && (
               <p className="slim-note">
-                No hay anomalías de volumen sin movimiento en esta ventana.
-              </p>
+                {t("No hay anomalías de volumen sin movimiento en esta ventana.")}</p>
             )}
             <Reading>{movers.data.reading}</Reading>
           </section>
           <p className="slim-note">
-            Los valores y la cobertura dependen de la información que el backend recibe del proveedor de mercado.
-            {movers.data.status === "collecting" ? " El backend todavía está reuniendo historial suficiente para esta ventana." : ""}
+            {t("Los valores y la cobertura dependen de la información que el backend recibe del proveedor de mercado.")}{movers.data.status === "collecting" ? " El backend todavía está reuniendo historial suficiente para esta ventana." : ""}
           </p>
         </>
       )}

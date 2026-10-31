@@ -1,3 +1,5 @@
+import { getIntlLocale } from "@/i18n/translation";
+import { t } from "@/i18n/translation";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -161,7 +163,7 @@ function buildTechnicalSummary(candleRows1h: Candle[], candleRows4h: Candle[], c
 function targetDistance(currentPrice: number | null, target: number | null | undefined): string | null {
   if (currentPrice == null || currentPrice <= 0 || target == null || target <= 0) return null;
   const distance = Math.abs(target - currentPrice) / currentPrice * 100;
-  const relative = target > currentPrice ? "por encima" : target < currentPrice ? "por debajo" : "al precio actual";
+  const relative = target > currentPrice ? t("por encima") : target < currentPrice ? t("por debajo") : t("al precio actual");
   return `${percent(distance, 2)} ${relative}`;
 }
 
@@ -170,10 +172,10 @@ function entryDistance(currentPrice: number | null, signal: { entry_price?: numb
   const low = signal.entry_low ?? null;
   const high = signal.entry_high ?? null;
   if (low != null && high != null && low > 0 && high > 0) {
-    if (currentPrice >= low && currentPrice <= high) return "Dentro de la zona";
+    if (currentPrice >= low && currentPrice <= high) return t("Dentro de la zona");
     const boundary = currentPrice < low ? low : high;
     const distance = Math.abs(boundary - currentPrice) / currentPrice * 100;
-    return `${percent(distance, 2)} ${currentPrice < low ? "por debajo" : "por encima"} de la zona`;
+    return `${percent(distance, 2)} ${currentPrice < low ? t("por debajo") : t("por encima")} ${t("de la zona")}`;
   }
   return targetDistance(currentPrice, signal.entry_price);
 }
@@ -194,10 +196,10 @@ function trendTone(trend: WatchlistTrendState): string {
 }
 function TrendChip({ label, value }: { label: string; value: WatchlistTrendState }) {
   return (
-    <span className={`watchlist-trend-chip ${trendTone(value)}`} title={`${label}: ${trendLabel(value)}`}>
+    <span className={`watchlist-trend-chip ${trendTone(value)}`} title={`${label}: ${t(trendLabel(value))}`}>
       {value === "up" ? <ArrowUpRight size={13} /> : value === "down" ? <ArrowDownRight size={13} /> : value === "transition" || value === "volatile" ? <Activity size={13} /> : <Minus size={13} />}
       <small>{label}</small>
-      <strong>{trendLabel(value)}</strong>
+      <strong>{t(trendLabel(value))}</strong>
     </span>
   );
 }
@@ -206,25 +208,25 @@ function TimeframeAnalysisCard({ label, analysis, trend }: { label: string; anal
     <article className="watchlist-analysis-card">
       <div className="watchlist-analysis-card-head">
         <strong>{label}</strong>
-        <span className={trendTone(trend)}>{trendLabel(trend)}</span>
+        <span className={trendTone(trend)}>{t(trendLabel(trend))}</span>
       </div>
       {analysis ? (
         <>
           <div className="watchlist-analysis-primary">
-            <div><small>ADX</small><strong>{number(analysis.adx, 1)}</strong></div>
-            <div><small>ATR</small><strong>{percent(analysis.atr_pct, 2)}</strong></div>
-            <div><small>Vol. relativo</small><strong>{analysis.rel_volume == null ? "—" : `${number(analysis.rel_volume, 2)}x`}</strong></div>
+            <div><small>{t("ADX")}</small><strong>{number(analysis.adx, 1)}</strong></div>
+            <div><small>{t("ATR")}</small><strong>{percent(analysis.atr_pct, 2)}</strong></div>
+            <div><small>{t("Vol. relativo")}</small><strong>{analysis.rel_volume == null ? "—" : `${number(analysis.rel_volume, 2)}x`}</strong></div>
           </div>
           <div className="watchlist-analysis-lines">
-            <div><span>EMA 20 / 50</span><strong className="mono">{price(analysis.ema20)} / {price(analysis.ema50)}</strong></div>
-            <div><span>Precio vs. EMA 200</span><strong className={analysis.above_ema200 == null ? "muted" : analysis.above_ema200 ? "positive" : "negative"}>{analysis.above_ema200 == null ? "Sin datos" : analysis.above_ema200 ? "Por encima" : "Por debajo"}</strong></div>
-            <div><span>Pendiente EMA 50</span><strong className={analysis.ema50_slope_pct == null ? "muted" : analysis.ema50_slope_pct >= 0 ? "positive" : "negative"}>{percent(analysis.ema50_slope_pct, 3)}</strong></div>
-            <div><span>Fuerza de tendencia</span><strong>{analysis.strength || "Sin datos"}</strong></div>
-            <div><span>Percentil de volatilidad</span><strong>{analysis.vol_percentile == null ? "—" : `${number(analysis.vol_percentile, 0)}%`}</strong></div>
-            <div><span>Bandas de Bollinger</span><strong>{analysis.bandwidth_trend === "expanding" ? "Expandiéndose" : analysis.bandwidth_trend === "contracting" ? "Contrayéndose" : analysis.bandwidth_trend === "stable" ? "Estables" : "Sin datos"}</strong></div>
+            <div><span>{t("EMA 20 / 50")}</span><strong className="mono">{price(analysis.ema20)} / {price(analysis.ema50)}</strong></div>
+            <div><span>{t("Precio vs. EMA 200")}</span><strong className={analysis.above_ema200 == null ? "muted" : analysis.above_ema200 ? "positive" : "negative"}>{analysis.above_ema200 == null ? t("Sin datos") : analysis.above_ema200 ? t("Por encima") : t("Por debajo")}</strong></div>
+            <div><span>{t("Pendiente EMA 50")}</span><strong className={analysis.ema50_slope_pct == null ? "muted" : analysis.ema50_slope_pct >= 0 ? "positive" : "negative"}>{percent(analysis.ema50_slope_pct, 3)}</strong></div>
+            <div><span>{t("Fuerza de tendencia")}</span><strong>{t(analysis.strength || "Sin datos")}</strong></div>
+            <div><span>{t("Percentil de volatilidad")}</span><strong>{analysis.vol_percentile == null ? "—" : `${number(analysis.vol_percentile, 0)}%`}</strong></div>
+            <div><span>{t("Bandas de Bollinger")}</span><strong>{t(analysis.bandwidth_trend === "expanding" ? "Expandiéndose" : analysis.bandwidth_trend === "contracting" ? "Contrayéndose" : analysis.bandwidth_trend === "stable" ? "Estables" : "Sin datos")}</strong></div>
           </div>
         </>
-      ) : <p className="slim-note">Aún no hay suficientes velas válidas para este análisis.</p>}
+      ) : <p className="slim-note">{t("Aún no hay suficientes velas válidas para este análisis.")}</p>}
     </article>
   );
 }
@@ -370,7 +372,7 @@ export default function WatchlistPage() {
   const flow15m = detailFlow?.windows.find((row) => row.label === "15m");
   const selectedFundingRate = detailDerivatives?.funding_rate ?? selected?.funding_rate ?? null;
   const nextFundingTime = detailDerivatives?.funding_next && Number.isFinite(Date.parse(detailDerivatives.funding_next))
-    ? new Date(detailDerivatives.funding_next).toLocaleTimeString("es-PR", { hour: "2-digit", minute: "2-digit" })
+    ? new Date(detailDerivatives.funding_next).toLocaleTimeString(getIntlLocale(), { hour: "2-digit", minute: "2-digit" })
     : null;
   const rangePosition = selected && selected.price != null && selected.high_24h != null && selected.low_24h != null && selected.high_24h > selected.low_24h
     ? Math.max(0, Math.min(100, ((selected.price - selected.low_24h) / (selected.high_24h - selected.low_24h)) * 100))
@@ -393,23 +395,22 @@ export default function WatchlistPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="TU SELECCIÓN, TU PERSPECTIVA"
-        title="Sigue lo que te importa."
-        description="Tendencia, participación y contexto de hasta 10 pares. Sin alterar tus señales."
+        eyebrow={t("TU SELECCIÓN, TU PERSPECTIVA")}
+        title={t("Sigue lo que te importa.")}
+        description={t("Tendencia, participación y contexto de hasta 10 pares. Sin alterar tus señales.")}
       >
-        <Tag tone="muted">{data?.length || 0} / 10 pares</Tag>
+        <Tag tone="muted">{data?.length || 0} / 10 {t("pares")}</Tag>
         <button
           className="btn btn-primary"
           onClick={() => setAdding((value) => !value)}
           disabled={(data?.length || 0) >= 10}
         >
           <Plus size={14} />
-          Agregar par
-        </button>
+          {t("Agregar par")}</button>
       </PageHeader>
       {adding && (
         <section className="watchlist-search panel panel-pad">
-          <SectionHeader title="Añade un par de Binance Futures" />
+          <SectionHeader title={t("Añade un par de Binance Futures")} />
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -423,15 +424,14 @@ export default function WatchlistPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="AVAX, avaxusdt, AVAX/USDT, 1000PEPE..."
-                aria-label="Buscar par para watchlist"
+                aria-label={t("Buscar par para watchlist")}
               />
               <button
                 className="btn btn-primary"
                 disabled={busy || !query.trim()}
                 type="submit"
               >
-                Agregar
-              </button>
+                {t("Agregar")}</button>
             </div>
           </form>
           <div className="pair-chips" style={{ marginTop: 13 }}>
@@ -455,8 +455,7 @@ export default function WatchlistPage() {
           )}
           {!suggestions.length && (
             <p className="slim-note">
-              No hay coincidencias nuevas entre las cotizaciones recibidas del backend.
-            </p>
+              {t("No hay coincidencias nuevas entre las cotizaciones recibidas del backend.")}</p>
           )}
         </section>
       )}
@@ -465,7 +464,7 @@ export default function WatchlistPage() {
         error={error}
         retry={refresh}
         empty={!loading && !error && !data?.length}
-        emptyText="Tu próxima oportunidad empieza por observar. Agrega BTC, ETH o SOL para empezar."
+        emptyText={t("Tu próxima oportunidad empieza por observar. Agrega BTC, ETH o SOL para empezar.")}
       />
       {!loading && !error && !data?.length && (
         <div className="pair-chips">
@@ -485,25 +484,25 @@ export default function WatchlistPage() {
         <section className="panel watchlist-full">
           <div className="watchlist-summary-bar">
             <div>
-              <strong>Lectura técnica de tus pares</strong>
-              <span>Las tendencias se calculan con velas cerradas. El precio se actualiza con la cotización más reciente disponible.</span>
+              <strong>{t("Lectura técnica de tus pares")}</strong>
+              <span>{t("Las tendencias se calculan con velas cerradas. El precio se actualiza con la cotización más reciente disponible.")}</span>
             </div>
-            <button className="btn btn-quiet" onClick={() => void refresh()}><Activity size={13} /> Actualizar análisis</button>
+            <button className="btn btn-quiet" onClick={() => void refresh()}><Activity size={13} /> {t("Actualizar análisis")}</button>
           </div>
           <div className="table-scroll">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Par</th>
-                  <th>Precio (USDT)</th>
+                  <th>{t("Par")}</th>
+                  <th>{t("Precio (USDT)")}</th>
                   <th>24h</th>
-                  <th>Tendencia 15M / 1H / 4H</th>
-                  <th>Score multi-TF</th>
-                  <th>Volumen 24h / relativo</th>
-                  <th>ADX / ATR (1H)</th>
-                  <th>Funding</th>
-                  <th>Contexto</th>
-                  <th>Últimas 24h</th>
+                  <th>{t("Tendencia 15M / 1H / 4H")}</th>
+                  <th>{t("Score multi-TF")}</th>
+                  <th>{t("Volumen 24h / relativo")}</th>
+                  <th>{t("ADX / ATR (1H)")}</th>
+                  <th>{t("Funding")}</th>
+                  <th>{t("Contexto")}</th>
+                  <th>{t("Últimas 24h")}</th>
                   <th />
                 </tr>
               </thead>
@@ -536,23 +535,23 @@ export default function WatchlistPage() {
                       </td>
                       <td>
                         <div className="watchlist-score-block">
-                          {q.score == null ? <span className="muted">Sin score</span> : <Score value={q.score} />}
+                          {q.score == null ? <span className="muted">{t("Sin score")}</span> : <Score value={q.score} />}
                           <small className={lean === "LONG" ? "positive" : lean === "SHORT" ? "negative" : "muted"}>{lean || "Sin dirección"}{q.score_detail?.strength ? ` · ${q.score_detail.strength}` : ""}</small>
                         </div>
                       </td>
                       <td>
-                        <div className="watchlist-table-metric"><strong>${compact(q.volume_24h)}</strong><small>Rel. {q.volume_ratio == null ? "—" : `${number(q.volume_ratio, 2)}x`}</small></div>
+                        <div className="watchlist-table-metric"><strong>${compact(q.volume_24h)}</strong><small>{t("Rel. ")}{q.volume_ratio == null ? "—" : `${number(q.volume_ratio, 2)}x`}</small></div>
                       </td>
                       <td>
-                        <div className="watchlist-table-metric"><strong>ADX {number(frame1h?.adx, 1)}</strong><small>ATR {percent(frame1h?.atr_pct, 2)}</small></div>
+                        <div className="watchlist-table-metric"><strong>{t("ADX ")}{number(frame1h?.adx, 1)}</strong><small>{t("ATR ")}{percent(frame1h?.atr_pct, 2)}</small></div>
                       </td>
-                      <td className={`mono ${q.funding_rate == null ? "muted" : q.funding_rate > 0 ? "negative" : q.funding_rate < 0 ? "positive" : "muted"}`}>{q.funding_rate == null ? "—" : percent(q.funding_rate * 100, 4)}<small className="watchlist-cell-sub">por periodo</small></td>
+                      <td className={`mono ${q.funding_rate == null ? "muted" : q.funding_rate > 0 ? "negative" : q.funding_rate < 0 ? "positive" : "muted"}`}>{q.funding_rate == null ? "—" : percent(q.funding_rate * 100, 4)}<small className="watchlist-cell-sub">{t("por periodo")}</small></td>
                       <td>
                         <div className="watchlist-context">
-                          {activeSignal && <Link to={`/senales?par=${q.symbol}`}><Tag tone="green" dot>Señal {activeSignal.direction || "activa"}</Tag></Link>}
-                          {q.liquidity_sweep && <Tag tone="blue">Barrido {q.liquidity_sweep.direction} · {Math.round(q.liquidity_sweep.minutes)}m</Tag>}
-                          {!activeSignal && !q.liquidity_sweep && <span className="muted">En observación</span>}
-                          {q.status === "unavailable" && <span className="muted">Precio sin actualizar</span>}
+                          {activeSignal && <Link to={`/senales?par=${q.symbol}`}><Tag tone="green" dot>{t("Señal ")}{activeSignal.direction || "activa"}</Tag></Link>}
+                          {q.liquidity_sweep && <Tag tone="blue">{t("Barrido ")}{q.liquidity_sweep.direction} · {Math.round(q.liquidity_sweep.minutes)}m</Tag>}
+                          {!activeSignal && !q.liquidity_sweep && <span className="muted">{t("En observación")}</span>}
+                          {q.status === "unavailable" && <span className="muted">{t("Precio sin actualizar")}</span>}
                         </div>
                       </td>
                       <td>
@@ -572,9 +571,7 @@ export default function WatchlistPage() {
       )}
       <p className="slim-note">
         <Star size={12} />
-        Tu watchlist es informativa. Añadir o quitar un par no modifica las
-        señales generadas por el scanner.
-      </p>
+        {t("Tu watchlist es informativa. Añadir o quitar un par no modifica las señales generadas por el scanner.")}</p>
       {selected && (
         <Modal title={selected.name} onClose={closeDetail}>
           <div className="flow-title">
@@ -582,7 +579,7 @@ export default function WatchlistPage() {
               <AssetIcon symbol={selected.symbol} size={42} />
               <div>
                 <h2>{selected.symbol.replace("USDT", " / USDT")}</h2>
-                <small>Binance USDT-M Futures</small>
+                <small>{t("Binance USDT-M Futures")}</small>
               </div>
             </div>
             {selected.score == null ? <span className="muted">—</span> : <Score value={selected.score} />}
@@ -602,123 +599,121 @@ export default function WatchlistPage() {
             fill
           />
           {summaryMetrics.length > 0 && <div className="watchlist-detail-grid">
-            {summaryMetrics.map((metric) => <div className="watchlist-detail-metric" key={metric.label}><small>{metric.label}</small><strong className={metric.tone}>{metric.display}</strong></div>)}
+            {summaryMetrics.map((metric) => <div className="watchlist-detail-metric" key={metric.label}><small>{t(metric.label)}</small><strong className={metric.tone}>{metric.display}</strong></div>)}
           </div>}
           {rangePosition != null && (
             <section className="watchlist-range-section">
-              <div className="watchlist-detail-section-head"><div><h3>Posición dentro del rango de 24H</h3><p>Ubicación del último precio entre el mínimo y el máximo del día; no es una señal por sí sola.</p></div><strong>{number(rangePosition, 0)}%</strong></div>
+              <div className="watchlist-detail-section-head"><div><h3>{t("Posición dentro del rango de 24H")}</h3><p>{t("Ubicación del último precio entre el mínimo y el máximo del día; no es una señal por sí sola.")}</p></div><strong>{number(rangePosition, 0)}%</strong></div>
               <div className="watchlist-range-track" role="img" aria-label={`Precio al ${number(rangePosition, 0)} por ciento del rango de 24 horas`}><span style={{ left: `${rangePosition}%` }} /></div>
-              <div className="watchlist-range-labels"><span>Mín. {price(selected.low_24h)}</span><span>Máx. {price(selected.high_24h)}</span></div>
+              <div className="watchlist-range-labels"><span>{t("Mín. ")}{price(selected.low_24h)}</span><span>{t("Máx. ")}{price(selected.high_24h)}</span></div>
             </section>
           )}
           <section className="watchlist-timeframe-section">
-            <div className="watchlist-detail-section-head"><div><h3>Derivados y posicionamiento</h3><p>Interés abierto, cambios de exposición y sesgo de participantes en futuros.</p></div></div>
-            {detailAnalyticsLoading ? <p className="slim-note">Consultando métricas reales de Binance Futures…</p> : derivativeMetrics.length ? (
+            <div className="watchlist-detail-section-head"><div><h3>{t("Derivados y posicionamiento")}</h3><p>{t("Interés abierto, cambios de exposición y sesgo de participantes en futuros.")}</p></div></div>
+            {detailAnalyticsLoading ? <p className="slim-note">{t("Consultando métricas reales de Binance Futures…")}</p> : derivativeMetrics.length ? (
               <div className="watchlist-derivatives-grid">
-                {derivativeMetrics.map((metric) => <div className="watchlist-detail-metric" key={metric.label}><small>{metric.label}</small><strong className={metric.tone}>{metric.display}</strong></div>)}
+                {derivativeMetrics.map((metric) => <div className="watchlist-detail-metric" key={metric.label}><small>{t(metric.label)}</small><strong className={metric.tone}>{metric.display}</strong></div>)}
               </div>
             ) : <p className="slim-note">{detailAnalyticsUnavailable ? "Binance no proporcionó métricas de derivados para este par en esta consulta." : "No hay métricas de derivados disponibles para este par."}</p>}
             {detailDerivatives?.reading && <p className="watchlist-analytics-reading">{detailDerivatives.reading}</p>}
-            {detailDerivatives?.updated_at && <p className="watchlist-data-stamp">Derivados actualizados {ago(detailDerivatives.updated_at)}</p>}
+            {detailDerivatives?.updated_at && <p className="watchlist-data-stamp">{t("Derivados actualizados ")}{ago(detailDerivatives.updated_at)}</p>}
           </section>
           <section className="watchlist-timeframe-section">
-            <div className="watchlist-detail-section-head"><div><h3>Flujo comprador y vendedor</h3><p>Agresión compradora, delta y volumen relativo calculados a partir de velas recientes.</p></div></div>
-            {detailAnalyticsLoading ? <p className="slim-note">Calculando flujo por temporalidad…</p> : detailFlow?.windows.some((row) => row.buy_pct != null || row.delta_usdt != null || row.volume_ratio != null) ? (
+            <div className="watchlist-detail-section-head"><div><h3>{t("Flujo comprador y vendedor")}</h3><p>{t("Agresión compradora, delta y volumen relativo calculados a partir de velas recientes.")}</p></div></div>
+            {detailAnalyticsLoading ? <p className="slim-note">{t("Calculando flujo por temporalidad…")}</p> : detailFlow?.windows.some((row) => row.buy_pct != null || row.delta_usdt != null || row.volume_ratio != null) ? (
               <div className="watchlist-flow-grid">
                 {(["15m", "1h", "4h"] as const).map((label) => {
                   const row = detailFlow?.windows.find((window) => window.label === label);
                   if (!row || (row.buy_pct == null && row.delta_usdt == null && row.volume_ratio == null)) return null;
                   return <article className="watchlist-flow-card" key={label}>
                     <strong>{label.toUpperCase()}</strong>
-                    {row.buy_pct != null && <div><span>Agresión compradora</span><b className={row.buy_pct >= 50 ? "positive" : "negative"}>{number(row.buy_pct, 1)}%</b></div>}
-                    {row.delta_usdt != null && <div><span>Delta neto</span><b className={row.delta_usdt >= 0 ? "positive" : "negative"}>{row.delta_usdt >= 0 ? "+" : "−"}${compact(Math.abs(row.delta_usdt))}</b></div>}
-                    {row.volume_ratio != null && <div><span>Volumen vs. normal</span><b>{number(row.volume_ratio, 2)}x</b></div>}
+                    {row.buy_pct != null && <div><span>{t("Agresión compradora")}</span><b className={row.buy_pct >= 50 ? "positive" : "negative"}>{number(row.buy_pct, 1)}%</b></div>}
+                    {row.delta_usdt != null && <div><span>{t("Delta neto")}</span><b className={row.delta_usdt >= 0 ? "positive" : "negative"}>{row.delta_usdt >= 0 ? "+" : "−"}${compact(Math.abs(row.delta_usdt))}</b></div>}
+                    {row.volume_ratio != null && <div><span>{t("Volumen vs. normal")}</span><b>{number(row.volume_ratio, 2)}x</b></div>}
                   </article>;
                 })}
               </div>
-            ) : <p className="slim-note">No hay suficientes velas recientes para calcular el flujo de este par.</p>}
+            ) : <p className="slim-note">{t("No hay suficientes velas recientes para calcular el flujo de este par.")}</p>}
             {detailFlow?.reading && <p className="watchlist-analytics-reading">{detailFlow.reading}</p>}
-            {detailFlow?.updated_at && <p className="watchlist-data-stamp">Flujo actualizado {ago(detailFlow.updated_at)}</p>}
+            {detailFlow?.updated_at && <p className="watchlist-data-stamp">{t("Flujo actualizado ")}{ago(detailFlow.updated_at)}</p>}
           </section>
           <section className="watchlist-timeframe-section">
-            <div className="watchlist-detail-section-head"><div><h3>Análisis por temporalidad</h3><p>Indicadores calculados con velas cerradas de Binance Futures.</p></div></div>
+            <div className="watchlist-detail-section-head"><div><h3>{t("Análisis por temporalidad")}</h3><p>{t("Indicadores calculados con velas cerradas de Binance Futures.")}</p></div></div>
             <div className="watchlist-analysis-grid">
               {timeframeEntries.map((tf) => <TimeframeAnalysisCard key={tf.key} label={tf.label} analysis={selected.analyses[tf.key]} trend={selected.trend[tf.trend]} />)}
             </div>
           </section>
           <section className="watchlist-timeframe-section">
-            <div className="watchlist-detail-section-head"><div><h3>Momentum y niveles técnicos</h3><p>RSI(14) y MACD sobre velas cerradas de 1H; soportes y resistencias por pivotes de 4H. Los niveles son zonas técnicas aproximadas, no garantías.</p></div></div>
-            {detailTechnicalLoading ? <p className="slim-note">Calculando RSI, MACD y niveles sobre velas de Binance…</p> : detailTechnical ? (
+            <div className="watchlist-detail-section-head"><div><h3>{t("Momentum y niveles técnicos")}</h3><p>{t("RSI(14) y MACD sobre velas cerradas de 1H; soportes y resistencias por pivotes de 4H. Los niveles son zonas técnicas aproximadas, no garantías.")}</p></div></div>
+            {detailTechnicalLoading ? <p className="slim-note">{t("Calculando RSI, MACD y niveles sobre velas de Binance…")}</p> : detailTechnical ? (
               <div className="watchlist-technical-grid">
                 <article className="watchlist-technical-card">
-                  <small>RSI (14) · 1H</small>
-                  <strong className={detailTechnical.rsi14 == null ? "muted" : detailTechnical.rsi14 >= 70 ? "negative" : detailTechnical.rsi14 <= 30 ? "positive" : ""}>{detailTechnical.rsi14 == null ? "Sin lectura" : number(detailTechnical.rsi14, 1)}</strong>
-                  <span>{detailTechnical.rsi14 == null ? "Se requieren al menos 15 cierres" : detailTechnical.rsi14 >= 70 ? "Zona de sobrecompra" : detailTechnical.rsi14 <= 30 ? "Zona de sobreventa" : detailTechnical.rsi14 >= 55 ? "Impulso comprador" : detailTechnical.rsi14 <= 45 ? "Impulso vendedor" : "Zona neutral"}</span>
+                  <small>{t("RSI (14) · 1H")}</small>
+                  <strong className={detailTechnical.rsi14 == null ? "muted" : detailTechnical.rsi14 >= 70 ? "negative" : detailTechnical.rsi14 <= 30 ? "positive" : ""}>{detailTechnical.rsi14 == null ? t("Sin lectura") : number(detailTechnical.rsi14, 1)}</strong>
+                  <span>{t(detailTechnical.rsi14 == null ? "Se requieren al menos 15 cierres" : detailTechnical.rsi14 >= 70 ? "Zona de sobrecompra" : detailTechnical.rsi14 <= 30 ? "Zona de sobreventa" : detailTechnical.rsi14 >= 55 ? "Impulso comprador" : detailTechnical.rsi14 <= 45 ? "Impulso vendedor" : "Zona neutral")}</span>
                 </article>
                 <article className="watchlist-technical-card">
-                  <small>MACD (12, 26, 9) · 1H</small>
-                  <strong className={detailTechnical.macdHistogram == null ? "muted" : detailTechnical.macdHistogram >= 0 ? "positive" : "negative"}>{detailTechnical.macdHistogram == null ? "Sin lectura" : detailTechnical.macdHistogram >= 0 ? "Histograma positivo" : "Histograma negativo"}</strong>
-                  <span>{detailTechnical.macdLine == null || detailTechnical.macdSignal == null || detailTechnical.macdHistogram == null ? "Se requieren más velas" : `MACD ${price(detailTechnical.macdLine)} · señal ${price(detailTechnical.macdSignal)} · hist. ${price(detailTechnical.macdHistogram)}`}</span>
+                  <small>{t("MACD (12, 26, 9) · 1H")}</small>
+                  <strong className={detailTechnical.macdHistogram == null ? "muted" : detailTechnical.macdHistogram >= 0 ? "positive" : "negative"}>{t(detailTechnical.macdHistogram == null ? "Sin lectura" : detailTechnical.macdHistogram >= 0 ? "Histograma positivo" : "Histograma negativo")}</strong>
+                  <span>{detailTechnical.macdLine == null || detailTechnical.macdSignal == null || detailTechnical.macdHistogram == null ? t("Se requieren más velas") : `MACD ${price(detailTechnical.macdLine)} · ${t("señal")} ${price(detailTechnical.macdSignal)} · ${t("hist.")} ${price(detailTechnical.macdHistogram)}`}</span>
                 </article>
                 <article className="watchlist-technical-card">
-                  <small>Soporte más cercano · 4H</small>
-                  <strong>{detailTechnical.support4h == null ? "Sin nivel claro" : price(detailTechnical.support4h)}</strong>
-                  <span>{detailTechnical.supportDistancePct == null ? (detailTechnical.supportMethod ?? "No identificado") : `${percent(detailTechnical.supportDistancePct, 2)} por encima del soporte`}{detailTechnical.supportMethod ? ` · ${detailTechnical.supportMethod}` : ""}</span>
+                  <small>{t("Soporte más cercano · 4H")}</small>
+                  <strong>{detailTechnical.support4h == null ? t("Sin nivel claro") : price(detailTechnical.support4h)}</strong>
+                  <span>{detailTechnical.supportDistancePct == null ? t(detailTechnical.supportMethod ?? "No identificado") : `${percent(detailTechnical.supportDistancePct, 2)} ${t("por encima del soporte")}`}{detailTechnical.supportMethod ? ` · ${t(detailTechnical.supportMethod)}` : ""}</span>
                 </article>
                 <article className="watchlist-technical-card">
-                  <small>Resistencia más cercana · 4H</small>
-                  <strong>{detailTechnical.resistance4h == null ? "Sin nivel claro" : price(detailTechnical.resistance4h)}</strong>
-                  <span>{detailTechnical.resistanceDistancePct == null ? (detailTechnical.resistanceMethod ?? "No identificada") : `${percent(detailTechnical.resistanceDistancePct, 2)} por debajo de la resistencia`}{detailTechnical.resistanceMethod ? ` · ${detailTechnical.resistanceMethod}` : ""}</span>
+                  <small>{t("Resistencia más cercana · 4H")}</small>
+                  <strong>{detailTechnical.resistance4h == null ? t("Sin nivel claro") : price(detailTechnical.resistance4h)}</strong>
+                  <span>{detailTechnical.resistanceDistancePct == null ? t(detailTechnical.resistanceMethod ?? "No identificada") : `${percent(detailTechnical.resistanceDistancePct, 2)} ${t("por debajo de la resistencia")}`}{detailTechnical.resistanceMethod ? ` · ${t(detailTechnical.resistanceMethod)}` : ""}</span>
                 </article>
               </div>
-            ) : <p className="slim-note">{detailTechnicalUnavailable ? "No se pudieron consultar las velas de Binance en este momento." : "No hay suficientes velas cerradas para calcular los indicadores."}</p>}
-            {detailTechnical && <p className="watchlist-data-stamp">Muestra: {detailTechnical.candles1h} velas cerradas de 1H y {detailTechnical.candles4h} de 4H. RSI/MACD se calculan localmente desde velas reales; los soportes y resistencias son pivotes recientes o extremos de rango.</p>}
+            ) : <p className="slim-note">{t(detailTechnicalUnavailable ? "No se pudieron consultar las velas de Binance en este momento." : "No hay suficientes velas cerradas para calcular los indicadores.")}</p>}
+            {detailTechnical && <p className="watchlist-data-stamp">{t("Muestra: ")}{detailTechnical.candles1h} {t("velas cerradas de 1H y ")}{detailTechnical.candles4h} {t("de 4H. RSI/MACD se calculan localmente desde velas reales; los soportes y resistencias son pivotes recientes o extremos de rango.")}</p>}
           </section>
           {selectedActiveSignal && (selectedActiveSignal.entry_price != null || selectedActiveSignal.entry_low != null || selectedActiveSignal.entry_high != null || selectedActiveSignal.stop_loss != null || (selectedActiveSignal.take_profits?.length ?? 0) > 0) && (
             <section className="watchlist-timeframe-section">
-              <div className="watchlist-detail-section-head"><div><h3>Distancia a los niveles de señal</h3><p>Distancia entre el precio actual y los niveles de la señal activa. Las distancias no significan que el precio vaya a alcanzarlos.</p></div></div>
+              <div className="watchlist-detail-section-head"><div><h3>{t("Distancia a los niveles de señal")}</h3><p>{t("Distancia entre el precio actual y los niveles de la señal activa. Las distancias no significan que el precio vaya a alcanzarlos.")}</p></div></div>
               <div className="watchlist-levels-grid">
-                {(selectedActiveSignal.entry_price != null || selectedActiveSignal.entry_low != null || selectedActiveSignal.entry_high != null) && <article className="watchlist-level-card"><small>Entrada {selectedActiveSignal.entry_low != null && selectedActiveSignal.entry_high != null ? "(zona)" : ""}</small><strong>{selectedActiveSignal.entry_low != null && selectedActiveSignal.entry_high != null ? `${price(selectedActiveSignal.entry_low)} – ${price(selectedActiveSignal.entry_high)}` : price(selectedActiveSignal.entry_price ?? selectedActiveSignal.entry_low ?? selectedActiveSignal.entry_high)}</strong><span>{entryDistance(selected.price, selectedActiveSignal) ?? "Precio actual no disponible"}</span></article>}
-                {selectedActiveSignal.stop_loss != null && <article className="watchlist-level-card"><small>Stop-loss</small><strong>{price(selectedActiveSignal.stop_loss)}</strong><span>{targetDistance(selected.price, selectedActiveSignal.stop_loss) ?? "Precio actual no disponible"} {selected.price == null ? "" : "desde el precio actual"}</span></article>}
-                {(selectedActiveSignal.take_profits ?? []).filter((target) => typeof target === "number" && Number.isFinite(target) && target > 0).slice(0, 3).map((target, index) => <article className="watchlist-level-card" key={`tp-${index}`}><small>Objetivo TP{index + 1}</small><strong>{price(target)}</strong><span>{targetDistance(selected.price, target) ?? "Precio actual no disponible"} {selected.price == null ? "" : "desde el precio actual"}</span></article>)}
+                {(selectedActiveSignal.entry_price != null || selectedActiveSignal.entry_low != null || selectedActiveSignal.entry_high != null) && <article className="watchlist-level-card"><small>{t("Entrada ")}{selectedActiveSignal.entry_low != null && selectedActiveSignal.entry_high != null ? "(zona)" : ""}</small><strong>{selectedActiveSignal.entry_low != null && selectedActiveSignal.entry_high != null ? `${price(selectedActiveSignal.entry_low)} – ${price(selectedActiveSignal.entry_high)}` : price(selectedActiveSignal.entry_price ?? selectedActiveSignal.entry_low ?? selectedActiveSignal.entry_high)}</strong><span>{entryDistance(selected.price, selectedActiveSignal) ?? t("Precio actual no disponible")}</span></article>}
+                {selectedActiveSignal.stop_loss != null && <article className="watchlist-level-card"><small>{t("Stop-loss")}</small><strong>{price(selectedActiveSignal.stop_loss)}</strong><span>{targetDistance(selected.price, selectedActiveSignal.stop_loss) ?? t("Precio actual no disponible")} {selected.price == null ? "" : t("desde el precio actual")}</span></article>}
+                {(selectedActiveSignal.take_profits ?? []).filter((target) => typeof target === "number" && Number.isFinite(target) && target > 0).slice(0, 3).map((target, index) => <article className="watchlist-level-card" key={`tp-${index}`}><small>{t("Objetivo TP")}{index + 1}</small><strong>{price(target)}</strong><span>{targetDistance(selected.price, target) ?? t("Precio actual no disponible")} {selected.price == null ? "" : t("desde el precio actual")}</span></article>)}
               </div>
-              <p className="watchlist-data-stamp">Señal {selectedActiveSignal.direction ?? "sin dirección"} · {selectedActiveSignal.status}{selectedActiveSignal.created_at ? ` · creada ${ago(selectedActiveSignal.created_at)}` : ""}</p>
+              <p className="watchlist-data-stamp">{t("Señal ")}{selectedActiveSignal.direction ?? "sin dirección"} · {selectedActiveSignal.status}{selectedActiveSignal.created_at ? ` · creada ${ago(selectedActiveSignal.created_at)}` : ""}</p>
             </section>
           )}
           <section className="watchlist-timeframe-section">
-            <div className="watchlist-detail-section-head"><div><h3>Sesgo combinado</h3><p>Resumen de la combinación 15M / 1H / 4H. Es contexto informativo, no una orden de entrada.</p></div></div>
+            <div className="watchlist-detail-section-head"><div><h3>{t("Sesgo combinado")}</h3><p>{t("Resumen de la combinación 15M / 1H / 4H. Es contexto informativo, no una orden de entrada.")}</p></div></div>
             <div className="watchlist-combined-bias">
-              <div><small>Dirección ponderada</small><strong className={(selected.score_detail?.lean ?? selected.score_detail?.direction) === "LONG" ? "positive" : (selected.score_detail?.lean ?? selected.score_detail?.direction) === "SHORT" ? "negative" : "muted"}>{selected.score_detail?.lean ?? selected.score_detail?.direction ?? "Sin datos"}</strong></div>
-              <div><small>Fuerza</small><strong>{selected.score_detail?.strength ?? "Sin confirmar"}</strong></div>
-              <div><small>Score</small><strong>{selected.score_detail?.score == null ? "—" : `${selected.score_detail.score}/100`}</strong></div>
-              <div><small>Actualizado</small><strong>{selected.data_updated_at ? ago(selected.data_updated_at) : "Sin marca temporal"}</strong></div>
+              <div><small>{t("Dirección ponderada")}</small><strong className={(selected.score_detail?.lean ?? selected.score_detail?.direction) === "LONG" ? "positive" : (selected.score_detail?.lean ?? selected.score_detail?.direction) === "SHORT" ? "negative" : "muted"}>{selected.score_detail?.lean ?? selected.score_detail?.direction ?? "Sin datos"}</strong></div>
+              <div><small>{t("Fuerza")}</small><strong>{selected.score_detail?.strength ?? "Sin confirmar"}</strong></div>
+              <div><small>{t("Score")}</small><strong>{selected.score_detail?.score == null ? "—" : `${selected.score_detail.score}/100`}</strong></div>
+              <div><small>{t("Actualizado")}</small><strong>{selected.data_updated_at ? ago(selected.data_updated_at) : "Sin marca temporal"}</strong></div>
             </div>
           </section>
           <div className="detail-row">
-            <span>Señal activa</span>
+            <span>{t("Señal activa")}</span>
             {selectedActiveSignal ? (
               <div className="watchlist-modal-signal">
-                <Link className="link-accent" to={`/senales?par=${selected.symbol}`}><Check size={12} /> Ver señal <ArrowRight size={12} /></Link>
+                <Link className="link-accent" to={`/senales?par=${selected.symbol}`}><Check size={12} /> {t("Ver señal ")}<ArrowRight size={12} /></Link>
                 <strong className={selectedActiveSignal.direction === "LONG" ? "positive" : selectedActiveSignal.direction === "SHORT" ? "negative" : "muted"}>{selectedActiveSignal.direction || "Activa"} · {selectedActiveSignal.status}</strong>
-                <small>Entrada {selectedActiveSignal.entry_low != null && selectedActiveSignal.entry_high != null ? `${price(selectedActiveSignal.entry_low)}–${price(selectedActiveSignal.entry_high)}` : price(selectedActiveSignal.entry_price ?? selectedActiveSignal.entry_low ?? selectedActiveSignal.entry_high)} · {selectedActiveSignal.created_at ? ago(selectedActiveSignal.created_at) : "fecha no disponible"}</small>
+                <small>{t("Entrada ")}{selectedActiveSignal.entry_low != null && selectedActiveSignal.entry_high != null ? `${price(selectedActiveSignal.entry_low)}–${price(selectedActiveSignal.entry_high)}` : price(selectedActiveSignal.entry_price ?? selectedActiveSignal.entry_low ?? selectedActiveSignal.entry_high)} · {selectedActiveSignal.created_at ? ago(selectedActiveSignal.created_at) : "fecha no disponible"}</small>
               </div>
-            ) : <span className="muted">Sin señal activa confirmada</span>}
+            ) : <span className="muted">{t("Sin señal activa confirmada")}</span>}
           </div>
           <div className="detail-row">
-            <span>Barrido de liquidez</span>
-            {selected.liquidity_sweep ? <strong className={selected.liquidity_sweep.direction === "LONG" ? "positive" : "negative"}>{selected.liquidity_sweep.direction} · hace {Math.round(selected.liquidity_sweep.minutes)} min</strong> : <span className="muted">Sin barrido reciente (ventana de 20 min)</span>}
+            <span>{t("Barrido de liquidez")}</span>
+            {selected.liquidity_sweep ? <strong className={selected.liquidity_sweep.direction === "LONG" ? "positive" : "negative"}>{selected.liquidity_sweep.direction} {t("· hace ")}{Math.round(selected.liquidity_sweep.minutes)} {t("min")}</strong> : <span className="muted">{t("Sin barrido reciente (ventana de 20 min)")}</span>}
           </div>
           <div className="signal-detail-actions">
             <Link
               className="btn btn-primary"
               to={`/mercado/flujo/${selected.symbol}`}
             >
-              Ver flujo
-              <ArrowUpRight size={13} />
+              {t("Ver flujo")}<ArrowUpRight size={13} />
             </Link>
             <Link className="btn btn-blue" to={`/derivados/${selected.symbol}`}>
-              Derivados
-              <ArrowUpRight size={13} />
+              {t("Derivados")}<ArrowUpRight size={13} />
             </Link>
           </div>
         </Modal>

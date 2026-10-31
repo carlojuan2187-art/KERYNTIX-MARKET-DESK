@@ -1,3 +1,4 @@
+import { t } from "@/i18n/translation";
 import { useCallback, useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import {
@@ -33,7 +34,7 @@ import {
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { ago, percent, price } from "@/utils/format";
-import { AssetIcon, Brand, Modal } from "./ui";
+import { AssetIcon, Brand, LanguageSwitch, Modal } from "./ui";
 import { Sparkline } from "./Sparkline";
 
 const groups = [
@@ -116,6 +117,8 @@ export default function Layout() {
     signalCount,
     notifications,
     readNotification,
+    t,
+    language,
   } = useApp();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(
@@ -183,17 +186,17 @@ export default function Layout() {
       )}
       <aside
         className={`sidebar ${mobileOpen ? "open" : ""}`}
-        aria-label="Navegación principal"
+        aria-label={t("Navegación principal")}
         aria-hidden={isMobile && !mobileOpen}
         inert={isMobile && !mobileOpen}
       >
         <div className="sidebar-brand">
-          <Link to="/" aria-label="FTrade, inicio">
+          <Link to="/" aria-label={t("FTrade, inicio")}>
             <Brand />
           </Link>
           <button
             className="icon-button close-sidebar"
-            aria-label="Cerrar menú"
+            aria-label={t("Cerrar menú")}
             onClick={() => setMobileOpen(false)}
           >
             <X size={19} />
@@ -203,13 +206,13 @@ export default function Layout() {
           <span>
             <Globe2 size={13} />
           </span>
-          <span>Mi espacio de trading</span>
+          <span>{t("Mi espacio de trading")}</span>
           <ChevronDown className="chevron" size={12} />
         </Link>
         <nav className="sidebar-nav">
           {groups.map((group) => (
             <div className="nav-group" key={group.label}>
-              <div className="nav-label">{group.label}</div>
+              <div className="nav-label">{t(group.label)}</div>
               {group.links.map((item) => {
                 const active =
                   item.to === "/"
@@ -223,7 +226,7 @@ export default function Layout() {
                     aria-current={active ? "page" : undefined}
                   >
                     <item.icon />
-                    <span>{item.label}</span>
+                    <span>{t(item.label)}</span>
                     {item.to === "/senales" && signalCount > 0 && (
                       <span className="nav-count">{signalCount}</span>
                     )}
@@ -236,8 +239,7 @@ export default function Layout() {
         <div className="sidebar-footer">
           <Link className="sidebar-help" to="/soporte">
             <CircleHelp size={15} />
-            Ayuda y soporte
-            <ArrowUpRight size={12} style={{ marginLeft: "auto" }} />
+            {t("Ayuda y soporte")}<ArrowUpRight size={12} style={{ marginLeft: "auto" }} />
           </Link>
           <Link className="profile-link" to="/cuenta">
             <span className="avatar">
@@ -245,10 +247,10 @@ export default function Layout() {
             </span>
             <div className="profile-copy">
               <strong>
-                {user?.username || "Mi cuenta"}
+                {user?.username || t("Mi cuenta")}
               </strong>
               <span>
-                Plan {user?.plan === "premium" ? "Premium" : "Free"}{" "}
+                {t("Plan ")}{user?.plan === "premium" ? "Premium" : "Free"}{" "}
                 <span className="separator-dot">·</span>{" "}
                 {user?.is_admin ? "Administrador" : "Mi cuenta"}
               </span>
@@ -261,22 +263,22 @@ export default function Layout() {
         <header className="topbar">
           <button
             className="icon-button mobile-menu-button"
-            aria-label="Abrir menú"
+            aria-label={t("Abrir menú")}
             onClick={() => setMobileOpen(true)}
           >
             <Menu size={20} />
           </button>
-          <Link className="mobile-brand" to="/" aria-label="FTrade, inicio">
+          <Link className="mobile-brand" to="/" aria-label={t("FTrade, inicio")}>
             <Brand compact />
           </Link>
           <div className="breadcrumbs">
-            <span>Espacio de trabajo</span>
+            <span>{t("Espacio de trabajo")}</span>
             <ChevronRight />
-            <strong>{label}</strong>
+            <strong>{t(label)}</strong>
           </div>
           <div
             className="variant-switch"
-            aria-label="Seleccionar versión de diseño"
+            aria-label={t("Seleccionar versión de diseño")}
           >
             <button
               className={variant === "terminal" ? "active" : ""}
@@ -284,7 +286,7 @@ export default function Layout() {
               onClick={() => setVariant("terminal")}
             >
               <PanelTop size={12} />
-              <span className="variant-label">Terminal</span>
+              <span className="variant-label">{t("Terminal")}</span>
             </button>
             <button
               className={variant === "panorama" ? "active" : ""}
@@ -292,22 +294,23 @@ export default function Layout() {
               onClick={() => setVariant("panorama")}
             >
               <Sparkles size={12} />
-              <span className="variant-label">Panorama</span>
+              <span className="variant-label">{t("Panorama")}</span>
             </button>
           </div>
           <div className="topbar-actions">
+            <LanguageSwitch />
             <button
               className="search-trigger"
               onClick={() => setSearchOpen(true)}
-              aria-label="Buscar un par"
+              aria-label={t("Buscar un par")}
             >
               <Search size={15} />
-              <span>Buscar un par</span>
+              <span>{t("Buscar un par")}</span>
               <kbd>Ctrl K</kbd>
             </button>
             <span className="topbar-divider" />
             <span className="topbar-clock mono">
-              {now.toLocaleTimeString("es", {
+              {now.toLocaleTimeString(language, {
                 timeZone: user?.tz || "America/Havana",
                 hour: "2-digit",
                 minute: "2-digit",
@@ -319,20 +322,20 @@ export default function Layout() {
               onClick={toggleTheme}
               title={
                 theme === "dark"
-                  ? "Cambiar a modo claro"
-                  : "Cambiar a modo oscuro"
+                  ? t("Cambiar a modo claro")
+                  : t("Cambiar a modo oscuro")
               }
               aria-label={
                 theme === "dark"
-                  ? "Cambiar a modo claro"
-                  : "Cambiar a modo oscuro"
+                  ? t("Cambiar a modo claro")
+                  : t("Cambiar a modo oscuro")
               }
             >
               {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
             </button>
             <button
               className="icon-button notification-button"
-              aria-label={`Notificaciones, ${unread} sin leer`}
+              aria-label={`${t("Notificaciones")}, ${unread} ${t("sin leer")}`}
               onClick={() => setNoticesOpen(true)}
             >
               <Bell size={16} />
@@ -340,7 +343,7 @@ export default function Layout() {
             </button>
           </div>
         </header>
-        <div className="ticker-strip" aria-label="Cotizaciones recibidas del backend">
+        <div className="ticker-strip" aria-label={t("Cotizaciones recibidas del backend")}>
           {quotes.slice(0, 5).map((quote) => (
             <Link
               key={quote.symbol}
@@ -379,16 +382,15 @@ export default function Layout() {
         <footer className="legal-footer">
           <span>
             <ShieldCheck size={10} />
-            Informativo. No es asesoría financiera ni garantía de resultados.
-          </span>
+            {t("Informativo. No es asesoría financiera ni garantía de resultados.")}</span>
           <span>
             <span className="live-dot" />
-            Backend de mercado <span className="separator-dot">·</span> Binance USDT-M{" "}
+            {t("Backend de mercado ")}<span className="separator-dot">·</span> {t("Binance USDT-M")}{" "}
             <span className="separator-dot">·</span>{" "}
             {user?.tz || "UTC"}
           </span>
         </footer>
-        <nav className="bottom-nav" aria-label="Accesos rápidos">
+        <nav className="bottom-nav" aria-label={t("Accesos rápidos")}>
           {[
             groups[0].links[0],
             groups[0].links[1],
@@ -411,26 +413,20 @@ export default function Layout() {
             >
               <item.icon />
               <span>
-                {item.label === "Vista general"
-                  ? "Inicio"
-                  : item.label === "Radar de oportunidades"
-                    ? "Radar"
-                    : item.label === "Mercado en vivo"
-                      ? "Mercado"
-                      : item.label}
+                {t(item.label === "Vista general" ? "Inicio" : item.label === "Radar de oportunidades" ? "Radar" : item.label === "Mercado en vivo" ? "Mercado" : item.label)}
               </span>
             </Link>
           ))}
         </nav>
       </div>
       {searchOpen && (
-        <Modal title="Encuentra tu próximo par" onClose={closeSearch}>
+        <Modal title={t("Encuentra tu próximo par")} onClose={closeSearch}>
           <div className="search-field">
             <Search size={17} />
             <input
               autoFocus
-              aria-label="Símbolo o nombre del activo"
-              placeholder="Bitcoin, AVAX, 1000PEPE..."
+              aria-label={t("Símbolo o nombre del activo")}
+              placeholder={t("Bitcoin, AVAX, 1000PEPE...")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -473,19 +469,17 @@ export default function Layout() {
                 .includes(query.toLowerCase()),
             ) && (
               <p className="slim-note">
-                No encontramos ese par. Prueba con BTC, SOL o AVAX.
-              </p>
+                {t("No encontramos ese par. Prueba con BTC, SOL o AVAX.")}</p>
             )}
           </div>
           <p className="slim-note">
-            Catálogo de símbolos recibidos desde el backend de Binance USDT-M. Presiona Esc para cerrar.
-          </p>
+            {t("Catálogo de símbolos recibidos desde el backend de Binance USDT-M. Presiona Esc para cerrar.")}</p>
         </Modal>
       )}
       {noticesOpen && (
-        <Modal title="Centro de notificaciones" onClose={closeNotices}>
+        <Modal title={t("Centro de notificaciones")} onClose={closeNotices}>
           <div className="notification-tools">
-            <span>{unread} sin leer</span>
+            <span>{unread} {t("sin leer")}</span>
             <button
               className="btn btn-quiet"
               onClick={() =>
@@ -493,8 +487,7 @@ export default function Layout() {
               }
             >
               <CheckCheck size={13} />
-              Marcar todas como leídas
-            </button>
+              {t("Marcar todas como leídas")}</button>
           </div>
           {notifications.map((n) => (
             <Link
@@ -506,16 +499,16 @@ export default function Layout() {
                 closeNotices();
               }}
             >
-              <h3>{n.title}</h3>
-              <p>{n.text}</p>
+              <h3>{t(n.title)}</h3>
+              <p>{t(n.text)}</p>
               <time>
                 {ago(n.created_at)}
-                {n.read ? " · Leída" : ""}
+                {n.read ? ` · ${t("Leída")}` : ""}
               </time>
             </Link>
           ))}
           {!notifications.length && (
-            <p className="slim-note">Aún no tienes notificaciones.</p>
+            <p className="slim-note">{t("Aún no tienes notificaciones.")}</p>
           )}
           <Link
             className="btn btn-quiet"
@@ -523,8 +516,7 @@ export default function Layout() {
             onClick={closeNotices}
           >
             <Settings2 size={14} />
-            Ajustes de avisos
-            <ChevronRight size={13} />
+            {t("Ajustes de avisos")}<ChevronRight size={13} />
           </Link>
         </Modal>
       )}

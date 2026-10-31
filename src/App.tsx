@@ -1,3 +1,5 @@
+import { getIntlLocale } from "@/i18n/translation";
+import { t } from "@/i18n/translation";
 import {
   BrowserRouter,
   Routes,
@@ -39,7 +41,7 @@ function PageLoading() {
   return (
     <div className="resource-state page-loading" role="status" aria-live="polite">
       <span className="loading-spinner" aria-hidden="true" />
-      <p>Cargando sección…</p>
+      <p>{t("Cargando sección…")}</p>
     </div>
   );
 }
@@ -67,11 +69,10 @@ class PageErrorBoundary extends Component<{ children: ReactNode }, { failed: boo
       return (
         <div className="resource-state" role="alert" style={{ minHeight: "55vh", justifyContent: "center", padding: 24 }}>
           <ShieldAlert size={36} />
-          <h1>No se pudo mostrar esta sección</h1>
-          <p>Ocurrió un error al cargar la pantalla. Puedes volver a intentarlo sin cerrar tu sesión.</p>
+          <h1>{t("No se pudo mostrar esta sección")}</h1>
+          <p>{t("Ocurrió un error al cargar la pantalla. Puedes volver a intentarlo sin cerrar tu sesión.")}</p>
           <button className="btn btn-primary" onClick={() => window.location.reload()}>
-            Recargar sección
-          </button>
+            {t("Recargar sección")}</button>
         </div>
       );
     }
@@ -80,7 +81,8 @@ class PageErrorBoundary extends Component<{ children: ReactNode }, { failed: boo
 }
 
 function SessionGuard() {
-  const { user, loading } = useApp();
+  const { user, loading, language } = useApp();
+  void language;
   const restriction = useApi(getAccountRestriction);
   if (loading)
     return (
@@ -96,15 +98,15 @@ function SessionGuard() {
         style={{ minHeight: "100vh", justifyContent: "center" }}
       >
         <ShieldAlert size={40} />
-        <h1>Cuenta bloqueada</h1>
+        <h1>{t("Cuenta bloqueada")}</h1>
         <p>
-          {restriction.data?.reason ||
-            "Consultando el motivo de la restricción..."}
+          {t(restriction.data?.reason ||
+            "Consultando el motivo de la restricción...")}
         </p>
         <p>
           {user.ban_until
-            ? `Finaliza el ${new Date(user.ban_until).toLocaleString("es", { timeZone: user.tz })}.`
-            : "La restricción es permanente."}
+            ? `Finaliza el ${new Date(user.ban_until).toLocaleString(getIntlLocale(), { timeZone: user.tz })}.`
+            : t("La restricción es permanente.")}
         </p>
         {appConfig.whatsapp[0] ? (
           <a
@@ -113,10 +115,9 @@ function SessionGuard() {
             target="_blank"
             rel="noreferrer"
           >
-            Contactar administrador
-          </a>
+            {t("Contactar administrador")}</a>
         ) : (
-          <p>El contacto de WhatsApp del administrador no está configurado.</p>
+          <p>{t("El contacto de WhatsApp del administrador no está configurado.")}</p>
         )}
       </div>
     );
@@ -128,14 +129,11 @@ function AccessGuard() {
     return (
       <div className="resource-state">
         <ShieldAlert size={40} />
-        <h1>Acceso vencido</h1>
+        <h1>{t("Acceso vencido")}</h1>
         <p>
-          Tu prueba o plan ha finalizado. Reactiva Premium para volver a las
-          señales y al análisis del mercado.
-        </p>
+          {t("Tu prueba o plan ha finalizado. Reactiva Premium para volver a las señales y al análisis del mercado.")}</p>
         <Link className="btn btn-primary" to="/planes">
-          Ver planes
-        </Link>
+          {t("Ver planes")}</Link>
       </div>
     );
   return <Outlet />;
@@ -192,10 +190,9 @@ export default function App() {
                 path="*"
                 element={
                   <div className="resource-state">
-                    <h1>Esta página no existe</h1>
+                    <h1>{t("Esta página no existe")}</h1>
                     <Link className="btn btn-primary" to="/">
-                      Volver a mi espacio
-                    </Link>
+                      {t("Volver a mi espacio")}</Link>
                   </div>
                 }
               />

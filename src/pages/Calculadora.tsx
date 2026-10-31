@@ -1,3 +1,4 @@
+import { t } from "@/i18n/translation";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -55,7 +56,7 @@ export default function CalculadoraPage() {
   function field(key: Field, label: string, hint?: string) {
     return (
       <label className="input-field" htmlFor={`calc-${key}`}>
-        <span>{label}</span>
+        <span>{t(label)}</span>
         <input
           id={`calc-${key}`}
           inputMode="decimal"
@@ -69,7 +70,7 @@ export default function CalculadoraPage() {
             setResult(null);
           }}
         />
-        {hint && <small>{hint}</small>}
+        {hint && <small>{t(hint)}</small>}
       </label>
     );
   }
@@ -121,14 +122,13 @@ export default function CalculadoraPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="PROTEGE LO QUE IMPORTA"
-        title="Primero el riesgo. Después la operación."
-        description="Convierte tu plan en un tamaño de posición, antes de comprometer capital."
+        eyebrow={t("PROTEGE LO QUE IMPORTA")}
+        title={t("Primero el riesgo. Después la operación.")}
+        description={t("Convierte tu plan en un tamaño de posición, antes de comprometer capital.")}
       >
         <Link className="btn btn-secondary" to="/guia/riesgo">
           <ShieldCheck size={14} />
-          Gestión de riesgo
-        </Link>
+          {t("Gestión de riesgo")}</Link>
       </PageHeader>
       <div className="two-col calculator-layout">
         <section className="panel panel-pad">
@@ -140,20 +140,18 @@ export default function CalculadoraPage() {
                 setResult(null);
               }}
             >
-              Modo manual
-            </button>
+              {t("Modo manual")}</button>
             <button
               className={`tab ${fromSignal ? "active" : ""}`}
               onClick={() => {
                 if (signals?.length) setParams({ senal: signals[0].symbol });
               }}
             >
-              Desde una señal
-            </button>
+              {t("Desde una señal")}</button>
           </div>
           {fromSignal && (
             <label className="input-field" style={{ marginBottom: 22 }}>
-              <span>Señal de referencia</span>
+              <span>{t("Señal de referencia")}</span>
               <select
                 value={fromSignal}
                 onChange={(e) => setParams({ senal: e.target.value })}
@@ -167,7 +165,7 @@ export default function CalculadoraPage() {
             </label>
           )}
           <form className="form-stack" onSubmit={calculate} noValidate>
-            <SectionHeader title="Tu perfil de riesgo">
+            <SectionHeader title={t("Tu perfil de riesgo")}>
               <button
                 className="btn btn-quiet"
                 type="button"
@@ -192,12 +190,11 @@ export default function CalculadoraPage() {
                 onClick={() => void saveProfile()}
               >
                 <Check size={12} />
-                Guardar perfil de riesgo
-              </button>
+                {t("Guardar perfil de riesgo")}</button>
             )}
             <div className="calculator-divider" />
-            <SectionHeader title="Niveles de la operación">
-              <Tag tone="muted">Dirección automática</Tag>
+            <SectionHeader title={t("Niveles de la operación")}>
+              <Tag tone="muted">{t("Dirección automática")}</Tag>
             </SectionHeader>
             <div className="form-grid">
               {field("entry", "Precio de entrada (USDT)")}
@@ -207,8 +204,7 @@ export default function CalculadoraPage() {
               {field("tp3", "Take Profit 3 · opcional")}
             </div>
             <p className="slim-note" style={{ padding: 0 }}>
-              Stop debajo de la entrada = LONG. Stop encima = SHORT.
-            </p>
+              {t("Stop debajo de la entrada = LONG. Stop encima = SHORT.")}</p>
             {error && (
               <p className="form-error" role="alert">
                 {error}
@@ -226,7 +222,7 @@ export default function CalculadoraPage() {
           </form>
         </section>
         <section className="panel panel-pad calculator-result">
-          <SectionHeader title="Tu operación, dimensionada">
+          <SectionHeader title={t("Tu operación, dimensionada")}>
             {result && (
               <Tag tone={result.direction === "LONG" ? "green" : "red"}>
                 {result.direction}
@@ -240,29 +236,23 @@ export default function CalculadoraPage() {
                 <ShieldCheck size={21} />
               </div>
               <h2>
-                El mejor trade empieza
-                <br />
-                por un riesgo definido.
-              </h2>
+                {t("El mejor trade empieza")}<br />
+                {t("por un riesgo definido.")}</h2>
               <p>
-                Introduce tus niveles y descubre cuánto operar, qué margen
-                necesitas y qué puedes ganar o perder.
-              </p>
+                {t("Introduce tus niveles y descubre cuánto operar, qué margen necesitas y qué puedes ganar o perder.")}</p>
               <span className="small muted">
-                No ejecutamos operaciones por ti.
-              </span>
+                {t("No ejecutamos operaciones por ti.")}</span>
             </div>
           ) : (
             <>
               <div className="risk-result-top">
-                <span>Tu riesgo por operación</span>
+                <span>{t("Tu riesgo por operación")}</span>
                 <strong className="mono">
                   {number(result.risk_usdt)}
                   <small>USDT</small>
                 </strong>
                 <Tag tone="amber">
-                  {form.risk_pct}% de tu capital · sin comisiones
-                </Tag>
+                  {form.risk_pct}{t("% de tu capital · sin comisiones")}</Tag>
               </div>
               <div className="detail-list">
                 {[
@@ -292,21 +282,21 @@ export default function CalculadoraPage() {
                   },
                 ].map((item) => (
                   <div key={item.label} className="detail-row">
-                    <span>{item.label}</span>
+                    <span>{t(item.label)}</span>
                     <strong className="mono">{item.value}</strong>
                   </div>
                 ))}
               </div>
               <div style={{ marginTop: 25 }}>
-                <SectionHeader title="Si el plan llega a sus objetivos" />
+                <SectionHeader title={t("Si el plan llega a sus objetivos")} />
                 <div className="table-scroll">
                   <table className="data-table calc-targets">
                     <thead>
                       <tr>
-                        <th>Nivel</th>
+                        <th>{t("Nivel")}</th>
                         <th>R:R</th>
-                        <th>Bruto</th>
-                        <th>Neto estimado</th>
+                        <th>{t("Bruto")}</th>
+                        <th>{t("Neto estimado")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -326,23 +316,19 @@ export default function CalculadoraPage() {
                         </tr>
                       ))}
                       <tr>
-                        <td>Stop Loss</td>
+                        <td>{t("Stop Loss")}</td>
                         <td className="mono negative">-1.0R</td>
                         <td className="mono negative">
                           -{number(result.risk_usdt)}
                         </td>
-                        <td className="muted">+ comisiones</td>
+                        <td className="muted">{t("+ comisiones")}</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
-              <Reading title="Números para decidir, no para prometer">
-                Comisión taker de 0,05% por lado. MMR asumido de 0,4%. La
-                liquidación es orientativa y no incluye funding ni tramos de
-                mantenimiento. Los objetivos suponen cerrar el 100% de la
-                posición en cada nivel, por separado.
-              </Reading>
+              <Reading title={t("Números para decidir, no para prometer")}>
+                {t("Comisión taker de 0,05% por lado. MMR asumido de 0,4%. La liquidación es orientativa y no incluye funding ni tramos de mantenimiento. Los objetivos suponen cerrar el 100% de la posición en cada nivel, por separado.")}</Reading>
             </>
           )}
         </section>

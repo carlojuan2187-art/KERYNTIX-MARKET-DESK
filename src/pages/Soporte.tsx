@@ -1,3 +1,4 @@
+import { t } from "@/i18n/translation";
 import { useState } from "react";
 import { ArrowUpRight, CheckCircle2, MessageCircle, Send } from "lucide-react";
 import { appConfig } from "@/api/config";
@@ -33,31 +34,31 @@ export default function SoportePage() {
   return (
     <div>
       <PageHeader
-        eyebrow="ESTAMOS PARA AYUDARTE"
-        title="Una respuesta empieza por escucharte."
-        description="Habla con un administrador o deja tu consulta en un ticket."
+        eyebrow={t("ESTAMOS PARA AYUDARTE")}
+        title={t("Una respuesta empieza por escucharte.")}
+        description={t("Habla con un administrador o deja tu consulta en un ticket.")}
       />
       <div className="two-col">
         <section className="panel panel-pad">
-          <SectionHeader title="Cuéntanos qué ocurre" />
+          <SectionHeader title={t("Cuéntanos qué ocurre")} />
           <form className="form-stack" onSubmit={send}>
             <label className="input-field">
-              <span>Asunto</span>
+              <span>{t("Asunto")}</span>
               <input
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="Por ejemplo: consulta sobre mi plan"
+                placeholder={t("Por ejemplo: consulta sobre mi plan")}
                 required
                 minLength={5}
               />
             </label>
             <label className="input-field">
-              <span>Tu consulta</span>
+              <span>{t("Tu consulta")}</span>
               <textarea
                 rows={6}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Describe qué necesitas y qué ocurrió. No incluyas claves privadas ni códigos de acceso."
+                placeholder={t("Describe qué necesitas y qué ocurrió. No incluyas claves privadas ni códigos de acceso.")}
                 required
                 minLength={10}
               />
@@ -72,17 +73,14 @@ export default function SoportePage() {
               {busy ? "Guardando consulta..." : "Crear ticket de soporte"}
             </button>
             <p className="slim-note" style={{ padding: 0 }}>
-              El ticket se guarda en el servicio de soporte de FTrade. No incluyas claves privadas ni códigos de acceso.
-            </p>
+              {t("El ticket se guarda en el servicio de soporte de FTrade. No incluyas claves privadas ni códigos de acceso.")}</p>
           </form>
         </section>
         <section className="support-contact">
           <MessageCircle size={32} strokeWidth={1.2} />
-          <h2>Una conversación directa.</h2>
+          <h2>{t("Una conversación directa.")}</h2>
           <p>
-            Para ayuda con pagos o acceso, puedes contactar por WhatsApp con el
-            equipo administrador.
-          </p>
+            {t("Para ayuda con pagos o acceso, puedes contactar por WhatsApp con el equipo administrador.")}</p>
           {appConfig.whatsapp.map((phone, index) => (
             <a
               className="support-admin"
@@ -92,7 +90,7 @@ export default function SoportePage() {
               rel="noreferrer"
             >
               <div>
-                <strong>Administrador {index + 1}</strong>
+                <strong>{t("Administrador ")}{index + 1}</strong>
                 <span>+{phone.replace(/^\+/, "")}</span>
               </div>
               <ArrowUpRight size={16} />
@@ -101,20 +99,18 @@ export default function SoportePage() {
           <div className="support-safety">
             <CheckCircle2 size={15} />
             <span>
-              Nunca te pediremos tu frase semilla, claves privadas ni acceso a
-              tu exchange.
-            </span>
+              {t("Nunca te pediremos tu frase semilla, claves privadas ni acceso a tu exchange.")}</span>
           </div>
         </section>
       </div>
       <section style={{ marginTop: 30 }}>
-        <SectionHeader title="Tus consultas" />
+        <SectionHeader title={t("Tus consultas")} />
         <ResourceState
           loading={tickets.loading}
           error={tickets.error}
           retry={tickets.refresh}
           empty={!tickets.loading && !tickets.error && !tickets.data?.length}
-          emptyText="Todavía no has creado tickets. Cuando lo hagas, podrás consultarlos aquí."
+          emptyText={t("Todavía no has creado tickets. Cuando lo hagas, podrás consultarlos aquí.")}
         />
         {tickets.data?.map((ticket) => (
           <div className="ticket-row" key={ticket.id}>

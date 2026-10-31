@@ -34,13 +34,14 @@ export async function loginPhone(phone: string): Promise<PhoneChallenge> {
 }
 
 /** Begin a new account registration. Telegram verification is required only here. */
-export async function registerPhone(phone: string, password: string): Promise<PhoneChallenge> {
+export async function registerPhone(phone: string, password: string, language: "en" | "es" = "en"): Promise<PhoneChallenge> {
   const refCode = sessionStorage.getItem("ftrade.referrer") || undefined;
   return apiRequest<PhoneChallenge>("/auth/register", {
     method: "POST",
     body: JSON.stringify({
       phone: phone.replace(/\s+/g, ""),
       password,
+      language,
       ...(refCode ? { ref_code: refCode } : {}),
     }),
   });

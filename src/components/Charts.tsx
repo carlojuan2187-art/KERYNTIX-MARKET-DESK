@@ -1,3 +1,4 @@
+import { t } from "@/i18n/translation";
 import { useEffect, useId, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -166,8 +167,8 @@ function IndicatorPane({ data, mode }: { data: TechnicalCandle[]; mode: "rsi" | 
   const yFor = (value: number) => mode === "rsi" ? top + (1 - value / 100) * plotHeight : mode === "atr" ? top + (1 - value / bound) * plotHeight : top + plotHeight / 2 - value / bound * (plotHeight / 2);
   const path = (key: keyof TechnicalCandle) => lineSegments(data, key, xFor, yFor);
   return <div className="indicator-pane">
-    <div className="indicator-pane-title"><strong>{mode === "rsi" ? "RSI 14" : mode === "atr" ? "ATR 14" : "MACD 12 · 26 · 9"}</strong><span>{mode === "rsi" ? "30 / 50 / 70" : mode === "atr" ? `Volatilidad · ${data[data.length - 1]?.atr == null ? "—" : price(data[data.length - 1].atr!)}` : "Línea · señal · histograma"}</span></div>
-    <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" role="img" aria-label={mode === "rsi" ? "RSI de 14 periodos" : mode === "atr" ? "ATR de 14 periodos" : "MACD 12 26 9"}>
+    <div className="indicator-pane-title"><strong>{mode === "rsi" ? "RSI 14" : mode === "atr" ? "ATR 14" : "MACD 12 · 26 · 9"}</strong><span>{mode === "rsi" ? "30 / 50 / 70" : mode === "atr" ? `${t("Volatilidad")} · ${data[data.length - 1]?.atr == null ? "—" : price(data[data.length - 1].atr!)}` : t("Línea · señal · histograma")}</span></div>
+    <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" role="img" aria-label={t(mode === "rsi" ? "RSI de 14 periodos" : mode === "atr" ? "ATR de 14 periodos" : "MACD 12 26 9")}>
       {mode === "rsi" ? [30, 50, 70].map((level) => <g key={level}><line x1={left} x2={width - right} y1={yFor(level)} y2={yFor(level)} className={level === 50 ? "chart-grid" : "indicator-threshold"} /><text x={width - right} y={yFor(level) - 2} textAnchor="end" className="chart-axis">{level}</text></g>) : mode === "macd" ? <line x1={left} x2={width - right} y1={yFor(0)} y2={yFor(0)} className="chart-grid" /> : null}
       {mode === "rsi" ? path("rsi").map((points, i) => <polyline key={i} points={points} fill="none" stroke="var(--blue)" strokeWidth="1.6" />) : mode === "atr" ? path("atr").map((points, i) => <polyline key={i} points={points} fill="none" stroke="var(--amber)" strokeWidth="1.6" />) : <>
         {data.map((item, i) => { if (item.macdHistogram == null) return null; const x = xFor(i), zero = yFor(0), valueY = yFor(item.macdHistogram); return <rect key={item.timestamp} x={x - Math.max(.6, plotWidth / data.length * .3)} y={Math.min(zero, valueY)} width={Math.max(1, plotWidth / data.length * .6)} height={Math.max(.7, Math.abs(valueY - zero))} fill={item.macdHistogram >= 0 ? "var(--green)" : "var(--red)"} opacity=".55" />; })}
@@ -404,8 +405,8 @@ function Candles({ data, livePrice, timeframe, view, indicators, tradeLevels }: 
       {indicators.volume && <span className="chart-volume">Vol <b>{compact(selected.volume)}</b></span>}
       {liveValue != null && <span className="chart-live-reading"><span className="live-dot" /> LIVE <b>{price(liveValue)}</b></span>}
     </div>
-    <div className="chart-interaction-hint">Arrastra para desplazarte · rueda/pellizco para zoom · arrastra la escala de precios a la derecha · usa la agarradera inferior para cambiar la altura</div>
-    <svg className="candle-chart" style={{ height }} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" role="img" aria-label={`${view === "candles" ? "Velas" : "Línea de precio"}; gráfico interactivo con zoom y desplazamiento`} tabIndex={0}
+    <div className="chart-interaction-hint">{t("Arrastra para desplazarte · rueda/pellizco para zoom · arrastra la escala de precios a la derecha · usa la agarradera inferior para cambiar la altura")}</div>
+    <svg className="candle-chart" style={{ height }} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" role="img" aria-label={`${t(view === "candles" ? "Velas" : "Línea de precio")}; ${t("gráfico interactivo con zoom y desplazamiento")}`} tabIndex={0}
       onKeyDown={(event) => {
         if (event.key === "ArrowLeft") { event.preventDefault(); setRequestedStart(clamp(viewStart - 3, 0, maxStart)); }
         if (event.key === "ArrowRight") { event.preventDefault(); setRequestedStart(clamp(viewStart + 3, 0, maxStart)); }
@@ -432,30 +433,30 @@ function Candles({ data, livePrice, timeframe, view, indicators, tradeLevels }: 
       {indicators.bollinger && <>{path("bbUpper").map((points, i) => <polyline key={`bb-u-${i}`} points={points} fill="none" stroke="var(--text-muted)" strokeWidth="1" strokeDasharray="3 3" />)}{path("bbLower").map((points, i) => <polyline key={`bb-l-${i}`} points={points} fill="none" stroke="var(--text-muted)" strokeWidth="1" strokeDasharray="3 3" />)}</>}
       {tradeLevels && <>
         <line x1="0" x2={chartWidth} y1={y(tradeLevels.entry)} y2={y(tradeLevels.entry)} stroke="var(--blue)" strokeWidth="1" strokeDasharray="5 3" opacity=".8" />
-        <text x="5" y={Math.max(10, y(tradeLevels.entry) - 4)} fill="var(--blue)" fontSize="8">ENTRADA {price(tradeLevels.entry)}</text>
+        <text x="5" y={Math.max(10, y(tradeLevels.entry) - 4)} fill="var(--blue)" fontSize="8">{t("ENTRADA ")}{price(tradeLevels.entry)}</text>
         <line x1="0" x2={chartWidth} y1={y(tradeLevels.stop)} y2={y(tradeLevels.stop)} stroke="var(--red)" strokeWidth="1" strokeDasharray="5 3" opacity=".8" />
-        <text x="5" y={Math.max(10, y(tradeLevels.stop) - 4)} fill="var(--red)" fontSize="8">STOP {price(tradeLevels.stop)}</text>
+        <text x="5" y={Math.max(10, y(tradeLevels.stop) - 4)} fill="var(--red)" fontSize="8">{t("STOP ")}{price(tradeLevels.stop)}</text>
         <line x1="0" x2={chartWidth} y1={y(tradeLevels.target)} y2={y(tradeLevels.target)} stroke="var(--green)" strokeWidth="1" strokeDasharray="5 3" opacity=".8" />
-        <text x="5" y={Math.max(10, y(tradeLevels.target) - 4)} fill="var(--green)" fontSize="8">OBJETIVO {price(tradeLevels.target)}</text>
+        <text x="5" y={Math.max(10, y(tradeLevels.target) - 4)} fill="var(--green)" fontSize="8">{t("OBJETIVO ")}{price(tradeLevels.target)}</text>
       </>}
       {showLiveLine && liveValue != null && <><line x1="0" x2={chartWidth} y1={y(liveValue)} y2={y(liveValue)} stroke="var(--accent)" strokeWidth="1" strokeDasharray="3 3" opacity=".95" /><rect x={chartWidth + 4} y={clamp(y(liveValue) - 10, 3, height - 27)} width="88" height="20" rx="3" fill="var(--accent)" /><text x={chartWidth + 48} y={clamp(y(liveValue) - 10, 3, height - 27) + 8} textAnchor="middle" fill="var(--accent-ink)" fontSize="9" fontFamily="var(--font-mono)" fontWeight="600">{price(liveValue)}</text></>}
       {hover !== null && <><line x1={xFor(hoverIndex)} x2={xFor(hoverIndex)} y1="8" y2={height - 22} stroke="var(--text-secondary)" strokeDasharray="3 3" opacity=".65" /><circle cx={xFor(hoverIndex)} cy={y(selected.close)} r="3" fill="var(--accent)" /></>}
     </svg>
-    <div className="chart-resize-handle" role="separator" aria-orientation="horizontal" aria-label="Cambiar altura del gráfico" tabIndex={0}
+    <div className="chart-resize-handle" role="separator" aria-orientation="horizontal" aria-label={t("Cambiar altura del gráfico")} tabIndex={0}
       onPointerDown={beginResize} onPointerMove={moveResize} onPointerUp={endResize} onPointerCancel={endResize}
       onKeyDown={(event) => { if (event.key === "ArrowUp") { event.preventDefault(); setHeight((value) => clamp(value - 20, 220, 720)); } if (event.key === "ArrowDown") { event.preventDefault(); setHeight((value) => clamp(value + 20, 220, 720)); } }}>
-      <span /><small>Arrastra para cambiar la altura</small><span />
+      <span /><small>{t("Arrastra para cambiar la altura")}</small><span />
     </div>
     {indicators.rsi && <IndicatorPane data={visibleData} mode="rsi" />}
     {indicators.macd && <IndicatorPane data={visibleData} mode="macd" />}
     {indicators.atr && <IndicatorPane data={visibleData} mode="atr" />}
-    {!activeCandle && showLiveLine && liveValue != null && <p className="chart-data-note">La línea LIVE refleja el precio WebSocket; la última vela del mercado está cerrada.</p>}
+    {!activeCandle && showLiveLine && liveValue != null && <p className="chart-data-note">{t("La línea LIVE refleja el precio WebSocket; la última vela del mercado está cerrada.")}</p>}
     <div className="chart-interaction-footer">
-      <span>Mostrando {visibleData.length} de {data.length} velas</span>
+      <span>{t("Mostrando ")}{visibleData.length} {t("de ")}{data.length} {t("velas")}</span>
       <div className="chart-zoom-buttons">
-        <button type="button" aria-label="Alejar gráfico" title="Mostrar más velas" onClick={() => { const next = clamp(Math.round(count * 1.2), Math.min(12, data.length), data.length); setVisibleCount(next); setRequestedStart(clamp(viewStart + count - next, 0, Math.max(0, data.length - next))); setHover(null); }}>−</button>
-        <button type="button" aria-label="Acercar gráfico" title="Mostrar menos velas" onClick={() => { const next = clamp(Math.round(count * 0.8), Math.min(12, data.length), data.length); setVisibleCount(next); setRequestedStart(clamp(viewStart + count - next, 0, Math.max(0, data.length - next))); setHover(null); }}>+</button>
-        <button type="button" onClick={resetView}>Restablecer vista</button>
+        <button type="button" aria-label={t("Alejar gráfico")} title={t("Mostrar más velas")} onClick={() => { const next = clamp(Math.round(count * 1.2), Math.min(12, data.length), data.length); setVisibleCount(next); setRequestedStart(clamp(viewStart + count - next, 0, Math.max(0, data.length - next))); setHover(null); }}>−</button>
+        <button type="button" aria-label={t("Acercar gráfico")} title={t("Mostrar menos velas")} onClick={() => { const next = clamp(Math.round(count * 0.8), Math.min(12, data.length), data.length); setVisibleCount(next); setRequestedStart(clamp(viewStart + count - next, 0, Math.max(0, data.length - next))); setHover(null); }}>+</button>
+        <button type="button" onClick={resetView}>{t("Restablecer vista")}</button>
       </div>
     </div>
   </div>;
@@ -638,15 +639,15 @@ export function MarketChart({
           <AssetIcon symbol={symbol} size={34} />
           <div>
             <div className="symbol-select-wrap">
-              <select aria-label="Par del gráfico" value={symbol} onChange={(event) => setSymbol(event.target.value)}>
+              <select aria-label={t("Par del gráfico")} value={symbol} onChange={(event) => setSymbol(event.target.value)}>
                 {quotes.map((item) => <option key={item.symbol} value={item.symbol}>{item.symbol.replace("USDT", " / USDT")}</option>)}
               </select>
               <ChevronDown size={13} />
             </div>
-            <span>Perpetuo <span className="separator-dot">·</span> Binance Futures</span>
+            <span>{t("Perpetuo ")}<span className="separator-dot">·</span> Binance Futures</span>
           </div>
         </div>
-        <Link className="icon-button" title="Ver flujo del par" aria-label={`Ver flujo de ${symbol}`} to={`/mercado/flujo/${symbol}`}>
+        <Link className="icon-button" title={t("Ver flujo del par")} aria-label={`Ver flujo de ${symbol}`} to={`/mercado/flujo/${symbol}`}>
           <Maximize2 size={15} />
         </Link>
       </div>
@@ -655,50 +656,50 @@ export function MarketChart({
         {quote && <span className={`chart-change ${quote.change_pct == null ? "muted" : quote.change_pct >= 0 ? "positive" : "negative"}`}>
           <ArrowUpRight size={13} />{percent(quote.change_pct)}<span>24h</span>
         </span>}
-        <span className={`chart-live-status ${quoteIsLive ? "is-live" : quoteIsRecent ? "is-recent" : "is-stale"}`} title={quoteAgeMs == null ? "Todavía no se ha recibido un tick WebSocket para este símbolo" : `Último tick WebSocket recibido hace ${(quoteAgeMs / 1000).toFixed(1)} s. Las velas históricas se actualizan cada 30 s; este indicador mide la conexión en vivo, no la antigüedad del snapshot REST.`}><span className="live-dot" />{quoteIsLive ? "Precio en vivo" : quoteAgeMs == null ? "Esperando tick" : quoteIsRecent ? "WebSocket lento" : "WebSocket sin datos"}</span>
+        <span className={`chart-live-status ${quoteIsLive ? "is-live" : quoteIsRecent ? "is-recent" : "is-stale"}`} title={quoteAgeMs == null ? t("Todavía no se ha recibido un tick WebSocket para este símbolo") : `${t("Último tick WebSocket recibido hace")} ${(quoteAgeMs / 1000).toFixed(1)} ${t("s. Las velas históricas se actualizan cada 30 s; este indicador mide la conexión en vivo, no la antigüedad del snapshot REST.")}`}><span className="live-dot" />{t(quoteIsLive ? "Precio en vivo" : quoteAgeMs == null ? "Esperando tick" : quoteIsRecent ? "WebSocket lento" : "WebSocket sin datos")}</span>
       </div>
       <div className="chart-toolbar">
-        <div className="timeframes" aria-label="Temporalidad del gráfico">
+        <div className="timeframes" aria-label={t("Temporalidad del gráfico")}>
           {["1m", "5m", "15m", "1h", "4h", "1D"].map((tf) => <button key={tf} className={tf === timeframe ? "active" : ""} aria-pressed={tf === timeframe} onClick={() => setTimeframe(tf)}>{tf}</button>)}
         </div>
         <div className="chart-view-toggle">
-          <button className={view === "candles" ? "active" : ""} aria-label="Gráfico de velas" aria-pressed={view === "candles"} title="Velas" onClick={() => setView("candles")}><ChartCandlestick size={15} /></button>
-          <button className={view === "line" ? "active" : ""} aria-label="Gráfico de línea" aria-pressed={view === "line"} title="Línea" onClick={() => setView("line")}><ChartNoAxesCombined size={15} /></button>
-          <button className="icon-button chart-refresh" onClick={() => void refresh()} aria-label="Actualizar velas" title="Actualizar velas"><span className={loading ? "refresh-spinning" : "refresh-symbol"}>↻</span></button>
+          <button className={view === "candles" ? "active" : ""} aria-label={t("Gráfico de velas")} aria-pressed={view === "candles"} title={t("Velas")} onClick={() => setView("candles")}><ChartCandlestick size={15} /></button>
+          <button className={view === "line" ? "active" : ""} aria-label={t("Gráfico de línea")} aria-pressed={view === "line"} title={t("Línea")} onClick={() => setView("line")}><ChartNoAxesCombined size={15} /></button>
+          <button className="icon-button chart-refresh" onClick={() => void refresh()} aria-label={t("Actualizar velas")} title={t("Actualizar velas")}><span className={loading ? "refresh-spinning" : "refresh-symbol"}>↻</span></button>
         </div>
       </div>
       <div className="chart-action-row">
-        <button type="button" className={`indicator-toggle ${plannerOpen ? "active" : ""}`} aria-expanded={plannerOpen} onClick={() => setPlannerOpen((open) => !open)}><Calculator size={12} /> Calcular operación</button>
-        <span>El precio LIVE sigue las cotizaciones del backend</span>
+        <button type="button" className={`indicator-toggle ${plannerOpen ? "active" : ""}`} aria-expanded={plannerOpen} onClick={() => setPlannerOpen((open) => !open)}><Calculator size={12} /> {t("Calcular operación")}</button>
+        <span>{t("El precio LIVE sigue las cotizaciones del backend")}</span>
       </div>
       {plannerOpen && <div className="trade-calculator">
-        <div className="trade-calculator-head"><strong>Plan de operación</strong><span>estimación, no envío de órdenes</span></div>
+        <div className="trade-calculator-head"><strong>{t("Plan de operación")}</strong><span>{t("estimación, no envío de órdenes")}</span></div>
         <div className="trade-direction-row">
           <button type="button" className={tradeDirection === "LONG" ? "active long" : ""} onClick={() => setTradeDirection("LONG")} aria-pressed={tradeDirection === "LONG"}>LONG</button>
           <button type="button" className={tradeDirection === "SHORT" ? "active short" : ""} onClick={() => setTradeDirection("SHORT")} aria-pressed={tradeDirection === "SHORT"}>SHORT</button>
         </div>
         <div className="trade-input-grid">
-          <label>Entrada (USDT)<input type="number" min="0" step="any" value={entryInput} placeholder={entry == null ? "Precio actual" : price(entry)} onChange={(event) => setEntryInput(event.target.value)} /></label>
-          <label>Stop loss (USDT)<input type="number" min="0" step="any" value={stopInput} placeholder={defaultStop == null ? "Automático -1%" : price(defaultStop)} onChange={(event) => setStopInput(event.target.value)} /></label>
-          <label>Objetivo (USDT)<input type="number" min="0" step="any" value={targetInput} placeholder={defaultTarget == null ? "Automático +2%" : price(defaultTarget)} onChange={(event) => setTargetInput(event.target.value)} /></label>
-          <label>Capital (USDT)<input type="number" min="0" step="any" value={capitalInput} onChange={(event) => setCapitalInput(event.target.value)} /></label>
-          <label>Riesgo (%)<input type="number" min="0" max="100" step="0.1" value={riskInput} onChange={(event) => setRiskInput(event.target.value)} /></label>
-          <label>Apalancamiento (x)<input type="number" min="1" step="1" value={leverageInput} onChange={(event) => setLeverageInput(event.target.value)} /></label>
+          <label>{t("Entrada (USDT)")}<input type="number" min="0" step="any" value={entryInput} placeholder={entry == null ? t("Precio actual") : price(entry)} onChange={(event) => setEntryInput(event.target.value)} /></label>
+          <label>{t("Stop loss (USDT)")}<input type="number" min="0" step="any" value={stopInput} placeholder={defaultStop == null ? t("Automático -1%") : price(defaultStop)} onChange={(event) => setStopInput(event.target.value)} /></label>
+          <label>{t("Objetivo (USDT)")}<input type="number" min="0" step="any" value={targetInput} placeholder={defaultTarget == null ? t("Automático +2%") : price(defaultTarget)} onChange={(event) => setTargetInput(event.target.value)} /></label>
+          <label>{t("Capital (USDT)")}<input type="number" min="0" step="any" value={capitalInput} onChange={(event) => setCapitalInput(event.target.value)} /></label>
+          <label>{t("Riesgo (%)")}<input type="number" min="0" max="100" step="0.1" value={riskInput} onChange={(event) => setRiskInput(event.target.value)} /></label>
+          <label>{t("Apalancamiento (x)")}<input type="number" min="1" step="1" value={leverageInput} onChange={(event) => setLeverageInput(event.target.value)} /></label>
         </div>
-        <p className="trade-auto-note">Si dejas el stop y el objetivo vacíos, se usan valores iniciales automáticos del 1% y 2% según LONG/SHORT. Puedes cambiarlos manualmente.</p>
+        <p className="trade-auto-note">{t("Si dejas el stop y el objetivo vacíos, se usan valores iniciales automáticos del 1% y 2% según LONG/SHORT. Puedes cambiarlos manualmente.")}</p>
         {levelsValid ? <div className="trade-result-grid">
-          <div><span>Riesgo estimado</span><strong>{number(riskBudget, 2)} USDT</strong></div>
-          <div><span>Tamaño</span><strong>{number(quantity, 5)} unidades</strong></div>
-          <div><span>Exposición</span><strong>{number(notional, 2)} USDT</strong></div>
-          <div><span>Margen estimado</span><strong>{number(margin, 2)} USDT</strong></div>
-          <div><span>Beneficio al objetivo</span><strong className="positive">{number(reward, 2)} USDT</strong></div>
-          <div><span>Ratio R/B</span><strong>{number(riskReward, 2)} : 1</strong></div>
-        </div> : <p className="trade-validation">Revisa los niveles: en LONG el stop debe estar debajo de la entrada y el objetivo arriba; en SHORT, al revés.</p>}
-        <p className="chart-disclaimer">El cálculo no incluye comisiones, funding, deslizamiento ni precio de liquidación. No coloca operaciones en Binance.</p>
+          <div><span>{t("Riesgo estimado")}</span><strong>{number(riskBudget, 2)} USDT</strong></div>
+          <div><span>{t("Tamaño")}</span><strong>{number(quantity, 5)} {t("unidades")}</strong></div>
+          <div><span>{t("Exposición")}</span><strong>{number(notional, 2)} USDT</strong></div>
+          <div><span>{t("Margen estimado")}</span><strong>{number(margin, 2)} USDT</strong></div>
+          <div><span>{t("Beneficio al objetivo")}</span><strong className="positive">{number(reward, 2)} USDT</strong></div>
+          <div><span>{t("Ratio R/B")}</span><strong>{number(riskReward, 2)} : 1</strong></div>
+        </div> : <p className="trade-validation">{t("Revisa los niveles: en LONG el stop debe estar debajo de la entrada y el objetivo arriba; en SHORT, al revés.")}</p>}
+        <p className="chart-disclaimer">{t("El cálculo no incluye comisiones, funding, deslizamiento ni precio de liquidación. No coloca operaciones en Binance.")}</p>
       </div>}
-      <div className="indicator-controls" aria-label="Indicadores técnicos">
-        {controls.map((control) => <button key={control.key} type="button" className={`indicator-toggle ${indicators[control.key] ? "active" : ""}`} aria-pressed={indicators[control.key]} onClick={() => toggleIndicator(control.key)} title={control.key === "vwap" ? "VWAP calculado sobre las 300 velas cargadas" : control.label}>
-          <span className="indicator-swatch" style={{ background: control.color }} />{control.label}
+      <div className="indicator-controls" aria-label={t("Indicadores técnicos")}>
+        {controls.map((control) => <button key={control.key} type="button" className={`indicator-toggle ${indicators[control.key] ? "active" : ""}`} aria-pressed={indicators[control.key]} onClick={() => toggleIndicator(control.key)} title={control.key === "vwap" ? t("VWAP calculado sobre las 300 velas cargadas") : t(control.label)}>
+          <span className="indicator-swatch" style={{ background: control.color }} />{t(control.label)}
         </button>)}
       </div>
       <div className="indicator-legend">
@@ -706,15 +707,15 @@ export function MarketChart({
           const last = chartData[chartData.length - 1];
           const key = control.key === "bollinger" ? null : control.key as keyof TechnicalCandle;
           const value = key && last ? last[key] : null;
-          return <span key={control.key}><i style={{ background: control.color }} />{control.label}{typeof value === "number" ? ` ${price(value)}` : ""}</span>;
+          return <span key={control.key}><i style={{ background: control.color }} />{t(control.label)}{typeof value === "number" ? ` ${price(value)}` : ""}</span>;
         })}
       </div>
-      {loading || error || !data ? <div className="chart-loading"><ResourceState loading={loading} error={error} retry={refresh} /></div> : chartData.length ? <Candles key={`${symbol}-${timeframe}`} data={chartData} livePrice={quote?.price} timeframe={timeframe} view={view} indicators={indicators} tradeLevels={tradeLevels} /> : <div className="chart-loading slim-note">No hay velas disponibles para este par.</div>}
+      {loading || error || !data ? <div className="chart-loading"><ResourceState loading={loading} error={error} retry={refresh} /></div> : chartData.length ? <Candles key={`${symbol}-${timeframe}`} data={chartData} livePrice={quote?.price} timeframe={timeframe} view={view} indicators={indicators} tradeLevels={tradeLevels} /> : <div className="chart-loading slim-note">{t("No hay velas disponibles para este par.")}</div>}
       <div className="chart-footer">
-        <span><span className="live-dot" />{view === "candles" ? "Velas OHLC" : "Precio de cierre"}{indicators.volume ? " y volumen" : ""}</span>
-        <span>Binance Futures <span className="separator-dot">·</span> {timeframe} <span className="separator-dot">·</span> EMA/RSI/MACD locales</span>
+        <span><span className="live-dot" />{t(view === "candles" ? "Velas OHLC" : "Precio de cierre")}{indicators.volume ? ` ${t("y volumen")}` : ""}</span>
+        <span>Binance Futures <span className="separator-dot">·</span> {timeframe} <span className="separator-dot">·</span> {t("EMA/RSI/MACD locales")}</span>
       </div>
-      <p className="chart-disclaimer">Indicadores técnicos informativos; no garantizan resultados. VWAP* se calcula sobre las 300 velas cargadas, no sobre toda la sesión.</p>
+      <p className="chart-disclaimer">{t("Indicadores técnicos informativos; no garantizan resultados. VWAP* se calcula sobre las 300 velas cargadas, no sobre toda la sesión.")}</p>
     </section>
   );
 }

@@ -1,3 +1,4 @@
+import { translate } from "@/i18n/translation";
 /** Small fetch client for the real FTrade API.
  * Access tokens are kept only in module memory. The refresh token lives in the
  * server-set HttpOnly cookie; because the web app and the API are on different
@@ -20,7 +21,7 @@ export class ApiError extends Error {
   readonly details?: unknown;
 
   constructor(status: number, payload: ApiErrorPayload, fallback: string) {
-    super(payload.message || fallback);
+    super(translate(payload.message || fallback));
     this.name = "ApiError";
     this.status = status;
     this.code = payload.code;
@@ -61,9 +62,7 @@ export function clearAccessToken() {
 function urlFor(path: string) {
   const base = appConfig.apiUrl.replace(/\/+$/, "");
   if (!base) {
-    throw new Error(
-      "Falta VITE_API_URL. Configura la URL raíz del backend FastAPI antes de usar FTrade.",
-    );
+    throw new Error(translate("Falta VITE_API_URL. Configura la URL raíz del backend FastAPI antes de usar FTrade."));
   }
   const suffix = path.startsWith("/") ? path : `/${path}`;
   return `${base}${suffix}`;
@@ -134,7 +133,7 @@ async function rawRequest<T>(
     }
   } catch (error) {
     if (controller.signal.aborted && !callerSignal?.aborted) {
-      throw new Error(`El servidor tardó demasiado en responder (${Math.round(timeoutMs / 1000)} s). Comprueba el backend o vuelve a intentarlo.`);
+      throw new Error(translate(`El servidor tardó demasiado en responder (${Math.round(timeoutMs / 1000)} s). Comprueba el backend o vuelve a intentarlo.`));
     }
     throw error;
   } finally {

@@ -1,3 +1,5 @@
+import { getIntlLocale } from "@/i18n/translation";
+import { t } from "@/i18n/translation";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -42,17 +44,16 @@ export default function CuentaPage() {
     return (
       <div>
         <PageHeader
-          eyebrow="TU ESPACIO, A TU MANERA"
-          title="Cargando tu cuenta…"
-          description="Estamos comprobando tu sesión para mostrar tu perfil y tu plan."
+          eyebrow={t("TU ESPACIO, A TU MANERA")}
+          title={t("Cargando tu cuenta…")}
+          description={t("Estamos comprobando tu sesión para mostrar tu perfil y tu plan.")}
         />
         <section className="panel panel-pad" role="status" aria-live="polite">
           <p className="account-explainer">
-            Si esta pantalla no cambia, vuelve al inicio e inténtalo de nuevo. No hace falta refrescar el teléfono.
-          </p>
+            {t("Si esta pantalla no cambia, vuelve al inicio e inténtalo de nuevo. No hace falta refrescar el teléfono.")}</p>
           <div className="signal-detail-actions">
-            <Link className="btn btn-secondary" to="/">Volver al inicio</Link>
-            <Link className="btn btn-primary" to="/login">Volver a iniciar sesión</Link>
+            <Link className="btn btn-secondary" to="/">{t("Volver al inicio")}</Link>
+            <Link className="btn btn-primary" to="/login">{t("Volver a iniciar sesión")}</Link>
           </div>
         </section>
       </div>
@@ -62,7 +63,7 @@ export default function CuentaPage() {
     setBusy(true);
     setError("");
     try {
-      new Intl.DateTimeFormat("es", { timeZone: tz }).format(new Date());
+      new Intl.DateTimeFormat(getIntlLocale(), { timeZone: tz }).format(new Date());
       const updated = await updateProfile({
         tz,
         exchange: exchange.trim() || undefined,
@@ -127,35 +128,34 @@ export default function CuentaPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="TU ESPACIO, A TU MANERA"
-        title="Todo empieza por ti."
-        description="Gestiona tu perfil, tu acceso y la forma en la que recibes contexto."
+        eyebrow={t("TU ESPACIO, A TU MANERA")}
+        title={t("Todo empieza por ti.")}
+        description={t("Gestiona tu perfil, tu acceso y la forma en la que recibes contexto.")}
       >
         {user.is_admin && (
           <Link className="btn btn-secondary" to="/admin">
             <ShieldCheck size={14} />
-            Abrir panel admin
-            <ArrowRight size={12} />
+            {t("Abrir panel admin")}<ArrowRight size={12} />
           </Link>
         )}
       </PageHeader>
       <div className="two-col">
         <section className="panel panel-pad">
-          <SectionHeader title="Mi perfil">
+          <SectionHeader title={t("Mi perfil")}>
             <span className="avatar">
               {user.username?.slice(1, 3).toUpperCase() || "FT"}
             </span>
           </SectionHeader>
           <div className="detail-row">
-            <span>Trader</span>
+            <span>{t("Trader")}</span>
             <strong>{user.username || "Mi cuenta"}</strong>
           </div>
           <div className="detail-row">
-            <span>Teléfono verificado</span>
+            <span>{t("Teléfono verificado")}</span>
             <strong className="mono">{user.phone}</strong>
           </div>
           <div className="detail-row">
-            <span>Mi plan</span>
+            <span>{t("Mi plan")}</span>
             <Tag tone={active ? "green" : "red"} dot>
               {user.plan === "premium" ? "PREMIUM" : "FREE"} ·{" "}
               {active
@@ -175,15 +175,13 @@ export default function CuentaPage() {
           </div>
           {user.plan === "free" && active && (
             <p className="slim-note">
-              Te quedan{" "}
-              {Math.ceil((Date.parse(expires!) - Date.now()) / 86400000)} días
-              de acceso gratuito.
-            </p>
+              {t("Te quedan")}{" "}
+              {Math.ceil((Date.parse(expires!) - Date.now()) / 86400000)} {t("días de acceso gratuito.")}</p>
           )}
           <div className="detail-row">
-            <span>Perfil de riesgo</span>
+            <span>{t("Perfil de riesgo")}</span>
             <span className="mono">
-              {number(user.risk_profile.capital, 0)} USDT ·{" "}
+              {number(user.risk_profile.capital, 0)} {t("USDT ·")}{" "}
               {user.risk_profile.risk_pct}%
             </span>
           </div>
@@ -193,15 +191,14 @@ export default function CuentaPage() {
               <ArrowRight size={13} />
             </Link>
             <Link className="btn btn-quiet" to="/calculadora">
-              Cambiar perfil de riesgo
-            </Link>
+              {t("Cambiar perfil de riesgo")}</Link>
           </div>
         </section>
         <section className="panel panel-pad">
-          <SectionHeader title="Tu configuración" />
+          <SectionHeader title={t("Tu configuración")} />
           <div className="form-stack">
             <label className="input-field">
-              <span>Zona horaria</span>
+              <span>{t("Zona horaria")}</span>
               <input
                 list="timezone-list"
                 value={tz}
@@ -221,20 +218,17 @@ export default function CuentaPage() {
                 ))}
               </datalist>
               <small>
-                Todas las fechas se adaptan a esta zona. Los periodos
-                estadísticos se calculan en UTC.
-              </small>
+                {t("Todas las fechas se adaptan a esta zona. Los periodos estadísticos se calculan en UTC.")}</small>
             </label>
             <label className="input-field">
-              <span>Registrar exchange</span>
+              <span>{t("Registrar exchange")}</span>
               <input
                 value={exchange}
                 onChange={(e) => setExchange(e.target.value)}
-                placeholder="Ej. Binance Futures"
+                placeholder={t("Ej. Binance Futures")}
               />
               <small>
-                Texto libre. No solicitamos claves API ni acceso a tu exchange.
-              </small>
+                {t("Texto libre. No solicitamos claves API ni acceso a tu exchange.")}</small>
             </label>
             {error && (
               <p className="form-error" role="alert">
@@ -252,16 +246,13 @@ export default function CuentaPage() {
           </div>
         </section>
         <section className="panel panel-pad">
-          <SectionHeader title="Vinculación con Telegram">
+          <SectionHeader title={t("Vinculación con Telegram")}>
             <Send size={16} className="muted" />
           </SectionHeader>
           <p className="account-explainer">
-            Solo se utiliza para verificar el teléfono y entregar
-            notificaciones. No hay chats ni herramientas de trading fuera de la
-            web.
-          </p>
+            {t("Solo se utiliza para verificar el teléfono y entregar notificaciones. No hay chats ni herramientas de trading fuera de la web.")}</p>
           <div className="detail-row">
-            <span>Estado</span>
+            <span>{t("Estado")}</span>
             <Tag tone={user.telegram_chat_id ? "green" : "muted"} dot>
               {user.telegram_chat_id ? "Vinculado" : "Sin vincular"}
             </Tag>
@@ -272,8 +263,7 @@ export default function CuentaPage() {
               style={{ marginTop: 15 }}
               onClick={() => void removeTelegramLink()}
             >
-              Desvincular Telegram
-            </button>
+              {t("Desvincular Telegram")}</button>
           ) : (
             <div className="signal-detail-actions">
               {telegramLinkRequest ? (
@@ -284,18 +274,15 @@ export default function CuentaPage() {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Abrir bot de Telegram
-                      <ExternalLink size={12} />
+                      {t("Abrir bot de Telegram")}<ExternalLink size={12} />
                     </a>
                     <button
                       className="btn btn-secondary"
                       onClick={() => void confirmTelegramLink()}
                     >
-                      Comprobar vinculación
-                    </button>
+                      {t("Comprobar vinculación")}</button>
                     <p className="slim-note">
-                      El enlace vence a los cinco minutos. Comparte tu propio contacto desde el bot.
-                    </p>
+                      {t("El enlace vence a los cinco minutos. Comparte tu propio contacto desde el bot.")}</p>
                   </>
                 ) : (
                   <button
@@ -303,8 +290,7 @@ export default function CuentaPage() {
                     onClick={() => void requestTelegramLink()}
                   >
                     <Send size={14} />
-                    Crear enlace de vinculación
-                  </button>
+                    {t("Crear enlace de vinculación")}</button>
                 )}
               {telegramError && <p className="form-error" role="alert">{telegramError}</p>}
             </div>
@@ -315,55 +301,48 @@ export default function CuentaPage() {
             style={{ marginTop: 17 }}
           >
             <Bell size={13} />
-            Gestionar avisos
-            <ArrowRight size={12} />
+            {t("Gestionar avisos")}<ArrowRight size={12} />
           </Link>
         </section>
         <section className="panel panel-pad">
-          <SectionHeader title="Un espacio que se adapta a ti">
+          <SectionHeader title={t("Un espacio que se adapta a ti")}>
             <Settings2 size={16} className="muted" />
           </SectionHeader>
           <div className="detail-row">
-            <span>Apariencia</span>
+            <span>{t("Apariencia")}</span>
             <button className="btn btn-secondary" onClick={toggleTheme}>
-              {theme === "dark" ? "Oscuro" : "Claro"} · Cambiar
-            </button>
+              {theme === "dark" ? "Oscuro" : "Claro"} {t("· Cambiar")}</button>
           </div>
           <div className="detail-row">
-            <span>Versión de diseño</span>
+            <span>{t("Versión de diseño")}</span>
             <div className="variant-switch">
               <button
                 className={variant === "terminal" ? "active" : ""}
                 onClick={() => setVariant("terminal")}
               >
-                Terminal
-              </button>
+                {t("Terminal")}</button>
               <button
                 className={variant === "panorama" ? "active" : ""}
                 onClick={() => setVariant("panorama")}
               >
-                Panorama
-              </button>
+                {t("Panorama")}</button>
             </div>
           </div>
           <p className="slim-note">
-            Terminal: precisión y seguimiento de setups. Panorama: mapa de
-            mercado, amplitud y lectura visual. Tu elección se conserva en este
-            navegador.
-          </p>
+            {t("Terminal: precisión y seguimiento de setups. Panorama: mapa de mercado, amplitud y lectura visual. Tu elección se conserva en este navegador.")}</p>
         </section>
       </div>
       <section className="panel panel-pad" style={{ marginTop: 22 }}>
         <SectionHeader
-          title="Sesiones activas"
-          subtitle="Revisa desde dónde se usa tu cuenta."
+          title={t("Sesiones activas")}
+          subtitle={t("Revisa desde dónde se usa tu cuenta.")}
         />
         <ResourceState
           loading={sessions.loading}
           error={sessions.error}
           retry={sessions.refresh}
           empty={!sessions.loading && !sessions.error && !sessions.data?.length}
-          emptyText="No hay otras sesiones activas."
+          emptyText={t("No hay otras sesiones activas.")}
         />
         {sessions.data?.map((session) => (
           <div className="session-row" key={session.id}>
@@ -371,7 +350,7 @@ export default function CuentaPage() {
             <div>
               <h3>
                 {session.device}
-                {session.current && <Tag tone="green">Esta sesión</Tag>}
+                {session.current && <Tag tone="green">{t("Esta sesión")}</Tag>}
               </h3>
               <p>
                 {session.location} ·{" "}
@@ -389,20 +368,18 @@ export default function CuentaPage() {
                   toast("Sesión cerrada");
                 }}
               >
-                Cerrar sesión
-              </button>
+                {t("Cerrar sesión")}</button>
             )}
           </div>
         ))}
       </section>
       <div className="account-logout">
         <span>
-          Tu cuenta fue creada el {dateTime(user.created_at, user.tz)}.
+          {t("Tu cuenta fue creada el ")}{dateTime(user.created_at, user.tz)}.
         </span>
         <button className="btn btn-danger" onClick={() => void signOut()}>
           <LogOut size={13} />
-          Cerrar mi sesión
-        </button>
+          {t("Cerrar mi sesión")}</button>
       </div>
     </div>
   );

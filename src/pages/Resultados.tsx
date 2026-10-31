@@ -1,3 +1,4 @@
+import { t } from "@/i18n/translation";
 import { useState } from "react";
 import {
   ArrowDownRight,
@@ -31,12 +32,12 @@ export default function ResultadosPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="RESULTADOS, SIN FILTROS"
-        title="La disciplina en números."
-        description="Solo operaciones cerradas que tocaron entrada. Cada R cuenta una historia."
+        eyebrow={t("RESULTADOS, SIN FILTROS")}
+        title={t("La disciplina en números.")}
+        description={t("Solo operaciones cerradas que tocaron entrada. Cada R cuenta una historia.")}
       >
         <select
-          aria-label="Periodo de resultados"
+          aria-label={t("Periodo de resultados")}
           className="styled-input"
           value={period}
           onChange={(e) => {
@@ -44,10 +45,10 @@ export default function ResultadosPage() {
             setPage(0);
           }}
         >
-          <option value="day">Hoy (UTC)</option>
-          <option value="week">Últimos 7 días</option>
-          <option value="month">Últimos 30 días</option>
-          <option value="all">Desde el inicio</option>
+          <option value="day">{t("Hoy (UTC)")}</option>
+          <option value="week">{t("Últimos 7 días")}</option>
+          <option value="month">{t("Últimos 30 días")}</option>
+          <option value="all">{t("Desde el inicio")}</option>
         </select>
       </PageHeader>
       <ResourceState
@@ -55,7 +56,7 @@ export default function ResultadosPage() {
         error={error}
         retry={refresh}
         empty={!loading && !error && data?.operations === 0}
-        emptyText="Aún no hay operaciones cerradas en este periodo. Prueba con 7 días, 30 días o el histórico total."
+        emptyText={t("Aún no hay operaciones cerradas en este periodo. Prueba con 7 días, 30 días o el histórico total.")}
       />
       {data && !loading && !error && data.operations > 0 && (
         <>
@@ -86,18 +87,18 @@ export default function ResultadosPage() {
               },
             ].map((metric) => (
               <div className="overview-metric" key={metric.label}>
-                <div className="metric-label">{metric.label}</div>
+                <div className="metric-label">{t(metric.label)}</div>
                 <div className={`metric-value ${metric.tone || ""}`}>
                   {metric.value}
                 </div>
-                <div className="metric-note">{metric.note}</div>
+                <div className="metric-note">{t(metric.note)}</div>
               </div>
             ))}
           </div>
           <section className="panel panel-pad">
             <SectionHeader
-              title="La curva de tu estrategia"
-              subtitle="R acumulado, ordenado por fecha de cierre"
+              title={t("La curva de tu estrategia")}
+              subtitle={t("R acumulado, ordenado por fecha de cierre")}
             >
               <Tag tone="green">
                 <ArrowUpRight size={12} />+{number(data.total_r)}R
@@ -106,19 +107,19 @@ export default function ResultadosPage() {
             <HistoryChart data={data.curve} height={265} />
             <div className="results-extremes">
               <div>
-                <span>Mejor operación</span>
+                <span>{t("Mejor operación")}</span>
                 <strong className="positive mono">
                   +{number(data.best_r)}R
                 </strong>
               </div>
               <div>
-                <span>Peor operación</span>
+                <span>{t("Peor operación")}</span>
                 <strong className="negative mono">
                   {number(data.worst_r)}R
                 </strong>
               </div>
               <div>
-                <span>Racha actual</span>
+                <span>{t("Racha actual")}</span>
                 <strong className={data.streak > 0 ? "positive" : "negative"}>
                   {Math.abs(data.streak)}{" "}
                   {data.streak > 0 ? "ganadas" : "perdidas"}
@@ -129,20 +130,20 @@ export default function ResultadosPage() {
           <section className="panel" style={{ marginTop: 22 }}>
             <div className="section-padding">
               <SectionHeader
-                title="Cada operación, al detalle"
-                subtitle="Sin pendientes, sin canceladas y sin resultados hipotéticos."
+                title={t("Cada operación, al detalle")}
+                subtitle={t("Sin pendientes, sin canceladas y sin resultados hipotéticos.")}
               />
             </div>
             <div className="table-scroll">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Par / Dirección</th>
-                    <th>Entrada</th>
-                    <th>Salida</th>
-                    <th>Cierre</th>
-                    <th>R obtenido</th>
-                    <th>Fecha de cierre</th>
+                    <th>{t("Par / Dirección")}</th>
+                    <th>{t("Entrada")}</th>
+                    <th>{t("Salida")}</th>
+                    <th>{t("Cierre")}</th>
+                    <th>{t("R obtenido")}</th>
+                    <th>{t("Fecha de cierre")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -196,13 +197,12 @@ export default function ResultadosPage() {
             </div>
             <div className="pagination">
               <span>
-                {page * 8 + 1}-{Math.min((page + 1) * 8, data.operations)} de{" "}
-                {data.operations} operaciones
-              </span>
+                {page * 8 + 1}-{Math.min((page + 1) * 8, data.operations)} {t("de")}{" "}
+                {data.operations} {t("operaciones")}</span>
               <div>
                 <button
                   className="icon-button"
-                  aria-label="Página anterior"
+                  aria-label={t("Página anterior")}
                   disabled={page === 0}
                   onClick={() => setPage((p) => p - 1)}
                 >
@@ -213,7 +213,7 @@ export default function ResultadosPage() {
                 </span>
                 <button
                   className="icon-button"
-                  aria-label="Página siguiente"
+                  aria-label={t("Página siguiente")}
                   disabled={(page + 1) * 8 >= data.operations}
                   onClick={() => setPage((p) => p + 1)}
                 >
@@ -226,13 +226,10 @@ export default function ResultadosPage() {
       )}
       <p className="slim-note">
         <ShieldCheck size={12} />
-        Si una operación toca TP1 y después retrocede al Stop Loss, se registra
-        como TP1. Un SL antes del primer objetivo equivale a -1,00R.
-      </p>
+        {t("Si una operación toca TP1 y después retrocede al Stop Loss, se registra como TP1. Un SL antes del primer objetivo equivale a -1,00R.")}</p>
       <p className="slim-note" style={{ paddingTop: 0 }}>
         <Info size={12} />
-        Este histórico incluye únicamente cierres registrados por el backend. Los resultados anteriores no garantizan resultados futuros.
-      </p>
+        {t("Este histórico incluye únicamente cierres registrados por el backend. Los resultados anteriores no garantizan resultados futuros.")}</p>
     </div>
   );
 }

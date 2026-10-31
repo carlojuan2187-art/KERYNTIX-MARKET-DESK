@@ -37,7 +37,7 @@ export async function getMe(): Promise<User> {
   return apiRequest<User>("/auth/me", { method: "GET" });
 }
 export async function updateProfile(patch: Partial<User>): Promise<User> {
-  const allowedKeys = ["exchange", "tz", "risk_profile"] as const;
+  const allowedKeys = ["exchange", "tz", "risk_profile", "language"] as const;
   const unsupported = Object.keys(patch).filter((key) => !allowedKeys.includes(key as (typeof allowedKeys)[number]));
   if (unsupported.length) throw new Error(`Estos campos no se pueden cambiar desde el perfil: ${unsupported.join(", ")}.`);
   return apiRequest<User>("/auth/me", { method: "PATCH", body: JSON.stringify(patch) });

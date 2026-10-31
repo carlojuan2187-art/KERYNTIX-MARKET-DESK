@@ -1,3 +1,4 @@
+import { t } from "@/i18n/translation";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, Gift, Link2 } from "lucide-react";
 import { getReferralSummary } from "@/api/account";
@@ -18,9 +19,9 @@ export default function ReferidosPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="EL BUEN CONTEXTO SE COMPARTE"
-        title="Tu comunidad también suma."
-        description="Invita a otros traders. Cinco referidos que activen Premium se convierten en 30 días para ti."
+        eyebrow={t("EL BUEN CONTEXTO SE COMPARTE")}
+        title={t("Tu comunidad también suma.")}
+        description={t("Invita a otros traders. Cinco referidos que activen Premium se convierten en 30 días para ti.")}
       />
       <ResourceState loading={loading} error={error} retry={refresh} />
       {data && !loading && !error && (
@@ -29,40 +30,34 @@ export default function ReferidosPage() {
             <section className="referral-invite">
               <Link2 size={25} />
               <h2>
-                Comparte una mejor forma
-                <br />
-                de leer el mercado.
-              </h2>
+                {t("Comparte una mejor forma")}<br />
+                {t("de leer el mercado.")}</h2>
               <p>
-                Este es tu enlace personal. Tu código se conserva antes del
-                registro para asociar cada invitación a tu cuenta.
-              </p>
+                {t("Este es tu enlace personal. Tu código se conserva antes del registro para asociar cada invitación a tu cuenta.")}</p>
               <div className="referral-link">
                 <input
-                  aria-label="Tu enlace de referido"
+                  aria-label={t("Tu enlace de referido")}
                   value={data.link}
                   readOnly
                 />
                 <CopyButton
                   text={data.link}
-                  label="Copiar enlace"
+                  label={t("Copiar enlace")}
                   className="btn btn-primary"
                 />
               </div>
               <span className="slim-note">
-                Solo cuentan las activaciones de Premium. Los registros
-                gratuitos no suman al objetivo.
-              </span>
+                {t("Solo cuentan las activaciones de Premium. Los registros gratuitos no suman al objetivo.")}</span>
             </section>
             <section className="referral-progress panel panel-pad">
-              <SectionHeader title="Tu próxima recompensa">
+              <SectionHeader title={t("Tu próxima recompensa")}>
                 <Gift size={17} className="positive" />
               </SectionHeader>
               <div className="referral-progress-number">
                 <strong>{data.progress.current}</strong>
                 <span>/ {data.progress.target}</span>
               </div>
-              <p>referidos Premium válidos</p>
+              <p>{t("referidos Premium válidos")}</p>
               <div className="referral-milestones">
                 {Array.from({ length: 5 }, (_, index) => (
                   <span
@@ -91,16 +86,15 @@ export default function ReferidosPage() {
                   : "30 días de Premium gratis"}
               </p>
               <span className="slim-note">
-                Te faltan{" "}
+                {t("Te faltan")}{" "}
                 {Math.max(0, data.progress.target - data.progress.current)}{" "}
-                activaciones para tu recompensa.
-              </span>
+                {t("activaciones para tu recompensa.")}</span>
             </section>
           </div>
           <section className="panel">
             <div className="section-padding">
               <SectionHeader
-                title="Las personas que se sumaron"
+                title={t("Las personas que se sumaron")}
                 subtitle={`${data.referrals.length} registros · ${data.progress.current} activaciones Premium`}
               />
             </div>
@@ -108,10 +102,10 @@ export default function ReferidosPage() {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Trader referido</th>
-                    <th>Registro</th>
-                    <th>Activación Premium</th>
-                    <th>Estado</th>
+                    <th>{t("Trader referido")}</th>
+                    <th>{t("Registro")}</th>
+                    <th>{t("Activación Premium")}</th>
+                    <th>{t("Estado")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -152,25 +146,21 @@ export default function ReferidosPage() {
             </div>
           </section>
           <section style={{ marginTop: 26 }}>
-            <SectionHeader title="Recompensas obtenidas" />
+            <SectionHeader title={t("Recompensas obtenidas")} />
             {data.rewards.length ? (
               data.rewards.map((reward) => (
                 <div className="detail-row" key={reward.id}>
                   <span>{dateTime(reward.created_at, user?.tz)}</span>
                   <strong className="positive">
-                    +{reward.days} días Premium
-                  </strong>
+                    +{reward.days} {t("días Premium")}</strong>
                 </div>
               ))
             ) : (
               <p className="slim-note">
-                Todavía no has completado un grupo de 5 activaciones. Tu primera
-                recompensa se mostrará aquí.
-              </p>
+                {t("Todavía no has completado un grupo de 5 activaciones. Tu primera recompensa se mostrará aquí.")}</p>
             )}
             <Link to="/planes" className="btn btn-quiet">
-              Ver mi plan
-              <ArrowRight size={13} />
+              {t("Ver mi plan")}<ArrowRight size={13} />
             </Link>
           </section>
         </>

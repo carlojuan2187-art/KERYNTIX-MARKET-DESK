@@ -1,9 +1,11 @@
+import { t } from "@/i18n/translation";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Clock3 } from "lucide-react";
 import { getRegime } from "@/api";
 import type { MarketRegime, MarketRegimeTimeframe, MarketRegimeTimeframeAnalysis } from "@/api/types";
 import { useApi } from "@/hooks/useApi";
+import { useApp } from "@/context/AppContext";
 import { compact, dateTime, number, percent } from "@/utils/format";
 import {
   PageHeader,
@@ -33,6 +35,8 @@ function timeframeTrend(analysis: MarketRegimeTimeframeAnalysis): MarketRegime["
 }
 
 export default function RegimenPage() {
+  const { language } = useApp();
+  void language; // Subscribe to language changes so imported translations refresh.
   const [timeframe, setTimeframe] = useState<MarketRegimeTimeframe>("4h");
   const { data, loading, error, refresh } = useApi(getRegime);
   const selectedAnalysis = data?.timeframes?.[timeframe];
@@ -55,25 +59,25 @@ export default function RegimenPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="ADAPTA TU ESTRATEGIA AL CONTEXTO"
-        title="No todos los mercados se operan igual."
-        description="Selecciona 4H, 1H o 15M para consultar el régimen de BTC y los indicadores de esa temporalidad."
+        eyebrow={t("ADAPTA TU ESTRATEGIA AL CONTEXTO")}
+        title={t("No todos los mercados se operan igual.")}
+        description={t("Selecciona 4H, 1H o 15M para consultar el régimen de BTC y los indicadores de esa temporalidad.")}
       >
         <RefreshButton loading={loading} onClick={refresh} />
       </PageHeader>
       <div className="regime-timeframe-picker">
-        <span>Temporalidad del régimen</span>
-        <div className="timeframes" role="group" aria-label="Temporalidad del régimen de mercado">
+        <span>{t("Temporalidad del régimen")}</span>
+        <div className="timeframes" role="group" aria-label={t("Temporalidad del régimen de mercado")}>
           {REGIME_TIMEFRAMES.map((item) => (
             <button
               key={item.value}
               type="button"
               className={timeframe === item.value ? "active" : ""}
               aria-pressed={timeframe === item.value}
-              title={`Ver régimen de ${item.longLabel}`}
+              title={t(`Ver régimen de ${item.longLabel}`)}
               onClick={() => setTimeframe(item.value)}
             >
-              {item.label}
+              {t(item.label)}
             </button>
           ))}
         </div>
@@ -81,8 +85,7 @@ export default function RegimenPage() {
       <ResourceState loading={loading} error={error} retry={refresh} />
       {data && !loading && !error && !displayRegime && (
         <p className="slim-note" role="status">
-          No hay datos suficientes para calcular el régimen de {selectedTimeframeLabel}. Prueba otra temporalidad o actualiza los datos.
-        </p>
+          {t("No hay datos suficientes para calcular el régimen de ")}{selectedTimeframeLabel}{t(". Prueba otra temporalidad o actualiza los datos.")}</p>
       )}
       {displayRegime && !loading && !error && (
         <>
@@ -98,7 +101,7 @@ export default function RegimenPage() {
                 className={displayRegime.trend === trend ? "active" : ""}
                 key={trend}
               >
-                {trend}
+                {t(trend)}
               </span>
             ))}
           </div>
@@ -113,7 +116,7 @@ export default function RegimenPage() {
           <section className="panel panel-pad">
             <SectionHeader
               title={`Las piezas del contexto · ${timeframe.toUpperCase()}`}
-              subtitle={`Indicadores calculados sobre velas de ${selectedTimeframeLabel}. El contexto de amplitud y derivados es global.`}
+              subtitle={t(`Indicadores calculados sobre velas de ${selectedTimeframeLabel}. El contexto de amplitud y derivados es global.`)}
             />
             <div className="regime-factors">
               {[
@@ -139,47 +142,42 @@ export default function RegimenPage() {
                 },
               ].map((factor) => (
                 <div key={factor.label}>
-                  <span>{factor.label}</span>
-                  <h3>{factor.title}</h3>
-                  <p>{factor.text}</p>
+                  <span>{t(factor.label)}</span>
+                  <h3>{t(factor.title)}</h3>
+                  <p>{t(factor.text)}</p>
                 </div>
               ))}
             </div>
             <div className="regime-secondary">
               <span>
-                Amplitud{" "}
+                {t("Amplitud")}{" "}
                 <strong className="positive">
                   {displayRegime.market_breadth == null ? "—" : `${Math.round(displayRegime.market_breadth * 100)}% al alza`}
                 </strong>
               </span>
               <span>
-                Funding{" "}
+                {t("Funding")}{" "}
                 <strong className="mono">
                   {displayRegime.funding_rate == null ? "—" : percent(displayRegime.funding_rate * 100, 4)}
                 </strong>
               </span>
               <span>
-                Interés abierto{" "}
+                {t("Interés abierto")}{" "}
                 <strong className="mono">${displayRegime.oi_value == null ? "—" : compact(displayRegime.oi_value)}</strong>
               </span>
               <span>
-                Sesión <strong>{displayRegime.session_now || "—"}</strong>
+                {t("Sesión ")}<strong>{displayRegime.session_now || "—"}</strong>
               </span>
             </div>
-            <Reading title="Cómo llevarlo a tu operativa">
-              En un entorno alcista con ADX fuerte, los retrocesos a zonas de
-              interés pueden tener más contexto que los cortos contra tendencia.
-              No anticipes la entrada: espera un setup confirmado y dimensiona
-              el riesgo antes de operar.
-            </Reading>
+            <Reading title={t("Cómo llevarlo a tu operativa")}>
+              {t("En un entorno alcista con ADX fuerte, los retrocesos a zonas de interés pueden tener más contexto que los cortos contra tendencia. No anticipes la entrada: espera un setup confirmado y dimensiona el riesgo antes de operar.")}</Reading>
             <Link className="btn btn-primary" to="/senales">
-              Buscar setups con contexto
-              <ArrowUpRight size={13} />
+              {t("Buscar setups con contexto")}<ArrowUpRight size={13} />
             </Link>
           </section>
           <p className="slim-note">
             <Clock3 size={12} />
-            Refresco automático cada 5 minutos. Última lectura:{" "}
+            {t("Refresco automático cada 5 minutos. Última lectura:")}{" "}
             {dateTime(displayRegime.updated_at)}.
           </p>
         </>

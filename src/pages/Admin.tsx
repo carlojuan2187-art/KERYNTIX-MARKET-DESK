@@ -1,3 +1,4 @@
+import { t } from "@/i18n/translation";
 import { useCallback, useState } from "react";
 import {
   Check,
@@ -128,9 +129,9 @@ export default function AdminPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="ADMINISTRACIÓN DE FTRADE"
-        title="Una plataforma bajo control."
-        description="Gestiona usuarios, planes y restricciones mediante las rutas administrativas del backend."
+        eyebrow={t("ADMINISTRACIÓN DE FTRADE")}
+        title={t("Una plataforma bajo control.")}
+        description={t("Gestiona usuarios, planes y restricciones mediante las rutas administrativas del backend.")}
       >
         <RefreshButton
           loading={users.loading}
@@ -177,7 +178,7 @@ export default function AdminPage() {
             }}
           >
             <div>
-              <span>{metric.label}</span>
+              <span>{t(metric.label)}</span>
               <metric.icon size={15} />
             </div>
             <strong>{metric.value ?? "..."}</strong>
@@ -186,8 +187,8 @@ export default function AdminPage() {
       </div>
       <section className="panel panel-pad" style={{ marginBottom: 22 }}>
         <SectionHeader
-          title="Reiniciar estadísticas"
-          subtitle="Empieza a medir la estrategia desde cero tras modificarla. No se borra ninguna operación."
+          title={t("Reiniciar estadísticas")}
+          subtitle={t("Empieza a medir la estrategia desde cero tras modificarla. No se borra ninguna operación.")}
         >
           <Tag tone={baseline.data?.active ? "amber" : "blue"}>
             {baseline.data?.active ? "Reiniciadas" : "Histórico completo"}
@@ -201,7 +202,7 @@ export default function AdminPage() {
         {baseline.data && !baseline.loading && !baseline.error && (
           <div className="form-stack">
             <div className="detail-row">
-              <span>Contando desde</span>
+              <span>{t("Contando desde")}</span>
               <strong>
                 {baseline.data.reset_at
                   ? dateTime(baseline.data.reset_at)
@@ -209,27 +210,27 @@ export default function AdminPage() {
               </strong>
             </div>
             <div className="detail-row">
-              <span>Operaciones que cuentan ahora</span>
+              <span>{t("Operaciones que cuentan ahora")}</span>
               <strong className="mono">{baseline.data.trades_counted}</strong>
             </div>
             <div className="detail-row">
-              <span>Operaciones archivadas (ocultas de las estadísticas)</span>
+              <span>{t("Operaciones archivadas (ocultas de las estadísticas)")}</span>
               <strong className="mono">{baseline.data.trades_archived}</strong>
             </div>
             {baseline.data.reason && (
               <div className="detail-row">
-                <span>Motivo del último reinicio</span>
+                <span>{t("Motivo del último reinicio")}</span>
                 <span>{baseline.data.reason}</span>
               </div>
             )}
             <label className="input-field">
-              <span>Motivo (por ejemplo, el cambio de estrategia)</span>
+              <span>{t("Motivo (por ejemplo, el cambio de estrategia)")}</span>
               <textarea
                 value={resetReason}
                 onChange={(e) => setResetReason(e.target.value)}
                 rows={2}
                 maxLength={500}
-                placeholder="Ej.: Ajuste de filtros de liquidez"
+                placeholder={t("Ej.: Ajuste de filtros de liquidez")}
               />
             </label>
             <label className="terms-check">
@@ -239,9 +240,7 @@ export default function AdminPage() {
                 onChange={(e) => setResetConfirmed(e.target.checked)}
               />
               <span>
-                Entiendo que Resultados y la Vista general empezarán desde cero
-                para todos los usuarios.
-              </span>
+                {t("Entiendo que Resultados y la Vista general empezarán desde cero para todos los usuarios.")}</span>
             </label>
             {resetError && (
               <p className="form-error" role="alert">
@@ -255,23 +254,18 @@ export default function AdminPage() {
                 onClick={() => void runStatsReset("reset")}
               >
                 <RotateCcw size={13} />
-                Reiniciar estadísticas
-              </button>
+                {t("Reiniciar estadísticas")}</button>
               {baseline.data.active && (
                 <button
                   className="btn btn-secondary"
                   disabled={resetBusy}
                   onClick={() => void runStatsReset("restore")}
                 >
-                  Restaurar histórico completo
-                </button>
+                  {t("Restaurar histórico completo")}</button>
               )}
             </div>
             <p className="slim-note" style={{ padding: 0 }}>
-              Solo cuentan las operaciones cerradas después del reinicio. Las
-              anteriores se conservan y se pueden recuperar con “Restaurar
-              histórico completo”.
-            </p>
+              {t("Solo cuentan las operaciones cerradas después del reinicio. Las anteriores se conservan y se pueden recuperar con “Restaurar histórico completo”.")}</p>
           </div>
         )}
       </section>
@@ -284,13 +278,13 @@ export default function AdminPage() {
               setQuery(e.target.value);
               setPage(0);
             }}
-            placeholder="Busca por ID, teléfono o @usuario"
-            aria-label="Buscar usuarios"
+            placeholder={t("Busca por ID, teléfono o @usuario")}
+            aria-label={t("Buscar usuarios")}
           />
           {query && (
             <button
               className="icon-button"
-              aria-label="Limpiar búsqueda"
+              aria-label={t("Limpiar búsqueda")}
               onClick={() => setQuery("")}
             >
               <X size={12} />
@@ -298,15 +292,14 @@ export default function AdminPage() {
           )}
         </div>
         <span className="slim-note" style={{ padding: 0 }}>
-          {users.data?.total || 0} usuarios encontrados
-        </span>
+          {users.data?.total || 0} {t("usuarios encontrados")}</span>
       </div>
       <ResourceState
         loading={users.loading}
         error={users.error}
         retry={users.refresh}
         empty={!users.loading && !users.error && !users.data?.users.length}
-        emptyText="No hay usuarios que coincidan con estos filtros."
+        emptyText={t("No hay usuarios que coincidan con estos filtros.")}
       />
       {users.data && !users.loading && !users.error && (
         <section className="panel">
@@ -314,11 +307,11 @@ export default function AdminPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Usuario</th>
-                  <th>Teléfono</th>
-                  <th>Plan</th>
-                  <th>Vencimiento</th>
-                  <th>Estado</th>
+                  <th>{t("Usuario")}</th>
+                  <th>{t("Teléfono")}</th>
+                  <th>{t("Plan")}</th>
+                  <th>{t("Vencimiento")}</th>
+                  <th>{t("Estado")}</th>
                   <th />
                 </tr>
               </thead>
@@ -360,8 +353,7 @@ export default function AdminPage() {
                           setPermanentConfirmed(false);
                         }}
                       >
-                        Ver ficha
-                        <ChevronRight size={11} />
+                        {t("Ver ficha")}<ChevronRight size={11} />
                       </button>
                     </td>
                   </tr>
@@ -371,13 +363,13 @@ export default function AdminPage() {
           </div>
           <div className="pagination">
             <span>
-              Página {page + 1} de{" "}
+              {t("Página ")}{page + 1} {t("de")}{" "}
               {Math.max(1, Math.ceil(users.data.total / users.data.limit))}
             </span>
             <div>
               <button
                 className="icon-button"
-                aria-label="Página anterior de usuarios"
+                aria-label={t("Página anterior de usuarios")}
                 disabled={page === 0}
                 onClick={() => setPage((p) => p - 1)}
               >
@@ -385,7 +377,7 @@ export default function AdminPage() {
               </button>
               <button
                 className="icon-button"
-                aria-label="Página siguiente de usuarios"
+                aria-label={t("Página siguiente de usuarios")}
                 disabled={(page + 1) * users.data.limit >= users.data.total}
                 onClick={() => setPage((p) => p + 1)}
               >
@@ -405,15 +397,15 @@ export default function AdminPage() {
             {selected.is_admin ? " · Administrador" : ""}
           </Tag>
           <div className="detail-row">
-            <span>ID</span>
+            <span>{t("ID")}</span>
             <strong className="mono">{selected.user_id}</strong>
           </div>
           <div className="detail-row">
-            <span>Teléfono</span>
+            <span>{t("Teléfono")}</span>
             <strong className="mono">{selected.phone}</strong>
           </div>
           <div className="detail-row">
-            <span>Plan / Vencimiento</span>
+            <span>{t("Plan / Vencimiento")}</span>
             <span>
               {selected.plan.toUpperCase()} ·{" "}
               {dateTime(
@@ -422,10 +414,10 @@ export default function AdminPage() {
             </span>
           </div>
           <div className="admin-action-section">
-            <SectionHeader title="Activar o ampliar Premium" />
+            <SectionHeader title={t("Activar o ampliar Premium")} />
             <div className="admin-activation">
               <label className="input-field">
-                <span>Días a sumar</span>
+                <span>{t("Días a sumar")}</span>
                 <input
                   type="number"
                   min={1}
@@ -440,21 +432,17 @@ export default function AdminPage() {
                 onClick={() => void run("activate")}
               >
                 <Check size={13} />
-                Activar plan
-              </button>
+                {t("Activar plan")}</button>
             </div>
             <p className="slim-note">
-              Se acumula sobre el plan activo. Si está vencido, comienza desde
-              hoy.
-            </p>
+              {t("Se acumula sobre el plan activo. Si está vencido, comienza desde hoy.")}</p>
           </div>
           <div className="admin-action-section">
-            <SectionHeader title="Control de acceso" />
+            <SectionHeader title={t("Control de acceso")} />
             {selected.is_admin ? (
               <p className="slim-note">
                 <ShieldCheck size={13} />
-                Los administradores no se pueden banear.
-              </p>
+                {t("Los administradores no se pueden banear.")}</p>
             ) : selected.banned ? (
               <>
                 <p className="slim-note">
@@ -467,25 +455,24 @@ export default function AdminPage() {
                   disabled={busy}
                   onClick={() => void run("unban")}
                 >
-                  Desbanear usuario
-                </button>
+                  {t("Desbanear usuario")}</button>
               </>
             ) : (
               <div className="form-stack">
                 <div className="form-grid">
                   <label className="input-field">
-                    <span>Tipo de restricción</span>
+                    <span>{t("Tipo de restricción")}</span>
                     <select
                       value={banType}
                       onChange={(e) => setBanType(e.target.value)}
                     >
-                      <option value="temporary">Temporal</option>
-                      <option value="permanent">Permanente</option>
+                      <option value="temporary">{t("Temporal")}</option>
+                      <option value="permanent">{t("Permanente")}</option>
                     </select>
                   </label>
                   {banType === "temporary" && (
                     <label className="input-field">
-                      <span>Duración en días (1-365)</span>
+                      <span>{t("Duración en días (1-365)")}</span>
                       <input
                         type="number"
                         list="ban-durations"
@@ -503,12 +490,12 @@ export default function AdminPage() {
                   )}
                 </div>
                 <label className="input-field">
-                  <span>Motivo de la restricción</span>
+                  <span>{t("Motivo de la restricción")}</span>
                   <textarea
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     rows={2}
-                    placeholder="Indica el motivo en lenguaje claro"
+                    placeholder={t("Indica el motivo en lenguaje claro")}
                   />
                 </label>
                 {banType === "permanent" && (
@@ -518,7 +505,7 @@ export default function AdminPage() {
                       checked={permanentConfirmed}
                       onChange={(e) => setPermanentConfirmed(e.target.checked)}
                     />
-                    <span>Confirmo el bloqueo permanente de esta cuenta.</span>
+                    <span>{t("Confirmo el bloqueo permanente de esta cuenta.")}</span>
                   </label>
                 )}
                 <button
@@ -534,9 +521,7 @@ export default function AdminPage() {
               </div>
             )}
             <p className="slim-note">
-              El bloqueo no cambia el plan ni detiene sus fechas. El backend
-              notificará al usuario al bloquearlo o desbanearlo.
-            </p>
+              {t("El bloqueo no cambia el plan ni detiene sus fechas. El backend notificará al usuario al bloquearlo o desbanearlo.")}</p>
           </div>
           {actionError && (
             <p className="form-error" role="alert">

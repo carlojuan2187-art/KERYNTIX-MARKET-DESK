@@ -1,3 +1,4 @@
+import { t } from "@/i18n/translation";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import type { SignalState } from "@/api/types";
@@ -28,12 +29,12 @@ export function SignalTable({ signals }: { signals: SignalState[] }) {
       <table className="data-table">
         <thead>
           <tr>
-            <th>Par / Dirección</th>
-            <th>Zona de entrada</th>
-            <th>Riesgo / Beneficio</th>
-            <th>Score</th>
-            <th>Estado</th>
-            <th aria-label="Ver detalle" />
+            <th>{t("Par / Dirección")}</th>
+            <th>{t("Zona de entrada")}</th>
+            <th>{t("Riesgo / Beneficio")}</th>
+            <th>{t("Score")}</th>
+            <th>{t("Estado")}</th>
+            <th aria-label={t("Ver detalle")} />
           </tr>
         </thead>
         <tbody>
@@ -96,7 +97,7 @@ export function SignalTable({ signals }: { signals: SignalState[] }) {
                 </td>
                 <td>
                   <Tag tone={status.tone} dot>
-                    {status.label}
+                    {t(status.label)}
                   </Tag>
                 </td>
                 <td>

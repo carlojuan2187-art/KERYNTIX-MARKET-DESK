@@ -1,3 +1,4 @@
+import { t } from "@/i18n/translation";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -15,6 +16,7 @@ import {
 import { getRadarSnapshot } from "@/api/terminal";
 import type { RadarOpportunity } from "@/api/terminal";
 import { useApi } from "@/hooks/useApi";
+import { useApp } from "@/context/AppContext";
 import { ago, compact, dateTime, number, percent, price } from "@/utils/format";
 import {
   AssetIcon,
@@ -97,7 +99,7 @@ function hasMetricValue(value: number | null | undefined): value is number {
 function Metric({ label, value, tone = "" }: { label: string; value: string; tone?: string }) {
   return (
     <div className="radar-metric">
-      <span>{label}</span>
+      <span>{t(label)}</span>
       <strong className={tone}>{value}</strong>
     </div>
   );
@@ -118,18 +120,18 @@ function OpportunityMetrics({ row }: { row: RadarOpportunity }) {
       : null;
     return (
       <div className="radar-specific-metrics">
-        <Metric label="Zona de entrada" value={zoneLabel} />
-        <Metric label="Stop loss" value={price(row.stop_loss)} tone="negative" />
-        <Metric label="Objetivo 1" value={price(target1)} tone="positive" />
-        <Metric label="R:B estimada · TP1" value={rr == null ? "—" : `1 : ${number(rr, 2)}`} />
-        <Metric label="Distancia a entrada" value={distanceToEntry == null ? "—" : `${number(distanceToEntry)}%`} />
-        <Metric label="Estado del setup" value={row.status || "Sin estado"} />
-        {row.atr_value != null && <Metric label="ATR del setup" value={price(row.atr_value)} />}
-        {row.liquidity_sweep_extreme_price != null && <Metric label="Extremo de liquidez" value={price(row.liquidity_sweep_extreme_price)} />}
-        {row.touched_at && <Metric label="Entrada tocada" value={ago(row.touched_at)} />}
-        {row.take_profits?.[1] != null && <Metric label="Objetivo 2" value={price(row.take_profits[1])} tone="positive" />}
-        {row.take_profits?.[2] != null && <Metric label="Objetivo 3" value={price(row.take_profits[2])} tone="positive" />}
-        {row.entry_expires_at && <Metric label="Vencimiento de entrada" value={formatDeadline(row.entry_expires_at)} />}
+        <Metric label={t("Zona de entrada")} value={zoneLabel} />
+        <Metric label={t("Stop loss")} value={price(row.stop_loss)} tone="negative" />
+        <Metric label={t("Objetivo 1")} value={price(target1)} tone="positive" />
+        <Metric label={t("R:B estimada · TP1")} value={rr == null ? "—" : `1 : ${number(rr, 2)}`} />
+        <Metric label={t("Distancia a entrada")} value={distanceToEntry == null ? "—" : `${number(distanceToEntry)}%`} />
+        <Metric label={t("Estado del setup")} value={t(row.status || "Sin estado")} />
+        {row.atr_value != null && <Metric label={t("ATR del setup")} value={price(row.atr_value)} />}
+        {row.liquidity_sweep_extreme_price != null && <Metric label={t("Extremo de liquidez")} value={price(row.liquidity_sweep_extreme_price)} />}
+        {row.touched_at && <Metric label={t("Entrada tocada")} value={ago(row.touched_at)} />}
+        {row.take_profits?.[1] != null && <Metric label={t("Objetivo 2")} value={price(row.take_profits[1])} tone="positive" />}
+        {row.take_profits?.[2] != null && <Metric label={t("Objetivo 3")} value={price(row.take_profits[2])} tone="positive" />}
+        {row.entry_expires_at && <Metric label={t("Vencimiento de entrada")} value={formatDeadline(row.entry_expires_at)} />}
       </div>
     );
   }
@@ -137,14 +139,14 @@ function OpportunityMetrics({ row }: { row: RadarOpportunity }) {
   if (row.kind === "sweep") {
     return (
       <div className="radar-specific-metrics">
-        <Metric label="Nivel de liquidez" value={price(row.level)} />
-        <Metric label="Extremo del barrido" value={price(row.extreme_price)} />
-        <Metric label="Mecha / rechazo" value={row.wick_ratio == null ? "—" : `${number(row.wick_ratio, 2)}x`} />
-        <Metric label="Distancia del barrido" value={row.sweep_distance_atr == null ? "—" : `${number(row.sweep_distance_atr, 2)} ATR`} />
-        <Metric label="ATR 15M" value={row.atr_pct == null ? "—" : `${number(row.atr_pct, 3)}%`} />
-        {hasMetricValue(row.rel_volume) && <Metric label="Volumen relativo" value={`${number(row.rel_volume, 2)}x`} />}
-        <Metric label="Tendencia 1H" value={trendText(row.trend_1h)} tone={trendTone(row.trend_1h)} />
-        <Metric label="Alineación" value={row.alignment_detail || alignmentText(row.alignment)} />
+        <Metric label={t("Nivel de liquidez")} value={price(row.level)} />
+        <Metric label={t("Extremo del barrido")} value={price(row.extreme_price)} />
+        <Metric label={t("Mecha / rechazo")} value={row.wick_ratio == null ? "—" : `${number(row.wick_ratio, 2)}x`} />
+        <Metric label={t("Distancia del barrido")} value={row.sweep_distance_atr == null ? "—" : `${number(row.sweep_distance_atr, 2)} ATR`} />
+        <Metric label={t("ATR 15M")} value={row.atr_pct == null ? "—" : `${number(row.atr_pct, 3)}%`} />
+        {hasMetricValue(row.rel_volume) && <Metric label={t("Volumen relativo")} value={`${number(row.rel_volume, 2)}x`} />}
+        <Metric label={t("Tendencia 1H")} value={t(trendText(row.trend_1h))} tone={trendTone(row.trend_1h)} />
+        <Metric label={t("Alineación")} value={t(row.alignment_detail || alignmentText(row.alignment))} />
       </div>
     );
   }
@@ -152,14 +154,14 @@ function OpportunityMetrics({ row }: { row: RadarOpportunity }) {
   if (row.kind === "watch") {
     return (
       <div className="radar-specific-metrics">
-        <Metric label="Nivel de zona" value={price(row.level)} />
-        <Metric label="Distancia a zona" value={row.distance_pct == null ? "—" : `${number(row.distance_pct)}%`} />
-        <Metric label="Distancia en ATR" value={row.distance_atr == null ? "—" : `${number(row.distance_atr, 2)} ATR`} />
-        <Metric label="Zonas detectadas" value={row.zone_count == null ? "—" : String(row.zone_count)} />
-        {hasMetricValue(row.rel_volume) && <Metric label="Volumen relativo" value={`${number(row.rel_volume, 2)}x`} />}
-        <Metric label="ATR 15M" value={row.atr_pct == null ? "—" : `${number(row.atr_pct, 3)}%`} />
-        <Metric label="Tendencia 1H" value={trendText(row.trend_1h)} tone={trendTone(row.trend_1h)} />
-        <Metric label="Alineación" value={alignmentText(row.alignment)} />
+        <Metric label={t("Nivel de zona")} value={price(row.level)} />
+        <Metric label={t("Distancia a zona")} value={row.distance_pct == null ? "—" : `${number(row.distance_pct)}%`} />
+        <Metric label={t("Distancia en ATR")} value={row.distance_atr == null ? "—" : `${number(row.distance_atr, 2)} ATR`} />
+        <Metric label={t("Zonas detectadas")} value={row.zone_count == null ? "—" : String(row.zone_count)} />
+        {hasMetricValue(row.rel_volume) && <Metric label={t("Volumen relativo")} value={`${number(row.rel_volume, 2)}x`} />}
+        <Metric label={t("ATR 15M")} value={row.atr_pct == null ? "—" : `${number(row.atr_pct, 3)}%`} />
+        <Metric label={t("Tendencia 1H")} value={t(trendText(row.trend_1h))} tone={trendTone(row.trend_1h)} />
+        <Metric label={t("Alineación")} value={t(alignmentText(row.alignment))} />
       </div>
     );
   }
@@ -167,10 +169,10 @@ function OpportunityMetrics({ row }: { row: RadarOpportunity }) {
   const moveTone = (row.change_1h_pct ?? 0) > 0 ? "positive" : (row.change_1h_pct ?? 0) < 0 ? "negative" : "";
   return (
     <div className="radar-specific-metrics">
-      <Metric label="Variación 1H" value={row.change_1h_pct == null ? "—" : percent(row.change_1h_pct)} tone={moveTone} />
-      {hasMetricValue(row.volume_ratio) && <Metric label="Volumen vs. promedio" value={`${number(row.volume_ratio, 2)}x`} />}
-      <Metric label="ATR 15M" value={row.atr_pct == null ? "—" : `${number(row.atr_pct, 3)}%`} />
-      <Metric label="Tendencia 1H" value={trendText(row.trend_1h)} tone={trendTone(row.trend_1h)} />
+      <Metric label={t("Variación 1H")} value={row.change_1h_pct == null ? "—" : percent(row.change_1h_pct)} tone={moveTone} />
+      {hasMetricValue(row.volume_ratio) && <Metric label={t("Volumen vs. promedio")} value={`${number(row.volume_ratio, 2)}x`} />}
+      <Metric label={t("ATR 15M")} value={row.atr_pct == null ? "—" : `${number(row.atr_pct, 3)}%`} />
+      <Metric label={t("Tendencia 1H")} value={t(trendText(row.trend_1h))} tone={trendTone(row.trend_1h)} />
     </div>
   );
 }
@@ -180,31 +182,31 @@ function MarketContext({ row }: { row: RadarOpportunity }) {
   return (
     <>
       <div className="radar-market-metrics">
-        <Metric label="Precio actual" value={price(row.current_price)} />
+        <Metric label={t("Precio actual")} value={price(row.current_price)} />
         <Metric
-          label="Cambio 24H"
+          label={t("Cambio 24H")}
           value={row.change_24h_pct == null ? "—" : percent(row.change_24h_pct)}
           tone={(row.change_24h_pct ?? 0) > 0 ? "positive" : (row.change_24h_pct ?? 0) < 0 ? "negative" : ""}
         />
-        <Metric label="Volumen 24H" value={row.volume_24h == null ? "—" : `${compact(row.volume_24h)} USDT`} />
+        <Metric label={t("Volumen 24H")} value={row.volume_24h == null ? "—" : `${compact(row.volume_24h)} USDT`} />
         <Metric
-          label="Funding"
+          label={t("Funding")}
           value={row.funding_rate == null ? "—" : percent(row.funding_rate * 100, 4)}
           tone={(row.funding_rate ?? 0) > 0 ? "negative" : (row.funding_rate ?? 0) < 0 ? "positive" : ""}
         />
-        <Metric label="Máximo 24H" value={price(row.high_24h)} />
-        <Metric label="Mínimo 24H" value={price(row.low_24h)} />
-        {hasMetricValue(row.open_interest) && <Metric label="Interés abierto" value={`${compact(row.open_interest)} USDT`} />}
-        {hasMetricValue(row.quote_volume_ratio) && <Metric label="Ratio de volumen" value={`${number(row.quote_volume_ratio, 2)}x`} />}
-        {hasMetricValue(row.buy_pct) && <Metric label="Flujo comprador" value={`${number(row.buy_pct, 1)}%`} />}
+        <Metric label={t("Máximo 24H")} value={price(row.high_24h)} />
+        <Metric label={t("Mínimo 24H")} value={price(row.low_24h)} />
+        {hasMetricValue(row.open_interest) && <Metric label={t("Interés abierto")} value={`${compact(row.open_interest)} USDT`} />}
+        {hasMetricValue(row.quote_volume_ratio) && <Metric label={t("Ratio de volumen")} value={`${number(row.quote_volume_ratio, 2)}x`} />}
+        {hasMetricValue(row.buy_pct) && <Metric label={t("Flujo comprador")} value={`${number(row.buy_pct, 1)}%`} />}
       </div>
       {trend && (
-        <div className="radar-timeframe-trends" aria-label="Tendencia por temporalidad">
-          <span className="radar-subsection-label">Tendencia por temporalidad</span>
+        <div className="radar-timeframe-trends" aria-label={t("Tendencia por temporalidad")}>
+          <span className="radar-subsection-label">{t("Tendencia por temporalidad")}</span>
           {(["15M", "1H", "4H"] as const).map((timeframe) => (
             <span className="radar-trend-pill" key={timeframe}>
               <small>{timeframe}</small>
-              <strong className={trendTone(trend[timeframe])}>{trendText(trend[timeframe])}</strong>
+              <strong className={trendTone(trend[timeframe])}>{t(trendText(trend[timeframe]))}</strong>
             </span>
           ))}
         </div>
@@ -231,6 +233,8 @@ function scoreComponentLabel(value: string): string {
 }
 
 export default function RadarPage() {
+  const { language } = useApp();
+  void language; // Subscribe to language changes so imported translations refresh.
   const { data, loading, error, refresh } = useApi(getRadarSnapshot);
   const [filter, setFilter] = useState<string>("all");
   const [query, setQuery] = useState("");
@@ -251,33 +255,33 @@ export default function RadarPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="ANTES DE LA SEÑAL"
-        title="Oportunidades en formación."
-        description="Una lectura más completa de cada activo: calidad, contexto de mercado, estructura, volatilidad y niveles relevantes."
+        eyebrow={t("ANTES DE LA SEÑAL")}
+        title={t("Oportunidades en formación.")}
+        description={t("Una lectura más completa de cada activo: calidad, contexto de mercado, estructura, volatilidad y niveles relevantes.")}
       >
         <RefreshButton onClick={refresh} loading={loading} />
       </PageHeader>
 
-      <section className="radar-summary-grid" aria-label="Resumen del radar">
+      <section className="radar-summary-grid" aria-label={t("Resumen del radar")}>
         <div className="radar-summary-card">
-          <span>Oportunidades detectadas</span>
+          <span>{t("Oportunidades detectadas")}</span>
           <strong>{allRows.length}</strong>
-          <small>En el snapshot actual</small>
+          <small>{t("En el snapshot actual")}</small>
         </div>
         <div className="radar-summary-card">
-          <span>Setups activos</span>
+          <span>{t("Setups activos")}</span>
           <strong>{summary.setups}</strong>
-          <small>Con zona y gestión de riesgo</small>
+          <small>{t("Con zona y gestión de riesgo")}</small>
         </div>
         <div className="radar-summary-card">
-          <span>Barridos recientes</span>
+          <span>{t("Barridos recientes")}</span>
           <strong>{summary.sweeps}</strong>
-          <small>Liquidez detectada</small>
+          <small>{t("Liquidez detectada")}</small>
         </div>
         <div className="radar-summary-card">
-          <span>En observación</span>
+          <span>{t("En observación")}</span>
           <strong>{summary.watch + summary.moves}</strong>
-          <small>{summary.watch} zonas · {summary.moves} movimientos</small>
+          <small>{summary.watch} {t("zonas · ")}{summary.moves} {t("movimientos")}</small>
         </div>
       </section>
 
@@ -290,7 +294,7 @@ export default function RadarPage() {
               onClick={() => setFilter(item.key)}
               type="button"
             >
-              {item.label}
+              {t(item.label)}
               <span>{item.key === "all" ? allRows.length : allRows.filter((row) => row.kind === item.key).length}</span>
             </button>
           ))}
@@ -300,13 +304,13 @@ export default function RadarPage() {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Buscar par o tipo de oportunidad"
-            aria-label="Buscar oportunidades por par o tipo"
+            placeholder={t("Buscar par o tipo de oportunidad")}
+            aria-label={t("Buscar oportunidades por par o tipo")}
           />
         </label>
         <span className="status-row radar-scan-status">
           <ScanLine size={12} />
-          Scanner · 15M / 5M{snapshotMeta?.snapshot_updated_at ? ` · Actualizado ${ago(snapshotMeta.snapshot_updated_at)}` : ""}{snapshotMeta?.scanned_symbols != null ? ` · ${snapshotMeta.scanned_symbols} activos analizados` : ""}{snapshotMeta?.snapshot_status === "partial" ? " · Lectura parcial" : ""}
+          {t("Scanner · 15M / 5M")}{snapshotMeta?.snapshot_updated_at ? ` · Actualizado ${ago(snapshotMeta.snapshot_updated_at)}` : ""}{snapshotMeta?.scanned_symbols != null ? ` · ${snapshotMeta.scanned_symbols} activos analizados` : ""}{snapshotMeta?.snapshot_status === "partial" ? " · Lectura parcial" : ""}
         </span>
       </div>
 
@@ -333,7 +337,7 @@ export default function RadarPage() {
                     </div>
                   </div>
                   <div className="radar-tag-group">
-                    <Tag tone={kindTone(row.kind)} dot>{row.label}</Tag>
+                    <Tag tone={kindTone(row.kind)} dot>{t(row.label)}</Tag>
                     {row.direction && <Tag tone={row.direction === "LONG" ? "green" : "red"}>{row.direction}</Tag>}
                     {row.status && <Tag tone={row.status === "TOUCHED" ? "blue" : "muted"}>{row.status}</Tag>}
                     {row.visibility && <Tag tone="muted">{row.visibility === "premium" ? "Premium" : row.visibility === "free" ? "Free" : row.visibility}</Tag>}
@@ -343,17 +347,17 @@ export default function RadarPage() {
                 {row.detail && <p className="radar-description">{row.detail}</p>}
 
                 <div className="radar-data-section">
-                  <div className="radar-data-heading"><Activity size={13} /> Datos específicos de la oportunidad</div>
+                  <div className="radar-data-heading"><Activity size={13} /> {t("Datos específicos de la oportunidad")}</div>
                   <OpportunityMetrics row={row} />
                 </div>
 
                 <div className="radar-data-section radar-context-section">
-                  <div className="radar-data-heading"><Waves size={13} /> Contexto de mercado</div>
+                  <div className="radar-data-heading"><Waves size={13} /> {t("Contexto de mercado")}</div>
                   <MarketContext row={row} />
                 </div>
 
                 {Object.keys(row.score_breakdown).length > 0 && (
-                  <div className="radar-breakdown" aria-label="Desglose del score">
+                  <div className="radar-breakdown" aria-label={t("Desglose del score")}>
                     {Object.entries(row.score_breakdown).map(([key, value]) => (
                       <span key={key} title={scoreComponentLabel(key)}>
                         {scoreComponentLabel(key)}
@@ -365,7 +369,7 @@ export default function RadarPage() {
               </div>
 
               <div className="radar-score">
-                {row.score == null ? <span className="muted">Score —</span> : <Score value={Math.round(row.score)} />}
+                {row.score == null ? <span className="muted">{t("Score —")}</span> : <Score value={Math.round(row.score)} />}
                 {row.kind === "move" && row.change_1h_pct != null && (
                   <span className={row.change_1h_pct >= 0 ? "positive" : "negative"}>
                     {row.change_1h_pct >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
@@ -385,15 +389,14 @@ export default function RadarPage() {
         </div>
       )}
 
-      <Reading title="Cómo leer estos datos">
-        <strong>Score:</strong> mide la puntuación que aporta el motor para ese tipo de oportunidad; no es una probabilidad de ganancia. <strong>R:B estimada:</strong> compara la distancia entre entrada, stop y primer objetivo del setup. <strong>Volumen relativo:</strong> compara la participación reciente con su referencia. Un barrido, una zona cercana o un movimiento anómalo no son por sí solos una señal confirmada: verifica la entrada, el stop y el contexto antes de tomar decisiones.
-      </Reading>
+      <Reading title={t("Cómo leer estos datos")}>
+        <strong>{t("Score:")}</strong> {t("mide la puntuación que aporta el motor para ese tipo de oportunidad; no es una probabilidad de ganancia. ")}<strong>{t("R:B estimada:")}</strong> {t("compara la distancia entre entrada, stop y primer objetivo del setup. ")}<strong>{t("Volumen relativo:")}</strong> {t("compara la participación reciente con su referencia. Un barrido, una zona cercana o un movimiento anómalo no son por sí solos una señal confirmada: verifica la entrada, el stop y el contexto antes de tomar decisiones.")}</Reading>
       <div className="radar-footer-actions">
         <Link className="btn btn-quiet" to="/guia">
-          <ShieldCheck size={14} /> Aprende a interpretar el radar <ArrowRight size={13} />
+          <ShieldCheck size={14} /> {t("Aprende a interpretar el radar ")}<ArrowRight size={13} />
         </Link>
         <Link className="btn btn-quiet" to="/senales">
-          <Target size={14} /> Consultar señales confirmadas <ArrowRight size={13} />
+          <Target size={14} /> {t("Consultar señales confirmadas ")}<ArrowRight size={13} />
         </Link>
       </div>
     </div>
