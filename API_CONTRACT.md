@@ -9,7 +9,7 @@ Este cliente consume directamente el contrato HTTP de FastAPI en la raíz del ho
 - `VITE_TELEGRAM_BOT_USERNAME`: bot público de autenticación; debe coincidir con `TELEGRAM_AUTH_BOT_USERNAME` del backend.
 - `VITE_TRIAL_DAYS`: debe coincidir con `TRIAL_DAYS` del backend; solo informa al usuario.
 - `VITE_ALERT_DURATION_SECONDS`: duración de los avisos emergentes en el cliente.
-- `VITE_ADMIN_WHATSAPP_1..3`: teléfonos de soporte públicos opcionales.
+- `VITE_SUPPORT_WHATSAPP`: contacto público principal de WhatsApp, en formato internacional sin `+`, espacios ni guiones; se comparte entre Planes, Soporte y avisos de cuenta. `VITE_ADMIN_WHATSAPP_1..3` conserva compatibilidad con contactos adicionales.
 - Nunca expongas secretos del servidor mediante variables `VITE_*`.
 
 El cliente envía `credentials: include` para permitir la cookie de sesión `HttpOnly`. El access token se mantiene en memoria. El backend debe permitir el origen web mediante CORS con credenciales y configurar cookies seguras en HTTPS.
