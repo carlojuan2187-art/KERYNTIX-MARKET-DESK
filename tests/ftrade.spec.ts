@@ -23,25 +23,58 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test("el inicio de sesión no ofrece accesos ni códigos de demostración", async ({ page }) => {
+test("la pantalla separa el inicio de sesión del registro", async ({ page }) => {
   await page.goto("/login");
-  await expect(page.getByRole("heading", { name: "Tu mercado empieza aquí." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bienvenido de nuevo." })).toBeVisible();
+  await expect(page.getByRole("tab", { name: /Iniciar sesión/i })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tab", { name: /Crear cuenta/i })).toBeVisible();
+  await expect(page.getByLabel("Número de teléfono")).toBeVisible();
+  await expect(page.getByLabel("Contraseña")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Abrir bot de Telegram/i })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /demo|simular vinculación/i })).toHaveCount(0);
   await expect(page.getByText("123456", { exact: true })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /rellenar wallet de prueba/i })).toHaveCount(0);
 });
 
-test("el login inicia una vinculación mediante la API y no salta la verificación", async ({ page }) => {
-  let postedPhone = "";
+test("el inicio de sesión usa teléfono y contraseña sin solicitar Telegram", async ({ page }) => {
+  let postedPayload: { phone?: string; password?: string } | null = null;
+  let telegramRequests = 0;
+  await page.route(`${apiBase}/auth/login`, async (route) => {
+    postedPayload = route.request().postDataJSON() as { phone?: string; password?: string };
+    await route.fulfill({
+      status: 401,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: { code: "INVALID_CREDENTIALS", message: "Número o contraseña incorrectos." } }),
+    });
+  });
+  await page.route(`${apiBase}/auth/telegram-check**`, async (route) => {
+    telegramRequests += 1;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ linked: false }) });
+  });
   await page.route(`${apiBase}/auth/phone`, async (route) => {
-    const payload = route.request().postDataJSON() as { phone?: string };
-    postedPhone = String(payload.phone || "");
+    telegramRequests += 1;
+    await route.fulfill({ status: 500, body: "No debería usarse para iniciar sesión" });
+  });
+
+  await page.goto("/login");
+  await page.getByLabel("Número de teléfono").fill("7875551234");
+  await page.getByLabel("Contraseña").fill("ContraseñaSegura123");
+  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+
+  await expect(page.getByRole("alert")).toContainText("Número o contraseña incorrectos.");
+  expect(postedPayload).toEqual({ phone: "+17875551234", password: "ContraseñaSegura123" });
+  expect(telegramRequests).toBe(0);
+});
+
+test("crear cuenta solicita Telegram y envía una contraseña", async ({ page }) => {
+  let postedPayload: { phone?: string; password?: string } | null = null;
+  await page.route(`${apiBase}/auth/register`, async (route) => {
+    postedPayload = route.request().postDataJSON() as { phone?: string; password?: string };
     await route.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
         token: "challenge-token",
-        phone: postedPhone,
+        phone: String(postedPayload?.phone || ""),
         step: "awaiting_telegram",
         expires_at: "2099-10-25T23:00:00Z",
         resend_at: "2099-10-25T22:00:00Z",
@@ -49,25 +82,23 @@ test("el login inicia una vinculación mediante la API y no salta la verificaci�
     });
   });
   await page.route(`${apiBase}/auth/telegram-check**`, async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ linked: false }),
-    });
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ linked: false }) });
   });
 
   await page.goto("/login");
-  await page.getByLabel("Número de teléfono").fill("55123456");
+  await page.getByRole("tab", { name: /Crear cuenta/i }).click();
+  await page.getByLabel("Número de teléfono").fill("7875551234");
+  await page.getByLabel("Crear contraseña").fill("ContraseñaSegura123");
+  await page.getByLabel("Confirmar contraseña").fill("ContraseñaSegura123");
   await page.locator(".terms-check input").check();
-  await page.getByRole("button", { name: "Continuar con mi teléfono" }).click();
+  await page.getByRole("button", { name: "Continuar con Telegram" }).click();
 
-  await expect(page.getByRole("heading", { name: "Una verificación, nada más." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Verifica tu número." })).toBeVisible();
   await expect(page.getByRole("link", { name: /Abrir bot de Telegram/ })).toHaveAttribute(
     "href",
     "https://t.me/ftrade_test_bot?start=verify_challenge-token",
   );
-  expect(postedPhone).toBe("+5355123456");
-  await expect(page.locator('input[aria-label^="Dígito "]')).toHaveCount(0);
+  expect(postedPayload).toEqual({ phone: "+17875551234", password: "ContraseñaSegura123" });
 });
 
 test("Mi Plan se muestra aunque no haya un teléfono de WhatsApp configurado", async ({ page }) => {
