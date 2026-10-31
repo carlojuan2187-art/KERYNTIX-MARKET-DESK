@@ -282,9 +282,7 @@ function WatchlistPreview({ data }: { data: OverviewData }) {
       <div className="section-padding">
         <SectionHeader
           title={
-            mode === "watchlist"
-              ? "Tu mercado, de un vistazo"
-              : "Los que marcan el ritmo"
+            t(mode === "watchlist" ? "Tu mercado, de un vistazo" : "Los que marcan el ritmo")
           }
         >
           <div className="timeframes">
@@ -347,7 +345,7 @@ function WatchlistPreview({ data }: { data: OverviewData }) {
                   <Link
                     className="icon-button"
                     to={`/mercado/flujo/${q.symbol}`}
-                    aria-label={`Analizar ${q.name}`}
+                    aria-label={`${t("Analizar")} ${q.name}`}
                   >
                     <ArrowUpRight size={12} />
                   </Link>
@@ -581,21 +579,21 @@ export default function DashboardPage() {
   return (
     <div>
       <PageHeader
-        eyebrow={
+        eyebrow={t(
           variant === "terminal"
             ? "CENTRO DE OPERACIONES · DATOS DEL BACKEND"
-            : "VISTA PANORÁMICA · DATOS DEL BACKEND"
-        }
-        title={
+            : "VISTA PANORÁMICA · DATOS DEL BACKEND",
+        )}
+        title={t(
           variant === "terminal"
             ? "El pulso del mercado."
-            : "Conecta las señales del mercado."
-        }
-        description={
+            : "Conecta las señales del mercado.",
+        )}
+        description={t(
           variant === "terminal"
             ? "Menos ruido. Más contexto para tu próxima decisión."
-            : "Precio, participación y oportunidades. La visión completa, sin perder el foco."
-        }
+            : "Precio, participación y oportunidades. La visión completa, sin perder el foco.",
+        )}
       >
         <RefreshButton onClick={refresh} loading={loading} />
         <Link to="/senales" className="btn btn-primary">
