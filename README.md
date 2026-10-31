@@ -25,7 +25,7 @@ Edita `.env.local`:
 - `VITE_TELEGRAM_BOT_USERNAME`: usuario del bot de autenticación, sin `@`; debe coincidir con `TELEGRAM_AUTH_BOT_USERNAME` en el backend.
 - `VITE_TRIAL_DAYS`: debe coincidir con `TRIAL_DAYS` en el backend. Es información visible, no controla la duración real de la prueba.
 - `VITE_ALERT_DURATION_SECONDS`: duración visual de los avisos emergentes.
-- `VITE_SUPPORT_WHATSAPP`: teléfono público principal de WhatsApp, en formato internacional y solo dígitos (por ejemplo, prefijo de país + número, sin `+`, espacios ni guiones). Se comparte entre Planes, Soporte y avisos de cuenta. `VITE_ADMIN_WHATSAPP_1..3` se conserva como compatibilidad para contactos adicionales.
+- `VITE_SUPPORT_WHATSAPP`: teléfono público principal de WhatsApp, en formato internacional y solo dígitos (por ejemplo, prefijo de país + número, sin `+`, espacios ni guiones). El contacto oficial actual de FTrade es `5359494299` (+53 5949 4299) y también existe como fallback en el frontend. Se comparte entre Planes, Soporte y avisos de cuenta. `VITE_ADMIN_WHATSAPP_1..3` se conserva como compatibilidad para contactos adicionales.
 - `VITE_APP_DOMAIN`: host opcional para enlaces públicos; si está vacío se usa el host actual.
 
 No pongas tokens privados, claves de API, secretos de Telegram, credenciales de base de datos, claves RPC ni claves de firma en variables `VITE_*`: Vite las incorpora al código que recibe el navegador. Los secretos pertenecen únicamente al entorno del backend.
