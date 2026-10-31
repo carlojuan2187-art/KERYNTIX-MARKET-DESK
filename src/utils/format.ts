@@ -10,6 +10,16 @@ export function number(value: NullableNumber, digits = 2) {
     maximumFractionDigits: digits,
   }).format(value);
 }
+/** Format monetary amounts without padding insignificant trailing zeroes. */
+export function numberTrimmed(value: NullableNumber, maximumFractionDigits = 3) {
+  if (!isFiniteNumber(value)) return "—";
+  const requestedDigits = Number.isFinite(maximumFractionDigits) ? Math.trunc(maximumFractionDigits) : 3;
+  const digits = Math.max(0, Math.min(12, requestedDigits));
+  return new Intl.NumberFormat(getIntlLocale(), {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: digits,
+  }).format(value);
+}
 export function price(value: NullableNumber) {
   if (!isFiniteNumber(value)) return "—";
   return number(
