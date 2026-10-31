@@ -174,6 +174,9 @@ export default function LoginPage() {
       const authError = err as Error & { code?: string };
       if (authError.code === "PASSWORD_SETUP_REQUIRED") {
         setError(t("Esta cuenta todavía no tiene contraseña. Configúrala una sola vez mediante la opción «Olvidé mi contraseña / configurar acceso»."));
+      } else if (authError.code === "RECOVERY_ACCEPTED") {
+        changeMode("login");
+        setError(t("Si existe una cuenta con ese teléfono, se han enviado instrucciones para recuperar el acceso."));
       } else {
         setError(t(authError.message || "No se pudo completar la solicitud."));
       }
