@@ -60,8 +60,16 @@ export interface WatchlistMarketItem {
 }
 
 export interface Candle { time: string; timestamp: number; open: number; high: number; low: number; close: number; volume: number; cvd: number }
-export interface ClosedOperation { id: string; symbol: string; direction: "LONG" | "SHORT"; entry_price: number; exit_price: number | null; result: "TP1" | "TP2" | "SL"; r_result: number; touched_at: string; closed_at: string }
-export interface Performance { operations: number; wins: number; losses: number; win_rate: number; total_r: number; average_r: number; best_r: number; worst_r: number; streak: number; curve: { date: string; r: number }[]; trades: ClosedOperation[] }
+export interface ClosedOperation {
+  id: string; symbol: string; direction: "LONG" | "SHORT"; entry_price: number; exit_price: number | null;
+  result: "TP1" | "TP2" | "SL"; r_result: number; touched_at: string; closed_at: string;
+  calculation_version?: string; execution_model?: string | null; entry_reference?: string | null; exit_via?: string | null; ambiguous?: boolean;
+}
+export interface Performance {
+  operations: number; wins: number; losses: number; win_rate: number; total_r: number; average_r: number;
+  best_r: number; worst_r: number; streak: number; curve: { date: string; r: number }[]; trades: ClosedOperation[];
+  legacy_results?: number; calculation_version?: string;
+}
 export interface LiquidationSummary {
   window: 5 | 15 | 60; long_usdt: number; short_usdt: number; total: number; orders: number; pace: number | null; usdt_per_min: number;
   pairs: { symbol: string; long_usdt: number; short_usdt: number }[];
