@@ -9,7 +9,7 @@ import {
   Link,
   useParams,
 } from "react-router-dom";
-import { Component, Suspense, lazy, type ErrorInfo, type ReactNode } from "react";
+import { Component, Suspense, lazy, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
 import { ShieldAlert } from "lucide-react";
 import Layout from "@/components/Layout";
 import { AppProvider, useApp } from "@/context/AppContext";
@@ -125,13 +125,20 @@ function SessionGuard() {
 }
 function AccessGuard() {
   const { user } = useApp();
+  const [, setAccessClock] = useState(Date.now());
+  useEffect(() => {
+    // Re-evaluate persisted trial/plan expiry while a tab remains open. The API
+    // already blocks expired access immediately; this updates the visible UI too.
+    const timer = window.setInterval(() => setAccessClock(Date.now()), 5000);
+    return () => window.clearInterval(timer);
+  }, []);
   if (!user || !hasAccess(user))
     return (
       <div className="resource-state">
         <ShieldAlert size={40} />
         <h1>{t("Acceso vencido")}</h1>
         <p>
-          {t("Tu prueba o plan ha finalizado. Reactiva Premium para volver a las señales y al análisis del mercado.")}</p>
+          {t("Tu prueba gratuita de cinco días o tu suscripción ha finalizado. Reactiva Premium para recuperar el acceso a todas las funciones de FTrade.")}</p>
         <Link className="btn btn-primary" to="/planes">
           {t("Ver planes")}</Link>
       </div>
@@ -176,15 +183,15 @@ export default function App() {
                 <Route path="derivados" element={<LazyPage><DerivadosPage /></LazyPage>} />
                 <Route path="derivados/:simbolo" element={<LazyPage><DerivadosPage /></LazyPage>} />
                 <Route path="calendario" element={<LazyPage><CalendarioPage /></LazyPage>} />
+                <Route path="calculadora" element={<LazyPage><CalculadoraPage /></LazyPage>} />
+                <Route path="guia" element={<LazyPage><GuiaPage /></LazyPage>} />
+                <Route path="guia/:tema" element={<LazyPage><GuiaPage /></LazyPage>} />
+                <Route path="referidos" element={<LazyPage><ReferidosPage /></LazyPage>} />
+                <Route path="ajustes/avisos" element={<LazyPage><AjustesAvisosPage /></LazyPage>} />
               </Route>
-              <Route path="calculadora" element={<LazyPage><CalculadoraPage /></LazyPage>} />
-              <Route path="guia" element={<LazyPage><GuiaPage /></LazyPage>} />
-              <Route path="guia/:tema" element={<LazyPage><GuiaPage /></LazyPage>} />
               <Route path="planes" element={<LazyPage><PlanesPage /></LazyPage>} />
-              <Route path="referidos" element={<LazyPage><ReferidosPage /></LazyPage>} />
               <Route path="cuenta" element={<LazyPage><CuentaPage /></LazyPage>} />
               <Route path="soporte" element={<LazyPage><SoportePage /></LazyPage>} />
-              <Route path="ajustes/avisos" element={<LazyPage><AjustesAvisosPage /></LazyPage>} />
               <Route path="admin" element={<AdminGuard />} />
               <Route
                 path="*"
