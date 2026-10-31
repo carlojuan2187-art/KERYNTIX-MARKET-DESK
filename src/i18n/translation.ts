@@ -14,6 +14,8 @@ const EN: Record<string, string> = {
   "El contacto de WhatsApp del administrador no está configurado.": "The administrator's WhatsApp contact has not been configured.",
   "Acceso vencido": "Access expired",
   "Tu prueba o plan ha finalizado. Reactiva Premium para volver a las señales y al análisis del mercado.": "Your trial or plan has ended. Reactivate Premium to regain access to signals and market analysis.",
+  "Tu prueba gratuita de cinco días o tu suscripción ha finalizado. Reactiva Premium para recuperar el acceso a todas las funciones de FTrade.": "Your five-day free trial or subscription has ended. Reactivate Premium to regain access to all FTrade features.",
+  "Si existe una cuenta con ese teléfono, se han enviado instrucciones para recuperar el acceso.": "If an account exists for that phone number, recovery instructions have been sent.",
   "Ver planes": "View plans",
   "Esta página no existe": "This page does not exist",
   "Volver a mi espacio": "Back to my workspace",
