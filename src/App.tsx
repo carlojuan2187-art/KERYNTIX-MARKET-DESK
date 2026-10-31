@@ -111,9 +111,9 @@ function SessionGuard() {
         {appConfig.whatsapp[0] ? (
           <a
             className="btn btn-secondary"
-            href={`https://wa.me/${appConfig.whatsapp[0].replace(/\D/g, "")}`}
+            href={`https://wa.me/${appConfig.whatsapp[0]}`}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
           >
             {t("Contactar administrador")}</a>
         ) : (
