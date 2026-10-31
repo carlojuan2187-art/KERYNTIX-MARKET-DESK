@@ -157,7 +157,7 @@ export interface MarketRegime {
 
 export interface AlertItem {
   id: string;
-  kind: "liq" | "mov" | "vol";
+  kind: "liq" | "mov" | "vol" | "plans";
   key: string;
   text: string;
   title?: string;
