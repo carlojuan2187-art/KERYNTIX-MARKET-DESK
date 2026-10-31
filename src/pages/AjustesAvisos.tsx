@@ -59,6 +59,11 @@ export default function AjustesAvisosPage() {
               description: "Interruptor general para los avisos de anomalías.",
             },
             {
+              key: "signals" as const,
+              title: "Nuevas señales",
+              description: "Aviso cuando FTrade publica una señal nueva disponible para tu cuenta.",
+            },
+            {
               key: "liq" as const,
               title: "Liquidaciones",
               description:

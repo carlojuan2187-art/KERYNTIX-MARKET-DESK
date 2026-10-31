@@ -68,14 +68,13 @@ function statusLabel(status?: string): string {
     case "available": return "Disponible";
     case "partial": return "Cobertura parcial";
     case "stale": return "Dato atrasado";
-    case "api_key_missing": return "Requiere API key";
     default: return "No disponible";
   }
 }
 
 function statusTone(status?: string): "green" | "amber" | "red" | "muted" {
   if (status === "available") return "green";
-  if (status === "partial" || status === "api_key_missing") return "amber";
+  if (status === "partial") return "amber";
   if (status === "stale") return "red";
   return "muted";
 }
@@ -87,7 +86,6 @@ function chartTime(point: DerivativesHistoryPoint): string {
 
 function sourceDescription(meta?: DerivativesSourceMeta): string {
   if (!meta) return "No hay metadatos de fuente.";
-  if (meta.status === "api_key_missing") return "Configura BINANCE_API_KEY en el entorno del backend; no hace falta exponer la clave en el navegador.";
   if (meta.status === "unavailable") return "Binance no devolvió una lectura válida para esta fuente.";
   const age = ageFromSeconds(meta.age_seconds);
   const coverage = meta.coverage_hours != null ? ` · ${number(meta.coverage_hours, 1)} h de cobertura` : "";
@@ -122,12 +120,6 @@ export default function DerivadosPage() {
   const fundingRate = data?.funding_rate ?? null;
   const longPct = data?.long_short_ratio?.percent_long ?? null;
   const shortPct = data?.long_short_ratio?.percent_short ?? null;
-  const topAccounts = data?.top_trader_accounts;
-  const topPositions: NonNullable<DerivativesData["top_trader_positions"]> | undefined = data?.top_trader_positions ?? (data?.top_trader_ratio ? {
-    ratio: data.top_trader_ratio.ratio ?? null,
-    long: data.top_trader_ratio.long,
-    short: data.top_trader_ratio.short,
-  } : undefined);
   const longShortRatio = data?.long_short_ratio?.ratio ?? (
     longPct != null && shortPct != null && shortPct > 0 ? longPct / shortPct : null
   );
@@ -137,8 +129,10 @@ export default function DerivadosPage() {
   const fundingChart = (data?.funding_history ?? []).filter((point) => point.funding_rate_pct != null).map((point) => ({
     label: chartTime(point), funding_pct: point.funding_rate_pct ?? 0,
   }));
-  const basisChart = (data?.basis_history ?? []).filter((point) => point.annualized_basis_pct != null).map((point) => ({
-    label: chartTime(point), basis_pct: point.annualized_basis_pct ?? 0,
+  // Plot the exchange-reported per-period basis. Annualized basis remains a
+  // separate headline metric and is never fabricated when Binance omits it.
+  const basisChart = (data?.basis_history ?? []).filter((point) => point.basis_rate_pct != null).map((point) => ({
+    label: chartTime(point), basis_pct: point.basis_rate_pct ?? 0,
   }));
   const sourceEntries = Object.entries(data?.sources ?? {});
   const reading = data?.market_reading;
@@ -231,7 +225,7 @@ export default function DerivadosPage() {
               <p className="slim-note"><Info size={12} />El cambio de 24H solo se muestra si el historial contiene cobertura temporal suficiente.</p>
             </section>
             <section className="panel panel-pad derivatives-chart-panel">
-              <SectionHeader title="Histórico de funding" subtitle="Últimos eventos de liquidación reportados por Binance." />
+              <SectionHeader title="Histórico de funding" subtitle="Últimas tasas de financiación reportadas por Binance; no son eventos de liquidación." />
               <div className="derivatives-chart-kpis">
                 <div><span>Funding anualizado estimado</span><strong className={(data.funding_annualized_pct ?? 0) >= 0 ? "positive" : "negative"}>{percent(data.funding_annualized_pct, 2)}</strong></div>
                 <div><span>Intervalo observado</span><strong>{data.funding_interval_hours == null ? "—" : `${number(data.funding_interval_hours, 1)} h`}</strong></div>
@@ -249,11 +243,13 @@ export default function DerivadosPage() {
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-              ) : <div className="derivatives-chart-empty">No hay suficientes liquidaciones históricas de funding para trazar una serie.</div>}
+              ) : fundingChart.length === 1 ? (
+                <div className="derivatives-chart-empty">Último dato válido: {percent(fundingChart[0].funding_pct, 5)} · {fundingChart[0].label}. Se necesita otro registro para dibujar la evolución.</div>
+              ) : <div className="derivatives-chart-empty">Binance todavía no ha devuelto tasas históricas de funding válidas para este par.</div>}
               <p className="slim-note"><Info size={12} />El funding anualizado es una extrapolación basada en el intervalo observado; no es una rentabilidad garantizada.</p>
             </section>
             <section className="panel panel-pad derivatives-chart-panel derivatives-basis-panel">
-              <SectionHeader title="Base del contrato · anualizada" subtitle="Datos históricos de base del futuro perpetuo frente al índice; fuente independiente de la prima mark/index." />
+              <SectionHeader title="Base del contrato · histórico" subtitle="Evolución de la base por período reportada por Binance. La tasa anualizada se muestra aparte solo cuando el proveedor la entrega." />
               <div className="derivatives-chart-kpis">
                 <div><span>Base por período</span><strong className={(data.basis_rate_pct ?? 0) >= 0 ? "positive" : "negative"}>{percent(data.basis_rate_pct, 4)}</strong></div>
                 <div><span>Base anualizada</span><strong className={(data.annualized_basis_pct ?? 0) >= 0 ? "positive" : "negative"}>{percent(data.annualized_basis_pct, 2)}</strong></div>
@@ -266,18 +262,20 @@ export default function DerivadosPage() {
                       <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
                       <XAxis dataKey="label" minTickGap={24} tick={{ fill: "var(--text-muted)", fontSize: 10 }} />
                       <YAxis tickFormatter={(value: number) => `${number(value, 2)}%`} width={64} tick={{ fill: "var(--text-muted)", fontSize: 10 }} />
-                      <Tooltip formatter={(value) => [`${number(Number(value), 4)}%`, "Base anualizada"]} />
+                      <Tooltip formatter={(value) => [`${number(Number(value), 4)}%`, "Base por período"]} />
                       <ReferenceLine y={0} stroke="var(--border-strong)" />
                       <Line type="monotone" dataKey="basis_pct" stroke="var(--accent)" strokeWidth={2} dot={false} isAnimationActive={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-              ) : <div className="derivatives-chart-empty">Binance no ha proporcionado suficientes puntos válidos de base para graficar el histórico.</div>}
-              <p className="slim-note"><Info size={12} />Base y funding son conceptos distintos. La base anualizada se presenta solo cuando Binance la reporta; no se extrapola si falta el campo.</p>
+              ) : basisChart.length === 1 ? (
+                <div className="derivatives-chart-empty">Último dato válido de base: {percent(basisChart[0].basis_pct, 4)} · {basisChart[0].label}. Se necesita otro registro para dibujar la evolución.</div>
+              ) : <div className="derivatives-chart-empty">Binance todavía no ha devuelto valores válidos de base por período para este par.</div>}
+              <p className="slim-note"><Info size={12} />La base por período y la base anualizada son métricas distintas. No se calcula una anualización cuando Binance no entrega ese campo.</p>
             </section>
           </div>
 
-          <div className="two-col derivatives-positioning-grid">
+          <div className="two-col derivatives-positioning-grid derivatives-positioning-grid-single">
             <section className="panel panel-pad">
               <SectionHeader title="Posicionamiento de las cuentas" subtitle="Ratio de cuentas long/short y cambio real de su distribución." />
               <div className="ratio-numbers">
@@ -291,34 +289,8 @@ export default function DerivadosPage() {
               <div className="detail-row"><span>Cuentas short hace 24H</span><strong className="mono">{percent(data.long_short_ratio.percent_short_24h_ago, 1)}</strong></div>
               <div className="derivatives-mini-meta">Fuente: ratio global de cuentas · {data.long_short_ratio.updated_at ? ago(data.long_short_ratio.updated_at) : "marca temporal no disponible"} · cobertura {number(data.long_short_ratio.coverage_hours, 1)} h</div>
               <Reading title="Cómo interpretarlo">Una mayoría en un lado no confirma una tendencia. El ratio describe cuentas, no tamaño de posiciones ni dirección garantizada del próximo movimiento.</Reading>
-            </section>
-            <section className="panel panel-pad">
-              <SectionHeader title="Top traders: cuentas y posiciones" subtitle="Son dos conjuntos de datos distintos; Binance requiere una API key para estas estadísticas." />
-              <div className="derivatives-top-traders-grid">
-                <div className="derivatives-top-trader-card">
-                  <div className="derivatives-subsection-title">Por cuentas</div>
-                  <div className="ratio-numbers">
-                    <div className="positive"><strong>{number(topAccounts?.long, 1)}{topAccounts?.long == null ? null : <span>%</span>}</strong><span>Long</span></div>
-                    <div className="negative"><strong>{number(topAccounts?.short, 1)}{topAccounts?.short == null ? null : <span>%</span>}</strong><span>Short</span></div>
-                  </div>
-                  <div className="detail-row"><span>Ratio long/short</span><strong>{number(topAccounts?.ratio, 3)}</strong></div>
-                  {topAccounts?.percentages_derived && <div className="derivatives-mini-meta">Porcentajes estimados desde el ratio.</div>}
-                </div>
-                <div className="derivatives-top-trader-card">
-                  <div className="derivatives-subsection-title">Por posiciones</div>
-                  <div className="ratio-numbers">
-                    <div className="positive"><strong>{number(topPositions?.long, 1)}{topPositions?.long == null ? null : <span>%</span>}</strong><span>Long</span></div>
-                    <div className="negative"><strong>{number(topPositions?.short, 1)}{topPositions?.short == null ? null : <span>%</span>}</strong><span>Short</span></div>
-                  </div>
-                  <div className="detail-row"><span>Ratio long/short</span><strong>{number(topPositions?.ratio, 3)}</strong></div>
-                  {topPositions?.percentages_derived && <div className="derivatives-mini-meta">Porcentajes estimados desde el ratio.</div>}
-                </div>
-              </div>
-              {data.sources?.top_trader_accounts?.status === "api_key_missing" || data.sources?.top_trader_positions?.status === "api_key_missing" ? (
-                <div className="derivatives-config-note"><Info size={14} />Para habilitar ambos bloques, configura una API key de Binance con acceso de lectura de datos de mercado en la variable <code>BINANCE_API_KEY</code> del backend. No añadas la clave al frontend ni habilites permisos de trading.</div>
-              ) : null}
-              <div className="detail-row"><span>Cambio de OI en 1 hora</span><strong className={`mono ${data.oi_change_1h == null ? "" : data.oi_change_1h >= 0 ? "positive" : "negative"}`}>{percent(data.oi_change_1h, 2)}</strong></div>
-              <div className="detail-row"><span>Cambio de OI en 24 horas</span><strong className={`mono ${data.oi_change_24h == null ? "" : data.oi_change_24h >= 0 ? "positive" : "negative"}`}>{percent(data.oi_change_24h, 2)}</strong></div>
+              <div className="detail-row"><span>Cambio de interés abierto en 1 hora</span><strong className={`mono ${data.oi_change_1h == null ? "" : data.oi_change_1h >= 0 ? "positive" : "negative"}`}>{percent(data.oi_change_1h, 2)}</strong></div>
+              <div className="detail-row"><span>Cambio de interés abierto en 24 horas</span><strong className={`mono ${data.oi_change_24h == null ? "" : data.oi_change_24h >= 0 ? "positive" : "negative"}`}>{percent(data.oi_change_24h, 2)}</strong></div>
               {data.reading && <Reading title="Lectura base de FTrade">{data.reading}</Reading>}
             </section>
           </div>
