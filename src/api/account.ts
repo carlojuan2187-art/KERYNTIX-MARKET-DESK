@@ -10,11 +10,63 @@ export interface PhoneChallenge {
   resend_at: string;
 }
 
+export interface AuthSession {
+  access_token: string;
+  refresh_token?: string | null;
+  user: User;
+  is_new: boolean;
+}
+
+function persistAuthSession(session: AuthSession): AuthSession {
+  setAccessToken(session.access_token);
+  setStoredRefreshToken(session.refresh_token);
+  sessionStorage.removeItem("ftrade.signedOut");
+  sessionStorage.removeItem("ftrade.referrer");
+  return session;
+}
+
 export async function loginPhone(phone: string): Promise<PhoneChallenge> {
   const refCode = sessionStorage.getItem("ftrade.referrer") || undefined;
   return apiRequest<PhoneChallenge>("/auth/phone", {
     method: "POST",
     body: JSON.stringify({ phone: phone.replace(/\s+/g, ""), ...(refCode ? { ref_code: refCode } : {}) }),
+  });
+}
+
+/** Begin a new account registration. Telegram verification is required only here. */
+export async function registerPhone(phone: string, password: string): Promise<PhoneChallenge> {
+  const refCode = sessionStorage.getItem("ftrade.referrer") || undefined;
+  return apiRequest<PhoneChallenge>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify({
+      phone: phone.replace(/\s+/g, ""),
+      password,
+      ...(refCode ? { ref_code: refCode } : {}),
+    }),
+  });
+}
+
+/** Direct returning-user login: phone + password, no Telegram challenge. */
+export async function loginWithPassword(phone: string, password: string): Promise<AuthSession> {
+  const session = await apiRequest<AuthSession>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ phone: phone.replace(/\s+/g, ""), password }),
+  });
+  return persistAuthSession(session);
+}
+
+/** Password recovery for an existing account; it is verified through Telegram. */
+export async function startPasswordRecovery(phone: string): Promise<PhoneChallenge> {
+  return apiRequest<PhoneChallenge>("/auth/recover", {
+    method: "POST",
+    body: JSON.stringify({ phone: phone.replace(/\s+/g, "") }),
+  });
+}
+
+export async function setAccountPassword(password: string): Promise<User> {
+  return apiRequest<User>("/auth/password", {
+    method: "POST",
+    body: JSON.stringify({ password }),
   });
 }
 
@@ -33,15 +85,11 @@ export async function resendCode(token: string) {
 }
 
 export async function verifyCode(phone: string, code: string) {
-  const session = await apiRequest<{ access_token: string; refresh_token?: string | null; user: User; is_new: boolean }>(
+  const session = await apiRequest<AuthSession>(
     "/auth/verify",
     { method: "POST", body: JSON.stringify({ phone: phone.replace(/\s+/g, ""), code }) },
   );
-  setAccessToken(session.access_token);
-  setStoredRefreshToken(session.refresh_token);
-  sessionStorage.removeItem("ftrade.signedOut");
-  sessionStorage.removeItem("ftrade.referrer");
-  return session;
+  return persistAuthSession(session);
 }
 
 export async function restoreAuthSession(): Promise<User | null> {

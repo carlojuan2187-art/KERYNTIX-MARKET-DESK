@@ -9,8 +9,10 @@ import {
   patchUserAlertPreferences,
 } from "./terminal";
 
+export type { PhoneChallenge, AuthSession } from "./account";
 export {
-  loginPhone, verifyTelegramLink, verifyCode, resendCode, startPayment, verifyPayment, getPaymentHistory,
+  loginPhone, registerPhone, loginWithPassword, startPasswordRecovery, setAccountPassword,
+  verifyTelegramLink, verifyCode, resendCode, startPayment, verifyPayment, getPaymentHistory,
   getAccountRestriction, startTelegramLink, unlinkTelegramAccount, logout,
 } from "./account";
 export {

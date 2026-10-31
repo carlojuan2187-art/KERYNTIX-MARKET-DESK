@@ -176,6 +176,9 @@ async function rotateAccessToken(): Promise<string | null> {
 
 const NO_REFRESH_RETRY = [
   "/auth/phone",
+  "/auth/register",
+  "/auth/login",
+  "/auth/recover",
   "/auth/telegram-check",
   "/auth/verify",
   "/auth/resend",
