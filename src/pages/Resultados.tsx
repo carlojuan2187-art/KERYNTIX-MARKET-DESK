@@ -76,7 +76,7 @@ export default function ResultadosPage() {
               {
                 label: "R acumulado",
                 value: `${data.total_r > 0 ? "+" : ""}${number(data.total_r)}R`,
-                note: "Riesgo real por operación",
+                note: "R calculado con entrada modelada y salida simulada",
                 tone: "positive",
               },
               {
@@ -95,6 +95,12 @@ export default function ResultadosPage() {
               </div>
             ))}
           </div>
+          {Number(data.legacy_results || 0) > 0 && (
+            <p className="slim-note" style={{ marginTop: 10 }}>
+              <Info size={12} />
+              {t("Hay resultados anteriores a la metodología 2.0 que conservan su cálculo histórico.")} {data.legacy_results}
+            </p>
+          )}
           <section className="panel panel-pad">
             <SectionHeader
               title={t("La curva de tu estrategia")}
@@ -178,7 +184,7 @@ export default function ResultadosPage() {
                           ) : (
                             <ArrowUpRight size={11} />
                           )}
-                          {trade.result}
+                          {trade.result}{trade.ambiguous ? ` · ${t("Ambiguo")}` : ""}
                         </Tag>
                       </td>
                       <td
@@ -226,7 +232,11 @@ export default function ResultadosPage() {
       )}
       <p className="slim-note">
         <ShieldCheck size={12} />
-        {t("Si una operación toca TP1 y después retrocede al Stop Loss, se registra como TP1. Un SL antes del primer objetivo equivale a -1,00R.")}</p>
+        {t("Al alcanzar TP1, el stop simulado se mueve a TP1. Si el precio regresa a ese nivel, la operación se cierra en TP1. Antes de TP1, el SL equivale a -1R.")}</p>
+      <p className="slim-note" style={{ paddingTop: 0 }}>
+        <Info size={12} />
+        {t("Es una simulación de una posición completa, sin cierres parciales, comisiones ni deslizamiento; no representa una ejecución real en un exchange.")}
+      </p>
       <p className="slim-note" style={{ paddingTop: 0 }}>
         <Info size={12} />
         {t("Este histórico incluye únicamente cierres registrados por el backend. Los resultados anteriores no garantizan resultados futuros.")}</p>
