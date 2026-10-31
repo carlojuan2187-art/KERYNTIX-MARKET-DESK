@@ -70,6 +70,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const lastPriceWsTickAt = useRef(0);
   // Freshness is tracked per symbol: BTC activity must not mask a stalled ETH feed.
   const lastPriceWsTickAtBySymbol = useRef<Record<string, number>>({});
+  const lastQuotesFallbackAt = useRef(0);
+  const lastQuotesEventRefreshAt = useRef(0);
   const lastPriceWsValueBySymbol = useRef<Record<string, number>>({});
   const [signalCount, setSignalCount] = useState(0);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -107,15 +109,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Keep slower, non-price account counters refreshed independently. Price data
     // is handled by WebSocket; the conditional fallback below only polls when ticks
     // stop arriving, so a stale REST response cannot overwrite a newer live tick.
-    const timer = window.setInterval(() => {
+    const refreshCount = () => {
       // A tab may stay open across the exact trial/plan expiry boundary.
       // Stop background signal polling as soon as the entitlement expires.
       if (!hasAccess(user)) return;
       void getSignals()
         .then((signals) => setSignalCount(signals.filter((s) => s.status !== "CANCELLED").length))
         .catch(() => undefined);
+    };
+    // Hidden tabs do not poll (signal events still arrive over the WebSocket);
+    // the counter is refreshed as soon as the tab becomes visible again.
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "hidden") return;
+      refreshCount();
     }, 15000);
-    return () => window.clearInterval(timer);
+    const onVisible = () => { if (document.visibilityState === "visible") refreshCount(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [user?.user_id, user?.plan, user?.plan_end, user?.trial_end, user?.is_admin, user?.banned, user?.ban_until]);
 
   useEffect(() => {
@@ -128,10 +141,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // If no tick reaches the browser for 2.5s, read the shared backend cache as a
       // fallback (the endpoint itself avoids REST calls while the feed is fresh).
       const now = Date.now();
-      const staleSymbols = quotesRef.current
-        .filter((quote) => now - (lastPriceWsTickAtBySymbol.current[quote.symbol] ?? 0) >= 2500)
-        .map((quote) => quote.symbol);
-      if (staleSymbols.length === 0) return;
+      // The all-market stream only carries contracts that traded, so illiquid pairs
+      // legitimately stay silent for long periods. Treating any silent pair as a
+      // failure made every browser download the whole quote list every 2 s. Fallback
+      // now triggers when (a) the stream as a whole is quiet, or (b) a liquid pair
+      // (top 40 by volume, which trades constantly) went stale, at most every 10 s.
+      const wsQuiet = now - lastPriceWsTickAt.current >= 2500;
+      let needFallback = wsQuiet;
+      if (!needFallback) {
+        if (now - lastQuotesFallbackAt.current < 10_000) return;
+        const liquid = [...quotesRef.current]
+          .filter((quote) => typeof quote.volume_24h === "number")
+          .sort((a, b) => (b.volume_24h ?? 0) - (a.volume_24h ?? 0))
+          .slice(0, 40);
+        needFallback = liquid.some((quote) => now - (lastPriceWsTickAtBySymbol.current[quote.symbol] ?? 0) >= 2500);
+      }
+      if (!needFallback) return;
+      lastQuotesFallbackAt.current = now;
       const startedAt = now;
       inFlight = true;
       void getQuotes()
@@ -236,6 +262,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     let disposed = false;
     let socket: WebSocket | null = null;
     let retryTimer: number | undefined;
+    let pauseTimer: number | undefined;
+
+    function sendPriceStreamState(enabled: boolean) {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        try { socket.send(JSON.stringify({ op: "prices", enabled })); } catch { /* The close handler reconnects. */ }
+      }
+    }
+    // A hidden tab keeps receiving signals, alerts and account events, but the heavy
+    // all-market price stream is paused after 15 s and resumed when the tab returns
+    // (the quote fallback below refreshes anything missed in the meantime).
+    function onVisibilityChange() {
+      if (pauseTimer !== undefined) { window.clearTimeout(pauseTimer); pauseTimer = undefined; }
+      if (document.visibilityState === "hidden") {
+        pauseTimer = window.setTimeout(() => sendPriceStreamState(false), 15_000);
+      } else {
+        lastQuotesFallbackAt.current = 0;
+        sendPriceStreamState(true);
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     async function connect() {
       try {
@@ -249,19 +295,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
         endpoint.search = "";
         endpoint.searchParams.set("ticket", ticket.ticket);
-        socket = new WebSocket(endpoint.toString());
-        socket.onmessage = (message) => {
+        // batch=1: the server sends one "tick.batch" frame per snapshot instead of one
+        // frame per symbol (far less bandwidth and CPU on both ends).
+        endpoint.searchParams.set("batch", "1");
+        const currentSocket = new WebSocket(endpoint.toString());
+        socket = currentSocket;
+        currentSocket.onopen = () => {
+          // Reconnecting while hidden must not re-enable the heavy price stream.
+          if (document.visibilityState === "hidden") sendPriceStreamState(false);
+        };
+        currentSocket.onmessage = (message) => {
           try {
             const event = JSON.parse(String(message.data)) as WsEvent;
-            if (event && typeof event.channel === "string" && typeof event.event === "string") emitWs(event);
+            if (!event || typeof event.channel !== "string" || typeof event.event !== "string") return;
+            if (event.channel === "prices" && event.event === "tick.batch") {
+              if (!Array.isArray(event.payload)) return;
+              // Re-emit as individual ticks so every existing listener keeps working.
+              for (const row of event.payload as TickData[]) {
+                emitWs({ channel: "prices", event: "tick", payload: row, ts: event.ts });
+              }
+              return;
+            }
+            emitWs(event);
           } catch {
             // Ignore malformed frames; the REST API remains the source of truth.
           }
         };
-        socket.onclose = () => {
+        currentSocket.onclose = () => {
           if (!disposed) retryTimer = window.setTimeout(() => void connect(), 3000);
         };
-        socket.onerror = () => socket?.close();
+        currentSocket.onerror = () => currentSocket.close();
       } catch {
         if (!disposed) retryTimer = window.setTimeout(() => void connect(), 5000);
       }
@@ -270,6 +333,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     void connect();
     return () => {
       disposed = true;
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (pauseTimer !== undefined) window.clearTimeout(pauseTimer);
       if (retryTimer != null) window.clearTimeout(retryTimer);
       socket?.close();
     };
@@ -360,6 +425,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
         if (event.channel === "market.liquidations" || event.channel === "market.movers") {
           if (!user || !hasAccess(user)) return;
+          // Prices already stream over the WebSocket; this refresh only picks up
+          // slow-moving enrichment fields, so one full download per 15 s is plenty
+          // (liquidation events can arrive several times per second).
+          if (Date.now() - lastQuotesEventRefreshAt.current < 15_000) return;
+          lastQuotesEventRefreshAt.current = Date.now();
           const quotesRequestStartedAt = Date.now();
           void getQuotes().then((latest) => {
             setQuotes((current) => {
