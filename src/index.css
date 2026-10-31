@@ -6526,6 +6526,9 @@ html {
 .derivatives-positioning-grid {
   margin-bottom: 18px;
 }
+.derivatives-positioning-grid-single > section {
+  grid-column: 1 / -1;
+}
 .derivatives-mini-meta {
   color: var(--text-muted);
   font-size: 9px;
