@@ -103,24 +103,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.user_id, user?.language]);
   useEffect(() => {
-    if (!user?.user_id) return;
+    if (!user?.user_id || !hasAccess(user)) return;
     // Keep slower, non-price account counters refreshed independently. Price data
     // is handled by WebSocket; the conditional fallback below only polls when ticks
     // stop arriving, so a stale REST response cannot overwrite a newer live tick.
     const timer = window.setInterval(() => {
+      // A tab may stay open across the exact trial/plan expiry boundary.
+      // Stop background signal polling as soon as the entitlement expires.
+      if (!hasAccess(user)) return;
       void getSignals()
         .then((signals) => setSignalCount(signals.filter((s) => s.status !== "CANCELLED").length))
         .catch(() => undefined);
     }, 15000);
     return () => window.clearInterval(timer);
-  }, [user?.user_id]);
+  }, [user?.user_id, user?.plan, user?.plan_end, user?.trial_end, user?.is_admin, user?.banned, user?.ban_until]);
 
   useEffect(() => {
-    if (!user?.user_id) return;
+    if (!user?.user_id || !hasAccess(user)) return;
     let disposed = false;
     let inFlight = false;
     const timer = window.setInterval(() => {
-      if (disposed || document.visibilityState === "hidden" || inFlight) return;
+      if (disposed || !hasAccess(user) || document.visibilityState === "hidden" || inFlight) return;
       // Normal market activity delivers price ticks at roughly one-second cadence.
       // If no tick reaches the browser for 2.5s, read the shared backend cache as a
       // fallback (the endpoint itself avoids REST calls while the feed is fresh).
@@ -160,40 +163,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
       disposed = true;
       window.clearInterval(timer);
     };
-  }, [user?.user_id]);
+  }, [user?.user_id, user?.plan, user?.plan_end, user?.trial_end, user?.is_admin, user?.banned, user?.ban_until]);
 
   useEffect(() => {
+    let disposed = false;
     void restoreAuthSession()
-      .then((me) => setUser(me))
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
-    void getQuotes()
-      .then((latest) => {
-        setQuotes((current) => {
-          const currentBySymbol = new Map(current.map((quote) => [quote.symbol, quote]));
-          const latestSymbols = new Set(latest.map((quote) => quote.symbol));
-          const merged = latest.map((fallback) => {
-            const previous = currentBySymbol.get(fallback.symbol);
-            if (!previous || !(lastPriceWsTickAtBySymbol.current[fallback.symbol] > 0)) return fallback;
-            return { ...fallback, price: previous.price, price_direction: previous.price_direction, price_tick_at: previous.price_tick_at, sparkline: previous.sparkline };
-          });
-          return [...merged, ...current.filter((quote) => !latestSymbols.has(quote.symbol))];
-        });
-      })
-      .catch(() => undefined);
-    void getNotifications()
-      .then(setNotifications)
-      .catch(() => undefined);
-    void getSignals()
-      .then((signals) =>
-        setSignalCount(signals.filter((s) => s.status !== "CANCELLED").length),
-      )
-      .catch(() => undefined);
+      .then((me) => { if (!disposed) setUser(me); })
+      .catch(() => { if (!disposed) setUser(null); })
+      .finally(() => { if (!disposed) setLoading(false); });
+    return () => { disposed = true; };
   }, []);
   useEffect(() => {
-    if (!user) return;
+    if (!user?.user_id || !hasAccess(user)) {
+      setQuotes([]);
+      setSignalCount(0);
+      setNotifications([]);
+      return;
+    }
+    let disposed = false;
     void getQuotes()
       .then((latest) => {
+        if (disposed || !hasAccess(user)) return;
         setQuotes((current) => {
           const currentBySymbol = new Map(current.map((quote) => [quote.symbol, quote]));
           const latestSymbols = new Set(latest.map((quote) => quote.symbol));
@@ -207,9 +197,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => undefined);
     void getSignals()
-      .then((signals) => setSignalCount(signals.filter((s) => s.status !== "CANCELLED").length))
+      .then((signals) => { if (!disposed && hasAccess(user)) setSignalCount(signals.filter((s) => s.status !== "CANCELLED").length); })
       .catch(() => undefined);
-  }, [user?.user_id]);
+    void getNotifications()
+      .then((items) => { if (!disposed && hasAccess(user)) setNotifications(items); })
+      .catch(() => undefined);
+    return () => { disposed = true; };
+  }, [user?.user_id, user?.plan, user?.plan_end, user?.trial_end, user?.is_admin, user?.banned, user?.ban_until]);
   useEffect(() => {
     if (!user) return;
     const deadline = nextAccountDeadline(user);
@@ -275,8 +269,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () =>
       subscribeWs((event) => {
         if (event.channel === "signals") {
+          if (!user || !hasAccess(user)) return;
           const signal = event.payload as SignalState;
           void getSignals().then((signals) => setSignalCount(signals.filter((s) => s.status !== "CANCELLED").length)).catch(() => undefined);
+          // Keep live counters current, but honor the user's notification switches
+          // before showing an in-app toast or a native browser notification.
+          const signalAlertsEnabled = Boolean(
+            user && hasAccess(user) && user.alert_prefs?.on && user.alert_prefs?.signals !== false,
+          );
+          if (!signalAlertsEnabled) return;
           void getNotifications().then(setNotifications).catch(() => undefined);
           const label = event.event === "signal.new" ? t("Nuevo setup") : event.event === "signal.touched" ? t("Entrada tocada") : event.event === "signal.tp1" ? t("TP1 alcanzado") : event.event === "signal.cancelled" ? t("Señal cancelada") : `${t("Operación cerrada")} ${signal.event?.result || ""}`;
           const title = `${signal.symbol} · ${label}`;
@@ -287,6 +288,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return;
         }
         if (event.channel === "prices") {
+          if (!user || !hasAccess(user)) return;
           const tick = event.payload as TickData;
           if (!tick || !tick.symbol) return;
           if (event.event === "tick") {
@@ -344,6 +346,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return;
         }
         if (event.channel === "market.liquidations" || event.channel === "market.movers") {
+          if (!user || !hasAccess(user)) return;
           const quotesRequestStartedAt = Date.now();
           void getQuotes().then((latest) => {
             setQuotes((current) => {
@@ -361,7 +364,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
         if (event.channel === "account" && event.event === "plan.changed") {
           void getMe().then(setUser).catch(() => undefined);
-          void getNotifications().then(setNotifications).catch(() => undefined);
           return;
         }
         if (event.channel === "account" && event.event === "ban.changed") {
@@ -373,8 +375,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
         if (event.channel === "alerts") {
           const alert = event.payload as AlertItem;
-          void getNotifications().then(setNotifications).catch(() => undefined);
-          if (!user || !hasAccess(user) || !user.alert_prefs.on || !user.alert_prefs[alert.kind]) return;
+          const accessActive = Boolean(user && hasAccess(user));
+          const isPlanNotice = alert.kind === "plans";
+          if (!user || (!accessActive && !isPlanNotice)) return;
+          // Expired users can receive renewal notices, but the protected inbox is
+          // intentionally unavailable until access is restored.
+          if (accessActive) void getNotifications().then(setNotifications).catch(() => undefined);
+          if (!user.alert_prefs.on || !user.alert_prefs[alert.kind]) return;
           const title = `${t("AVISO ·")} ${alert.symbol || t("Mercado")}`;
           toast(title, "info", appConfig.alertDuration * 1000);
           if (typeof Notification !== "undefined" && Notification.permission === "granted") {
