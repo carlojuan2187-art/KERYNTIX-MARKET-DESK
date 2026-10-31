@@ -101,7 +101,7 @@ test("crear cuenta solicita Telegram y envía una contraseña", async ({ page })
   expect(postedPayload).toEqual({ phone: "+17875551234", password: "ContraseñaSegura123" });
 });
 
-test("Mi Plan se muestra aunque no haya un teléfono de WhatsApp configurado", async ({ page }) => {
+test("Mi Plan y Soporte usan el contacto oficial de WhatsApp", async ({ page }) => {
   await page.route(`${apiBase}/auth/refresh`, async (route) => {
     await route.fulfill({
       status: 200,
@@ -164,7 +164,14 @@ test("Mi Plan se muestra aunque no haya un teléfono de WhatsApp configurado", a
   await expect(page.locator(".premium-plan .plan-price")).toContainText("10");
   await expect(page.locator(".premium-plan .plan-price")).not.toContainText("10.000");
   await expect(page.getByRole("heading", { name: "Your payment history" })).toBeVisible();
-  await expect(page.getByText("The administrator's WhatsApp contact has not been configured yet.")).toBeVisible();
+  const planWhatsapp = page.getByRole("link", { name: /Contact via WhatsApp/i });
+  await expect(planWhatsapp).toHaveAttribute("href", "https://wa.me/5359494299");
+  await expect(page.getByText("The administrator's WhatsApp contact has not been configured yet.")).toHaveCount(0);
+
+  await page.goto("/soporte");
+  const supportWhatsapp = page.getByRole("link", { name: /Administrator 1/i });
+  await expect(supportWhatsapp).toHaveAttribute("href", "https://wa.me/5359494299");
+  await expect(page.getByText("The administrator's WhatsApp contact has not been configured yet.")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "This section could not be displayed" })).toHaveCount(0);
 });
 
