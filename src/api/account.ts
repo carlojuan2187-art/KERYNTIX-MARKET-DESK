@@ -1,6 +1,6 @@
 import type { PaymentRecord, User } from "./types";
 import { appConfig } from "./config";
-import { apiRequest, clearAccessToken, restoreApiSession, setAccessToken, setStoredRefreshToken } from "./client";
+import { apiRequest, clearAccessToken, restoreApiSession, setAccessToken, setStoredRefreshToken, getStoredRefreshToken } from "./client";
 
 export interface PhoneChallenge {
   token: string;
@@ -98,12 +98,7 @@ export async function restoreAuthSession(): Promise<User | null> {
 }
 
 export async function logout() {
-  let stored: string | null = null;
-  try {
-    stored = window.localStorage.getItem("ftrade.rt");
-  } catch {
-    // ignore unavailable storage
-  }
+  const stored = getStoredRefreshToken();
   try {
     await apiRequest<void>("/auth/logout", {
       method: "POST",

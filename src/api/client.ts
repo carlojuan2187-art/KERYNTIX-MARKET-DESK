@@ -33,17 +33,31 @@ let accessToken: string | null = null;
 let refreshInFlight: Promise<string | null> | null = null;
 
 const REFRESH_STORAGE_KEY = "ftrade.rt";
+const COOKIE_ONLY_AUTH = import.meta.env.VITE_AUTH_COOKIE_ONLY === "true";
 
 function readStoredRefreshToken(): string | null {
   try {
+    if (COOKIE_ONLY_AUTH) {
+      // Remove any token left by an earlier fallback-mode build.
+      window.localStorage.removeItem(REFRESH_STORAGE_KEY);
+      return null;
+    }
     return window.localStorage.getItem(REFRESH_STORAGE_KEY) || null;
   } catch {
     return null;
   }
 }
 
+export function getStoredRefreshToken(): string | null {
+  return readStoredRefreshToken();
+}
+
 export function setStoredRefreshToken(token: string | null | undefined) {
   try {
+    if (COOKIE_ONLY_AUTH) {
+      window.localStorage.removeItem(REFRESH_STORAGE_KEY);
+      return;
+    }
     if (token) window.localStorage.setItem(REFRESH_STORAGE_KEY, token);
     else window.localStorage.removeItem(REFRESH_STORAGE_KEY);
   } catch {
