@@ -14,9 +14,14 @@ function normalizePublicPhone(value: unknown): string {
   return digits.length >= 8 && digits.length <= 15 ? digits : "";
 }
 
+// Official FTrade support contact supplied by the project owner. Keep this public
+// fallback so WhatsApp works even when Railway has not yet defined the build variable.
+const defaultSupportWhatsapp = "5359494299";
+const configuredSupportWhatsapp = normalizePublicPhone(import.meta.env.VITE_SUPPORT_WHATSAPP);
+
 const publicWhatsappContacts = [
   // Preferred single public contact shared by Plans, Support and account notices.
-  import.meta.env.VITE_SUPPORT_WHATSAPP,
+  configuredSupportWhatsapp || defaultSupportWhatsapp,
   // Backwards compatibility with existing deployments that still use the legacy variables.
   import.meta.env.VITE_ADMIN_WHATSAPP_1,
   import.meta.env.VITE_ADMIN_WHATSAPP_2,
