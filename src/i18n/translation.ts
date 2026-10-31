@@ -460,7 +460,9 @@ const EN: Record<string, string> = {
   "R obtenido": "R earned",
   "Fecha de cierre": "Close date",
   "operaciones": "trades",
-  "Si una operación toca TP1 y después retrocede al Stop Loss, se registra como TP1. Un SL antes del primer objetivo equivale a -1,00R.": "If a trade reaches TP1 and then pulls back to the Stop Loss, it is recorded as TP1. An SL before the first target equals -1.00R.",
+  "Al alcanzar TP1, el stop simulado se mueve a TP1. Si el precio regresa a ese nivel, la operación se cierra en TP1. Antes de TP1, el SL equivale a -1R.": "When TP1 is reached, the simulated stop moves to TP1. If price returns to that level, the trade closes at TP1. Before TP1, the SL equals -1R.",
+  "Es una simulación de una posición completa, sin cierres parciales, comisiones ni deslizamiento; no representa una ejecución real en un exchange.": "This simulates one full position, without partial exits, fees or slippage; it does not represent a real exchange execution.",
+  "Hay resultados anteriores a la metodología 2.0 que conservan su cálculo histórico.": "Some results recorded before methodology 2.0 retain their historical calculation.",
   "Este histórico incluye únicamente cierres registrados por el backend. Los resultados anteriores no garantizan resultados futuros.": "This history includes only closures recorded by the backend. Past results do not guarantee future results.",
   "Máximo 10 señales vigentes": "Up to 10 active signals",
   "Ventana de entrada": "Entry window",
@@ -947,7 +949,7 @@ const EN: Record<string, string> = {
   "Calculando tu riesgo...": "Calculating your risk...",
   "Calcular tamaño de posición": "Calculate position size",
   "Ganada = cierre en TP1 o TP2": "Win = closed at TP1 or TP2",
-  "Riesgo real por operación": "Actual risk per trade",
+  "R calculado con entrada modelada y salida simulada": "R calculated from modeled entry and simulated exit",
   "Incluye todos los cierres": "Includes all closed trades",
   "ganadas": "wins",
   "perdidas": "losses",
@@ -1077,6 +1079,7 @@ const EN: Record<string, string> = {
   "por debajo de la resistencia": "below resistance",
   "señal": "signal",
   "hist.": "hist.",
+  "Ambiguo": "Ambiguous",
 };
 
 function normalize(value: string): string {
