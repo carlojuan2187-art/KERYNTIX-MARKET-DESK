@@ -309,7 +309,9 @@ export default function WatchlistPage() {
     return () => { cancelled = true; };
   }, [selected?.symbol]);
   useEffect(() => {
-    const timer = window.setInterval(() => void refresh(), 30000);
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== "hidden") void refresh();
+    }, 30000);
     return () => window.clearInterval(timer);
   }, [refresh]);
   const quoteMap = new Map(quotes.map((quote) => [quote.symbol, quote]));

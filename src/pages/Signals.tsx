@@ -60,7 +60,10 @@ export default function SignalsPage() {
     [refresh],
   );
   useEffect(() => {
-    const timer = window.setInterval(() => void refresh(), 15000);
+    // Do not poll while the tab is hidden; WebSocket signal events still refresh it.
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== "hidden") void refresh();
+    }, 15000);
     return () => window.clearInterval(timer);
   }, [refresh]);
   const filtered =

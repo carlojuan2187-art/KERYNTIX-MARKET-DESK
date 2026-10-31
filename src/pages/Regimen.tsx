@@ -53,7 +53,9 @@ export default function RegimenPage() {
   const selectedTimeframeLabel = REGIME_TIMEFRAMES.find((item) => item.value === timeframe)?.longLabel ?? "4 horas";
 
   useEffect(() => {
-    const timer = setInterval(() => void refresh(), 300000);
+    const timer = setInterval(() => {
+      if (document.visibilityState !== "hidden") void refresh();
+    }, 300000);
     return () => clearInterval(timer);
   }, [refresh]);
   return (

@@ -235,7 +235,7 @@ export default function MercadoPage() {
     // snapshot and an explicit manual refresh.
     const cadence = tab === "liquidaciones" ? 10_000 : 15_000;
     const timer = globalThis.setInterval(() => {
-      if (refreshInFlight.current) return;
+      if (refreshInFlight.current || document.visibilityState === "hidden") return;
       refreshInFlight.current = true;
       const pending = tab === "flujo"
         ? flow.refresh()
