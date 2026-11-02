@@ -197,7 +197,7 @@ export default function Layout() {
       >
         <div className="sidebar-brand">
           <Link to="/" aria-label={t("KERYNTIX MARKET DESK, inicio")}>
-            <Brand />
+            <Brand sidebar />
           </Link>
           <button
             className="icon-button close-sidebar"
