@@ -1547,6 +1547,24 @@ option {
   gap: 10px;
   margin-bottom: 5px;
 }
+.notification-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.notification-clear-button {
+  color: var(--red);
+}
+.notification-clear-button:hover:not(:disabled) {
+  color: var(--red);
+  opacity: 0.82;
+}
+.notification-tools button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 .notification-tools > span {
   font-size: 10px;
   color: var(--text-muted);
