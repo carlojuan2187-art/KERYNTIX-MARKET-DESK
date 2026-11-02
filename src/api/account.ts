@@ -193,13 +193,24 @@ export interface ReferralSummary {
   rewards: { id: string; days: number; created_at: string }[];
 }
 
+function referralLinkOnCurrentDomain(rawLink: string | undefined): string {
+  if (!rawLink) return "";
+  try {
+    const parsed = new URL(rawLink, window.location.origin);
+    if (!parsed.pathname.startsWith("/r/")) return "";
+    return `${window.location.origin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return "";
+  }
+}
+
 export async function getReferralSummary(): Promise<ReferralSummary> {
   const result = await apiRequest<Partial<ReferralSummary> & { referral_link?: string; premium_referred?: number }>(
     "/referrals",
     { method: "GET" },
   );
   return {
-    link: result.link || result.referral_link || "",
+    link: referralLinkOnCurrentDomain(result.link || result.referral_link),
     progress: result.progress || { current: result.premium_referred || 0, target: 5 },
     referrals: (result.referrals || []).map((item) => ({
       ...item,
