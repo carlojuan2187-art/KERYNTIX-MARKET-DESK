@@ -265,7 +265,7 @@ export default function LoginPage() {
                   : mode === "login"
                     ? t("Bienvenido de nuevo.")
                     : mode === "register"
-                      ? t("Crea tu cuenta FTrade.")
+                      ? t("Crea tu cuenta KERYNTIX MARKET DESK.")
                       : t("Recupera tu acceso.")}
           </h2>
           <p className="login-description">
@@ -363,7 +363,7 @@ export default function LoginPage() {
                         onChange={(e) => setAccepted(e.target.checked)}
                       />
                       <span>
-                        {t("Acepto las condiciones de uso y entiendo que operar futuros implica riesgo de pérdida. FTrade no es asesoría financiera.")}</span>
+                        {t("Acepto las condiciones de uso y entiendo que operar futuros implica riesgo de pérdida. KERYNTIX MARKET DESK no es asesoría financiera.")}</span>
                     </label>
                   </>
                 )}

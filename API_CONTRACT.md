@@ -1,4 +1,4 @@
-# Contrato de integración FTrade Web
+# Contrato de integración KERYNTIX MARKET DESK Web
 
 Este cliente consume directamente el contrato HTTP de FastAPI en la raíz del host configurado por `VITE_API_URL` (sin prefijo `/v1`). No hay modo mock en tiempo de ejecución ni fallback a identidades o datos ficticios. Los nombres y estados que se muestran en pantalla se derivan de respuestas reales; los campos nulos se presentan como desconocidos.
 
@@ -70,7 +70,6 @@ Los campos de mercado pueden ser `null` cuando el proveedor no aporta una lectur
 | Modificar/eliminar alerta de precio | `PATCH/DELETE /alerts/price/{id}` |
 | Consultar notificaciones | `GET /notifications?limit=...` |
 | Marcar una/todas como leídas | `POST /notifications/{id}/read`, `POST /notifications/read-all` |
-| Borrar todo el historial | `DELETE /notifications` (requiere confirmación en la interfaz) |
 | Crear/listar tickets propios | `POST/GET /support/tickets` |
 | Leer ticket o enviar mensaje | `GET /support/tickets/{id}`, `POST /support/tickets/{id}/messages` |
 

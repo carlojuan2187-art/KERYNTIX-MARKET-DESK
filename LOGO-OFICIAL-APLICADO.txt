@@ -1,14 +1,8 @@
-FTRADE — SISTEMA DE LOGOS UNIFICADO (30-10-2026)
+KERYNTIX MARKET DESK — IDENTIDAD VISUAL
 
-- Wordmark: toro + FTRADE + lema, sin la franja inferior de descripciones diminutas.
-- Símbolo compacto: cabeza de toro y gráfico, sin letras recortadas.
-- La navegación compacta usa object-fit: contain para evitar recortes.
-- Favicon, icono de 192 px y Apple Touch Icon utilizan el mismo símbolo.
-- La tarjeta social Open Graph/Twitter se conserva en 1200 x 630.
-
-Archivos principales:
-- src/assets/ftrade-logo-brand.webp (wordmark de la interfaz)
-- src/assets/ftrade-icon.webp (símbolo compacto de la interfaz)
-- public/ftrade-icon.png, public/ftrade-icon-192.png, public/ftrade-icon-32.png
-- public/apple-touch-icon.png
-- public/ftrade-social.jpg (tarjeta para compartir; no modificada)
+- Logotipo principal: brand-assets/keryntix-market-desk-logo.webp (arte aprobado en alta resolución; fuente maestra no publicada como recurso web).
+- Wordmark horizontal de la interfaz: src/assets/keryntix-market-desk-wordmark.webp (optimizado).
+- Símbolo compacto: src/assets/keryntix-mark.webp (optimizado).
+- Favicon y app icons: public/keryntix-mark-32.png, keryntix-mark-192.png, keryntix-mark-512.png y apple-touch-icon.png.
+- Imagen social Open Graph/Twitter: public/keryntix-market-desk-social.jpg.
+- Paleta: negro profundo y dorado metálico, coherente con el ecosistema KERYNTIX.

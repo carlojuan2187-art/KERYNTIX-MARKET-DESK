@@ -73,7 +73,7 @@ export default function SoportePage() {
               {busy ? "Guardando consulta..." : "Crear ticket de soporte"}
             </button>
             <p className="slim-note" style={{ padding: 0 }}>
-              {t("El ticket se guarda en el servicio de soporte de FTrade. No incluyas claves privadas ni códigos de acceso.")}</p>
+              {t("El ticket se guarda en el servicio de soporte de KERYNTIX MARKET DESK. No incluyas claves privadas ni códigos de acceso.")}</p>
           </form>
         </section>
         <section className="support-contact">

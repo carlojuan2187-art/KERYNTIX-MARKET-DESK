@@ -107,9 +107,9 @@ export default function AjustesAvisosPage() {
   }
 
   const channels: { key: ChannelKey; title: string; description: string; icon: typeof Bell; disabled?: boolean }[] = [
-    { key: "in_app", title: "Centro de FTrade", description: "Guarda los avisos en el centro de notificaciones y muestra avisos dentro de la plataforma.", icon: Bell },
+    { key: "in_app", title: "Centro de KERYNTIX MARKET DESK", description: "Guarda los avisos en el centro de notificaciones y muestra avisos dentro de la plataforma.", icon: Bell },
     { key: "telegram", title: "Telegram", description: user.telegram_chat_id ? "Envía los avisos al chat de Telegram vinculado a tu cuenta." : "Vincula Telegram desde Cuenta para poder recibir avisos por este canal.", icon: Send, disabled: !user.telegram_chat_id },
-    { key: "web_push", title: "Navegador y dispositivo", description: "Recibe notificaciones del sistema incluso cuando FTrade está cerrado, en este navegador.", icon: Smartphone, disabled: !pushSupported },
+    { key: "web_push", title: "Navegador y dispositivo", description: "Recibe notificaciones del sistema incluso cuando KERYNTIX MARKET DESK está cerrado, en este navegador.", icon: Smartphone, disabled: !pushSupported },
   ];
 
   return (
@@ -126,7 +126,7 @@ export default function AjustesAvisosPage() {
           </SectionHeader>
           {[
             { key: "on" as const, title: "Avisos automáticos", description: "Interruptor general para los avisos de anomalías." },
-            { key: "signals" as const, title: "Nuevas señales", description: "Aviso cuando FTrade publica una señal nueva disponible para tu cuenta." },
+            { key: "signals" as const, title: "Nuevas señales", description: "Aviso cuando KERYNTIX MARKET DESK publica una señal nueva disponible para tu cuenta." },
             { key: "liq" as const, title: "Liquidaciones", description: "Barridos de longs y squeezes de shorts, globales o por par." },
             { key: "mov" as const, title: "Movimientos con volumen", description: "Pumps y dumps respaldados por volumen confirmado." },
             { key: "vol" as const, title: "Volumen sin movimiento", description: "Volumen anormal mientras el precio permanece estable." },
@@ -173,7 +173,7 @@ export default function AjustesAvisosPage() {
             <SectionHeader title={t("Notificaciones del navegador")}>
               <BellRing size={16} className="muted" />
             </SectionHeader>
-            <p className="account-explainer">{t("Web Push permite recibir avisos aunque FTrade esté cerrada. La suscripción se guarda para este navegador y puedes retirarla desactivando su canal.")}</p>
+            <p className="account-explainer">{t("Web Push permite recibir avisos aunque KERYNTIX MARKET DESK esté cerrada. La suscripción se guarda para este navegador y puedes retirarla desactivando su canal.")}</p>
             <Tag tone={permission === "granted" ? "green" : permission === "denied" ? "amber" : "muted"} dot>
               {permission === "granted" ? t("Permiso concedido") : permission === "denied" ? t("Permiso bloqueado") : permission === "unsupported" ? t("No compatible") : t("Permiso pendiente")}
             </Tag>
@@ -186,7 +186,7 @@ export default function AjustesAvisosPage() {
           <section className="notification-rules">
             <SectionHeader title={t("Un filtro pensado para tu atención")} />
             <div><ShieldCheck size={17} /><p>{t("Máximo 8 avisos por hora en total. No se repite el mismo par durante 45 minutos, salvo que la magnitud se duplique.")}</p></div>
-            <div><Info size={17} /><p>{t("Los avisos de mercado desaparecen de pantalla a los")} {appConfig.alertDuration} {t("segundos y los estados de señales a los 7 segundos. Si activas Centro de FTrade, los avisos permanecen allí incluso después de leerlos.")}</p></div>
+            <div><Info size={17} /><p>{t("Los avisos de mercado desaparecen de pantalla a los")} {appConfig.alertDuration} {t("segundos y los estados de señales a los 7 segundos. Si activas Centro de KERYNTIX MARKET DESK, los avisos permanecen allí incluso después de leerlos.")}</p></div>
           </section>
         </div>
       </div>

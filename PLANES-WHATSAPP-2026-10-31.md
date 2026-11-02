@@ -12,7 +12,7 @@
 
 ## Configuración necesaria en Railway
 
-En el servicio **Frontend / FTrade Web**, añade la variable pública de build:
+En el servicio **Frontend / KERYNTIX MARKET DESK Web**, añade la variable pública de build:
 
 `VITE_SUPPORT_WHATSAPP=5359494299`
 

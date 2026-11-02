@@ -61,7 +61,7 @@ class PageErrorBoundary extends Component<{ children: ReactNode }, { failed: boo
   componentDidCatch(error: Error, info: ErrorInfo) {
     // Keep the exception available in browser diagnostics instead of leaving a
     // completely black page with no clue about the failing component.
-    console.error("FTrade: error al renderizar una pantalla", error, info.componentStack);
+    console.error("KERYNTIX MARKET DESK: error al renderizar una pantalla", error, info.componentStack);
   }
 
   render() {
@@ -138,7 +138,7 @@ function AccessGuard() {
         <ShieldAlert size={40} />
         <h1>{t("Acceso vencido")}</h1>
         <p>
-          {t("Tu prueba gratuita de cinco días o tu suscripción ha finalizado. Reactiva Premium para recuperar el acceso a todas las funciones de FTrade.")}</p>
+          {t("Tu prueba gratuita de cinco días o tu suscripción ha finalizado. Reactiva Premium para recuperar el acceso a todas las funciones de KERYNTIX MARKET DESK.")}</p>
         <Link className="btn btn-primary" to="/planes">
           {t("Ver planes")}</Link>
       </div>

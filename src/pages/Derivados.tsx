@@ -295,7 +295,7 @@ export default function DerivadosPage() {
               <Reading title={t("Cómo interpretarlo")}>{t("Una mayoría en un lado no confirma una tendencia. El ratio describe cuentas, no tamaño de posiciones ni dirección garantizada del próximo movimiento.")}</Reading>
               <div className="detail-row"><span>{t("Cambio de interés abierto en 1 hora")}</span><strong className={`mono ${data.oi_change_1h == null ? "" : data.oi_change_1h >= 0 ? "positive" : "negative"}`}>{percent(data.oi_change_1h, 2)}</strong></div>
               <div className="detail-row"><span>{t("Cambio de interés abierto en 24 horas")}</span><strong className={`mono ${data.oi_change_24h == null ? "" : data.oi_change_24h >= 0 ? "positive" : "negative"}`}>{percent(data.oi_change_24h, 2)}</strong></div>
-              {data.reading && <Reading title={t("Lectura base de FTrade")}>{data.reading}</Reading>}
+              {data.reading && <Reading title={t("Lectura base de KERYNTIX MARKET DESK")}>{data.reading}</Reading>}
             </section>
           </div>
 

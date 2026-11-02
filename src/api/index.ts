@@ -97,4 +97,4 @@ export async function calculatePosition(input: CalcInput): Promise<CalcResult> {
 
 export { getReferralSummary as getReferrals, getAdminOverview as getAdminStats, getAdminUsers as getUsers, adminBanUser as banUser, adminUnbanUser as unbanUser, activatePremium } from "./account";
 export { getReferralSummary, getAdminOverview, getAdminUsers, adminBanUser, adminUnbanUser } from "./account";
-export { getNotifications, markNotificationRead, markAllNotificationsRead, deleteAllNotifications, getSessions, revokeSession, getTickets, createTicket } from "./terminal";
+export { getNotifications, markNotificationRead, markAllNotificationsRead, getSessions, revokeSession, getTickets, createTicket } from "./terminal";

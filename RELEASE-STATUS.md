@@ -6,7 +6,7 @@
 - La navegación tiene acceso a hasta 300 velas, manteniendo el cálculo previo de indicadores; el gráfico enseña inicialmente las 60 más recientes y permite desplazarse por el historial sin cambiar de temporalidad.
 - Al recorrer velas antiguas, la línea de precio en vivo deja de forzar la escala y no aplasta la vista histórica.
 
-# Estado de entrega del front-end FTrade
+# Estado de entrega del front-end KERYNTIX MARKET DESK
 
 ## Actualización — gráfico de mercado y herramientas técnicas (26 de octubre de 2026)
 
@@ -19,7 +19,7 @@
 ## Cambios aplicados
 
 - Eliminados el usuario premium/admin de demostración, el acceso simulado por Telegram, el código fijo de verificación, las capas `mockData`/`simulation` y el modo de autenticación `mock`.
-- Los módulos de la interfaz usan adaptadores HTTP para el backend FTrade; los campos ausentes se mantienen como desconocidos en vez de convertirse en cifras inventadas.
+- Los módulos de la interfaz usan adaptadores HTTP para el backend KERYNTIX MARKET DESK; los campos ausentes se mantienen como desconocidos en vez de convertirse en cifras inventadas.
 - Añadida la conexión WebSocket mediante ticket autenticado en `/events/ticket` y `/ws/events`, con reintentos y refresco REST de respaldo.
 - Corregido el manejo de preferencias de avisos, estados de pago, la dirección de liquidaciones, el progreso de confirmación y lecturas desconocidas de radar/flujo/derivados.
 - Corregido el fallo de renderizado de “Mi Plan” cuando `VITE_ADMIN_WHATSAPP_1` no está configurado: el contacto es opcional y la página muestra un aviso en su lugar. También se protege el enlace equivalente del aviso de cuenta bloqueada.

@@ -3,11 +3,11 @@
 ## Web Push en navegador
 - `public/sw.js` muestra notificaciones push con la web cerrada y abre únicamente rutas del mismo origen al pulsarlas.
 - `src/api/webPush.ts` registra y elimina la suscripción actual con el backend.
-- Ajustes permite activar/desactivar Centro FTrade, Telegram y navegador/dispositivo por separado.
+- Ajustes permite activar/desactivar Centro KERYNTIX MARKET DESK, Telegram y navegador/dispositivo por separado.
 - El backend incorpora `DELETE /push/subscriptions/current`, idempotente y limitado a la suscripción del usuario autenticado.
 
 ## Preferencias
-- `in_app` controla el inbox/toasts de FTrade.
+- `in_app` controla el inbox/toasts de KERYNTIX MARKET DESK.
 - `telegram` controla la entrega al chat vinculado.
 - `web_push` controla la notificación de sistema/Web Push.
 - Los filtros de eventos y el interruptor general se siguen respetando.

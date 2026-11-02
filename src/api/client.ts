@@ -1,5 +1,5 @@
 import { translate } from "@/i18n/translation";
-/** Small fetch client for the real FTrade API.
+/** Small fetch client for the KERYNTIX MARKET DESK API.
  * Access tokens are kept only in module memory. The refresh token lives in the
  * server-set HttpOnly cookie; because the web app and the API are on different
  * sites, browsers such as Safari, Brave or in-app browsers drop that cookie, so a
@@ -76,7 +76,7 @@ export function clearAccessToken() {
 function urlFor(path: string) {
   const base = appConfig.apiUrl.replace(/\/+$/, "");
   if (!base) {
-    throw new Error(translate("Falta VITE_API_URL. Configura la URL raíz del backend FastAPI antes de usar FTrade."));
+    throw new Error(translate("Falta VITE_API_URL. Configura la URL raíz del backend FastAPI antes de usar KERYNTIX MARKET DESK."));
   }
   const suffix = path.startsWith("/") ? path : `/${path}`;
   return `${base}${suffix}`;

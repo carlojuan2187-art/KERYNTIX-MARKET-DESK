@@ -15,7 +15,6 @@ import {
   getNotifications,
   getQuotes,
   markNotificationRead,
-  deleteAllNotifications,
   type AppNotification,
   type AssetQuote,
 } from "@/api/terminal";
@@ -42,7 +41,6 @@ interface AppState {
   signalCount: number;
   notifications: AppNotification[];
   readNotification: (id: string) => void;
-  clearNotificationHistory: () => Promise<boolean>;
   toast: (title: string, kind?: Toast["kind"], duration?: number) => void;
   loading: boolean;
   language: Language;
@@ -77,8 +75,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const lastPriceWsValueBySymbol = useRef<Record<string, number>>({});
   const [signalCount, setSignalCount] = useState(0);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const notificationRequestVersion = useRef(0);
-  const notificationMutationInProgress = useRef(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toast = useCallback(
     (title: string, kind: Toast["kind"] = "success", duration = 7000) => {
@@ -91,30 +87,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     [language],
   );
-  const refreshNotifications = useCallback(async () => {
-    if (notificationMutationInProgress.current) return;
-    const requestVersion = ++notificationRequestVersion.current;
-    const items = await getNotifications();
-    if (!notificationMutationInProgress.current && requestVersion === notificationRequestVersion.current) {
-      setNotifications(items);
-    }
-  }, []);
-  const clearNotificationHistory = useCallback(async (): Promise<boolean> => {
-    if (notificationMutationInProgress.current) return false;
-    notificationMutationInProgress.current = true;
-    const requestVersion = ++notificationRequestVersion.current;
-    try {
-      await deleteAllNotifications();
-      if (requestVersion === notificationRequestVersion.current) setNotifications([]);
-      toast(t("Historial de notificaciones borrado."), "success");
-      return true;
-    } catch (error) {
-      toast(t((error as Error).message || "No se pudo borrar el historial de notificaciones."), "error");
-      return false;
-    } finally {
-      notificationMutationInProgress.current = false;
-    }
-  }, [toast, t]);
   const setLanguage = useCallback(async (next: Language) => {
     setLanguageState(next);
     try { window.localStorage.setItem("ftrade.language", next); } catch { /* Browser storage may be disabled. */ }
@@ -256,12 +228,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user.alert_prefs?.in_app === false) {
       setNotifications([]);
     } else {
-      const requestVersion = ++notificationRequestVersion.current;
       void getNotifications()
-        .then((items) => {
-          if (!disposed && hasAccess(user) && requestVersion === notificationRequestVersion.current
-              && !notificationMutationInProgress.current) setNotifications(items);
-        })
+        .then((items) => { if (!disposed && hasAccess(user)) setNotifications(items); })
         .catch(() => undefined);
     }
     return () => { disposed = true; };
@@ -286,8 +254,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.lang = language;
     document.title = language === "es"
-      ? "FTrade | Una perspectiva más clara del mercado"
-      : "FTrade | A clearer view of the market";
+      ? "KERYNTIX MARKET DESK | Inteligencia de mercado"
+      : "KERYNTIX MARKET DESK | Intelligent Market Platform";
   }, [language]);
   useEffect(() => {
     if (!user?.user_id) return;
@@ -388,7 +356,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           if (!signalAlertsEnabled) return;
           const signalPrefs = user?.alert_prefs;
           const showInApp = Boolean(signalPrefs && signalPrefs.in_app !== false);
-          if (showInApp) void refreshNotifications().catch(() => undefined);
+          if (showInApp) void getNotifications().then(setNotifications).catch(() => undefined);
           const label = event.event === "signal.new" ? t("Nuevo setup") : event.event === "signal.touched" ? t("Entrada tocada") : event.event === "signal.tp1" ? t("TP1 alcanzado") : event.event === "signal.cancelled" ? t("Señal cancelada") : `${t("Operación cerrada")} ${signal.event?.result || ""}`;
           const title = `${signal.symbol} · ${label}`;
           if (showInApp) toast(title, "info", 7000);
@@ -497,14 +465,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
           // intentionally unavailable until access is restored.
           if (!user.alert_prefs.on || !user.alert_prefs[alert.kind]) return;
           const showInApp = user.alert_prefs.in_app !== false;
-          if (accessActive && showInApp) void refreshNotifications().catch(() => undefined);
+          if (accessActive && showInApp) void getNotifications().then(setNotifications).catch(() => undefined);
           const title = `${t("AVISO ·")} ${alert.symbol || t("Mercado")}`;
           if (showInApp) toast(title, "info", appConfig.alertDuration * 1000);
           // Web Push delivery is centralized in the service worker so a push
           // received with the tab open is not duplicated by a page notification.
         }
       }),
-    [user, toast, t, refreshNotifications],
+    [user, toast, t],
   );
   function readNotification(id: string) {
     void markNotificationRead(id)
@@ -525,7 +493,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         signalCount,
         notifications,
         readNotification,
-        clearNotificationHistory,
         toast,
         language,
         setLanguage,

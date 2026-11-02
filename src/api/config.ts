@@ -1,4 +1,4 @@
-/** Public configuration for the API-only FTrade web client. */
+/** Public configuration for the API-only KERYNTIX MARKET DESK web client. */
 const configuredBot = String(import.meta.env.VITE_TELEGRAM_BOT_USERNAME || "")
   .trim()
   .replace(/^@/, "");
@@ -14,7 +14,7 @@ function normalizePublicPhone(value: unknown): string {
   return digits.length >= 8 && digits.length <= 15 ? digits : "";
 }
 
-// Official FTrade support contact supplied by the project owner. Keep this public
+// Official KERYNTIX MARKET DESK support contact supplied by the project owner. Keep this public
 // fallback so WhatsApp works even when Railway has not yet defined the build variable.
 const defaultSupportWhatsapp = "5359494299";
 const configuredSupportWhatsapp = normalizePublicPhone(import.meta.env.VITE_SUPPORT_WHATSAPP);

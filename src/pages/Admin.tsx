@@ -129,7 +129,7 @@ export default function AdminPage() {
   return (
     <div>
       <PageHeader
-        eyebrow={t("ADMINISTRACIÓN DE FTRADE")}
+        eyebrow={t("ADMINISTRACIÓN DE KERYNTIX MARKET DESK")}
         title={t("Una plataforma bajo control.")}
         description={t("Gestiona usuarios, planes y restricciones mediante las rutas administrativas del backend.")}
       >

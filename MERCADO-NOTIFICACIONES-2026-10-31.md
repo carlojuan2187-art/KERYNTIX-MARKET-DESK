@@ -1,4 +1,4 @@
-# FTrade — cambios de derivados y notificaciones (2026-10-31)
+# KERYNTIX MARKET DESK — cambios de derivados y notificaciones (2026-10-31)
 
 ## Derivados
 - Se retiró de la vista web el panel «Top traders» (cuentas y posiciones), que dependía de endpoints autenticados de Binance.

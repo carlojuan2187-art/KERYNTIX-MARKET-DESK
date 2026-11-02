@@ -1,4 +1,4 @@
-# FTrade bilingual interface — 2026-10-31
+# KERYNTIX MARKET DESK bilingual interface — 2026-10-31
 
 ## Behavior
 - English (`en`) is the default for new and legacy accounts without a stored preference.

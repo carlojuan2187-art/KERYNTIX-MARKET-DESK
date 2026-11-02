@@ -1,4 +1,4 @@
-# FTrade — corrección de frescura del gráfico
+# KERYNTIX MARKET DESK — corrección de frescura del gráfico
 
 ## Cambios
 - El gráfico solicita 240 velas en lugar de 300 para acelerar la carga inicial, conservando margen para EMA 200.

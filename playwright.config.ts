@@ -20,7 +20,7 @@ export default defineConfig({
     env: {
       VITE_API_URL: "http://127.0.0.1:8000",
       VITE_WS_URL: "ws://127.0.0.1:8000/ws/events",
-      VITE_TELEGRAM_BOT_USERNAME: "ftrade_test_bot",
+      VITE_TELEGRAM_BOT_USERNAME: "keryntix_market_desk_test_bot",
       VITE_SUPPORT_WHATSAPP: "",
       VITE_ADMIN_WHATSAPP_1: "",
       VITE_ADMIN_WHATSAPP_2: "",

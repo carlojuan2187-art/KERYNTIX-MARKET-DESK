@@ -12,15 +12,15 @@ import {
   X,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import ftradeBrandLogo from "@/assets/ftrade-logo-brand.webp";
-import ftradeBrandIcon from "@/assets/ftrade-icon.webp";
+import keryntixBrandLogo from "@/assets/keryntix-market-desk-wordmark.webp";
+import keryntixBrandIcon from "@/assets/keryntix-mark.webp";
 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <span className={`brand${compact ? " brand-compact" : ""}`}>
       <img
-        src={compact ? ftradeBrandIcon : ftradeBrandLogo}
-        alt={compact ? t("Símbolo de FTrade") : t("FTrade — Analiza, opera, avanza")}
+        src={compact ? keryntixBrandIcon : keryntixBrandLogo}
+        alt={compact ? t("Símbolo de KERYNTIX MARKET DESK") : t("KERYNTIX MARKET DESK — Inteligencia de mercado")}
         className="brand-image"
         loading="eager"
         decoding="async"
@@ -219,7 +219,7 @@ export function CopyButton({
 }
 export function Reading({
   children,
-  title = "La lectura de FTrade",
+  title = "La lectura de KERYNTIX MARKET DESK",
 }: {
   children: ReactNode;
   title?: string;

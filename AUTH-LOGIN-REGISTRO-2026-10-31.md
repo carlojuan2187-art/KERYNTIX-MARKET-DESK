@@ -1,4 +1,4 @@
-# FTrade — Flujo de inicio de sesión y registro
+# KERYNTIX MARKET DESK — Flujo de inicio de sesión y registro
 
 ## Comportamiento de la interfaz
 
