@@ -2,6 +2,11 @@ export type Language = "en" | "es";
 
 /** Exact, product-reviewed UI copy translations. Spanish remains the source language. */
 const EN: Record<string, string> = {
+  "Borrar historial": "Clear history",
+  "¿Borrar todo el historial de notificaciones?": "Delete the entire notification history?",
+  "Borrando...": "Deleting...",
+  "Historial de notificaciones borrado.": "Notification history cleared.",
+  "No se pudo borrar el historial de notificaciones.": "Could not clear notification history.",
   "Idioma": "Language",
   "English": "English",
   "Español": "Spanish",
