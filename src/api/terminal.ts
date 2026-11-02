@@ -501,6 +501,9 @@ export async function markNotificationRead(id: string): Promise<void> {
   await apiRequest(`/notifications/${encodeURIComponent(id)}/read`, { method: "POST" });
 }
 export async function markAllNotificationsRead(): Promise<void> { await apiRequest("/notifications/read-all", { method: "POST" }); }
+export async function deleteAllNotifications(): Promise<{ deleted: number; unread_count: number }> {
+  return apiRequest<{ deleted: number; unread_count: number }>("/notifications", { method: "DELETE" });
+}
 
 export interface SessionRecord { id: string; device: string; location: string; current: boolean; last_activity: string }
 export async function getSessions(): Promise<SessionRecord[]> { return apiRequest<SessionRecord[]>("/sessions", { method: "GET" }); }
