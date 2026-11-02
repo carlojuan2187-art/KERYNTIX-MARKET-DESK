@@ -28,6 +28,7 @@ import {
   Sparkles,
   Star,
   Sun,
+  Trash2,
   Users,
   X,
   Zap,
@@ -117,6 +118,7 @@ export default function Layout() {
     signalCount,
     notifications,
     readNotification,
+    clearNotificationHistory,
     t,
     language,
   } = useApp();
@@ -126,6 +128,7 @@ export default function Layout() {
   );
   const [searchOpen, setSearchOpen] = useState(false);
   const [noticesOpen, setNoticesOpen] = useState(false);
+  const [clearingNotices, setClearingNotices] = useState(false);
   const [query, setQuery] = useState("");
   const [now, setNow] = useState(new Date());
   const loc = useLocation();
@@ -480,14 +483,30 @@ export default function Layout() {
         <Modal title={t("Centro de notificaciones")} onClose={closeNotices}>
           <div className="notification-tools">
             <span>{unread} {t("sin leer")}</span>
-            <button
-              className="btn btn-quiet"
-              onClick={() =>
-                notifications.forEach((n) => readNotification(n.id))
-              }
-            >
-              <CheckCheck size={13} />
-              {t("Marcar todas como leídas")}</button>
+            <div className="notification-actions">
+              <button
+                className="btn btn-quiet"
+                disabled={!unread}
+                onClick={() => notifications.filter((n) => !n.read).forEach((n) => readNotification(n.id))}
+              >
+                <CheckCheck size={13} />
+                {t("Marcar todas como leídas")}
+              </button>
+              <button
+                className="btn btn-quiet notification-clear-button"
+                disabled={!notifications.length || clearingNotices}
+                onClick={async () => {
+                  if (!notifications.length || clearingNotices) return;
+                  if (!window.confirm(t("¿Borrar todo el historial de notificaciones?"))) return;
+                  setClearingNotices(true);
+                  try { await clearNotificationHistory(); }
+                  finally { setClearingNotices(false); }
+                }}
+              >
+                <Trash2 size={13} />
+                {clearingNotices ? t("Borrando...") : t("Borrar historial")}
+              </button>
+            </div>
           </div>
           {notifications.map((n) => (
             <Link
