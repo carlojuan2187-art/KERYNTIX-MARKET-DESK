@@ -28,6 +28,7 @@ import {
   Sparkles,
   Star,
   Sun,
+  Trash2,
   Users,
   X,
   Zap,
@@ -117,6 +118,8 @@ export default function Layout() {
     signalCount,
     notifications,
     readNotification,
+    deleteAllNotifications,
+    toast,
     t,
     language,
   } = useApp();
@@ -126,12 +129,14 @@ export default function Layout() {
   );
   const [searchOpen, setSearchOpen] = useState(false);
   const [noticesOpen, setNoticesOpen] = useState(false);
+  const [confirmDeleteNotices, setConfirmDeleteNotices] = useState(false);
+  const [deletingNotices, setDeletingNotices] = useState(false);
   const [query, setQuery] = useState("");
   const [now, setNow] = useState(new Date());
   const loc = useLocation();
   useResponsiveTableLabels();
   const closeSearch = useCallback(() => setSearchOpen(false), []);
-  const closeNotices = useCallback(() => setNoticesOpen(false), []);
+  const closeNotices = useCallback(() => { setNoticesOpen(false); setConfirmDeleteNotices(false); }, []);
   const unread = notifications.filter((n) => !n.read).length;
   const current = groups
     .flatMap((g) => g.links)
@@ -479,16 +484,59 @@ export default function Layout() {
       {noticesOpen && (
         <Modal title={t("Centro de notificaciones")} onClose={closeNotices}>
           <div className="notification-tools">
-            <span>{unread} {t("sin leer")}</span>
-            <button
-              className="btn btn-quiet"
-              onClick={() =>
-                notifications.forEach((n) => readNotification(n.id))
-              }
-            >
-              <CheckCheck size={13} />
-              {t("Marcar todas como leídas")}</button>
+            <span>{notifications.length} {t("notificaciones")} · {unread} {t("sin leer")}</span>
+            <div className="notification-tool-actions">
+              <button
+                className="btn btn-quiet"
+                onClick={() => notifications.forEach((n) => readNotification(n.id))}
+                disabled={!unread}
+              >
+                <CheckCheck size={13} />
+                {t("Marcar todas como leídas")}
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={() => setConfirmDeleteNotices(true)}
+                disabled={!notifications.length || deletingNotices}
+              >
+                <Trash2 size={13} />
+                {t("Borrar historial")}
+              </button>
+            </div>
           </div>
+          {confirmDeleteNotices && (
+            <div className="notification-delete-confirm" role="alertdialog" aria-label={t("Confirmar borrado del historial")}>
+              <div>
+                <strong>{t("¿Borrar todas las notificaciones?")}</strong>
+                <p>{t("Se eliminarán de tu centro de notificaciones. Los envíos pendientes no se cancelarán.")}</p>
+              </div>
+              <div className="notification-delete-actions">
+                <button className="btn btn-quiet" onClick={() => setConfirmDeleteNotices(false)} disabled={deletingNotices}>
+                  {t("Cancelar")}
+                </button>
+                <button
+                  className="btn btn-danger"
+                  disabled={deletingNotices || !notifications.length}
+                  onClick={async () => {
+                    setDeletingNotices(true);
+                    try {
+                      const deleted = await deleteAllNotifications();
+                      setConfirmDeleteNotices(false);
+                      setNoticesOpen(false);
+                      toast(`${t("Historial borrado")}: ${deleted}`, "success");
+                    } catch (error) {
+                      toast(t((error as Error).message || "No se pudo borrar el historial."), "error");
+                    } finally {
+                      setDeletingNotices(false);
+                    }
+                  }}
+                >
+                  <Trash2 size={13} />
+                  {deletingNotices ? t("Borrando…") : t("Sí, borrar historial")}
+                </button>
+              </div>
+            </div>
+          )}
           {notifications.map((n) => (
             <Link
               key={n.id}
