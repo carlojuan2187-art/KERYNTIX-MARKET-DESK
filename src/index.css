@@ -210,30 +210,54 @@ p {
   padding: 0 12px;
   min-width: 0;
 }
-/* Show the complete KERYNTIX MARKET DESK wordmark without clipping its edges. */
+/* A dedicated sidebar lockup keeps the emblem and wordmark readable at 224px and 183px. */
 .sidebar-brand > a {
   display: flex;
   flex: 1 1 auto;
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  text-decoration: none;
 }
-.sidebar-brand .brand {
+.sidebar-brand .brand-sidebar {
   display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  overflow: hidden;
 }
-.sidebar-brand .brand-image {
+.sidebar-brand .brand-sidebar-mark {
   display: block;
-  width: 100%;
-  max-width: 100%;
-  height: auto;
-  max-height: 76px;
+  width: 49px;
+  height: 49px;
+  flex: 0 0 49px;
   object-fit: contain;
-  object-position: center;
-  flex: 1 1 auto;
+  border-radius: 50%;
 }
+.sidebar-brand .brand-sidebar-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  gap: 4px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.sidebar-brand .brand-sidebar-copy strong {
+  color: #e7bd69;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .035em;
+}
+.sidebar-brand .brand-sidebar-copy > span {
+  color: var(--text);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .055em;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -2062,9 +2086,6 @@ option {
   }
   .sidebar-brand {
     padding: 0 12px;
-  }
-  .brand > span {
-    font-size: 29px;
   }
   .breadcrumbs {
     font-size: 10px;
