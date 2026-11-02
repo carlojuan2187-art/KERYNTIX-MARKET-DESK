@@ -202,39 +202,37 @@ p {
   border-right: 1px solid var(--border);
 }
 .sidebar-brand {
-  height: 104px;
+  height: 108px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  padding: 0 25px;
+  justify-content: center;
+  padding: 0 12px;
   min-width: 0;
-  overflow: hidden;
 }
-/* Keep the full wordmark strictly inside the sidebar. On mobile the sidebar
-   slides off-canvas; clipping prevents the wide logo image from covering the
-   dashboard while the menu is closed. */
+/* Show the complete KERYNTIX MARKET DESK wordmark without clipping its edges. */
 .sidebar-brand > a {
   display: flex;
-  flex: 0 1 174px;
-  width: 174px;
+  flex: 1 1 auto;
+  width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow: hidden;
 }
 .sidebar-brand .brand {
+  display: flex;
   width: 100%;
-  max-width: 174px;
+  max-width: 100%;
   min-width: 0;
-  overflow: hidden;
 }
 .sidebar-brand .brand-image {
+  display: block;
   width: 100%;
-  max-width: 174px;
-  height: 80px;
-  max-height: 80px;
+  max-width: 100%;
+  height: auto;
+  max-height: 76px;
   object-fit: contain;
-  object-position: left center;
-  flex: 0 1 auto;
+  object-position: center;
+  flex: 1 1 auto;
 }
 .brand {
   display: inline-flex;
@@ -1551,6 +1549,43 @@ option {
   font-size: 10px;
   color: var(--text-muted);
 }
+.notification-tool-actions,
+.notification-delete-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.notification-tool-actions .btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.notification-delete-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px;
+  margin: 8px 0 12px;
+  border: 1px solid color-mix(in srgb, var(--red) 38%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--red) 6%, var(--surface));
+}
+.notification-delete-confirm strong {
+  display: block;
+  color: var(--text);
+  font-size: 12px;
+}
+.notification-delete-confirm p {
+  margin-top: 5px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.notification-delete-actions {
+  flex-shrink: 0;
+}
 .toast-stack {
   position: fixed;
   z-index: 150;
@@ -2026,7 +2061,7 @@ option {
     left: 183px;
   }
   .sidebar-brand {
-    padding: 0 19px;
+    padding: 0 12px;
   }
   .brand > span {
     font-size: 29px;
