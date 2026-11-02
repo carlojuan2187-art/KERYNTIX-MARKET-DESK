@@ -70,6 +70,7 @@ Los campos de mercado pueden ser `null` cuando el proveedor no aporta una lectur
 | Modificar/eliminar alerta de precio | `PATCH/DELETE /alerts/price/{id}` |
 | Consultar notificaciones | `GET /notifications?limit=...` |
 | Marcar una/todas como leídas | `POST /notifications/{id}/read`, `POST /notifications/read-all` |
+| Borrar todo el historial propio | `DELETE /notifications` |
 | Crear/listar tickets propios | `POST/GET /support/tickets` |
 | Leer ticket o enviar mensaje | `GET /support/tickets/{id}`, `POST /support/tickets/{id}/messages` |
 
