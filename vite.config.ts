@@ -9,8 +9,11 @@ const __dirname = path.dirname(__filename);
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    allowedHosts: ["keryntix-market-desk-production.up.railway.app"],
+  },
   preview: {
-    allowedHosts: ["ftrade-web-production.up.railway.app"],
+    allowedHosts: ["keryntix-market-desk-production.up.railway.app"],
   },
   plugins: [react(), tailwindcss()],
   resolve: {
