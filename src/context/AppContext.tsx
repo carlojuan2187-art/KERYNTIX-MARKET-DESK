@@ -15,6 +15,7 @@ import {
   getNotifications,
   getQuotes,
   markNotificationRead,
+  deleteAllNotifications as deleteAllNotificationsRequest,
   type AppNotification,
   type AssetQuote,
 } from "@/api/terminal";
@@ -41,6 +42,7 @@ interface AppState {
   signalCount: number;
   notifications: AppNotification[];
   readNotification: (id: string) => void;
+  deleteAllNotifications: () => Promise<number>;
   toast: (title: string, kind?: Toast["kind"], duration?: number) => void;
   loading: boolean;
   language: Language;
@@ -479,6 +481,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .then(() => setNotifications((items) => items.map((item) => item.id === id ? { ...item, read: true } : item)))
       .catch((error) => toast(t((error as Error).message || "No se pudo marcar como leída."), "error"));
   }
+  const deleteAllNotifications = useCallback(async () => {
+    const result = await deleteAllNotificationsRequest();
+    setNotifications([]);
+    return result.deleted;
+  }, []);
   return (
     <Context.Provider
       value={{
@@ -493,6 +500,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         signalCount,
         notifications,
         readNotification,
+        deleteAllNotifications,
         toast,
         language,
         setLanguage,
