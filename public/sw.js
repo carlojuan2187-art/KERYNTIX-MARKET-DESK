@@ -1,4 +1,4 @@
-/* FTrade Web Push worker. No market data or credentials are cached here. */
+/* KERYNTIX MARKET DESK Web Push worker. No market data or credentials are cached here. */
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
 });
@@ -11,10 +11,10 @@ self.addEventListener("push", (event) => {
   try {
     payload = event.data ? event.data.json() : {};
   } catch {
-    payload = { title: "FTrade", body: "Tienes una nueva actualización." };
+    payload = { title: "KERYNTIX MARKET DESK", body: "Tienes una nueva actualización." };
   }
-  const title = String(payload.title || "FTrade").slice(0, 120);
-  const body = String(payload.body || "Tienes una nueva actualización en FTrade.").slice(0, 240);
+  const title = String(payload.title || "KERYNTIX MARKET DESK").slice(0, 120);
+  const body = String(payload.body || "Tienes una nueva actualización en KERYNTIX MARKET DESK.").slice(0, 240);
   const data = {
     url: typeof payload.url === "string" ? payload.url : "/",
     kind: typeof payload.kind === "string" ? payload.kind : "general",
@@ -22,8 +22,8 @@ self.addEventListener("push", (event) => {
   };
   event.waitUntil(self.registration.showNotification(title, {
     body,
-    icon: "/ftrade-icon-192.png",
-    badge: "/ftrade-icon-32.png",
+    icon: "/keryntix-mark-192.png",
+    badge: "/keryntix-mark-32.png",
     tag: typeof payload.tag === "string" ? payload.tag.slice(0, 120) : `ftrade:${payload.id || Date.now()}`,
     data,
     renotify: false,
