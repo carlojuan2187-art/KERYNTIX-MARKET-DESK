@@ -191,7 +191,7 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <header className="login-header">
-        <Brand />
+        <Brand auth />
         <LanguageSwitch />
       </header>
       <main className="login-layout">
