@@ -15,8 +15,23 @@ import { useApp } from "@/context/AppContext";
 import keryntixBrandLogo from "@/assets/keryntix-market-desk-wordmark.webp";
 import keryntixBrandIcon from "@/assets/keryntix-market-desk-sidebar-mark.webp";
 import keryntixSidebarEmblem from "@/assets/keryntix-market-desk-emblem.webp";
+import keryntixAuthLogo from "@/assets/keryntix-market-desk-auth-logo.webp";
 
-export function Brand({ compact = false, sidebar = false }: { compact?: boolean; sidebar?: boolean }) {
+export function Brand({ compact = false, sidebar = false, auth = false }: { compact?: boolean; sidebar?: boolean; auth?: boolean }) {
+  if (auth) {
+    return (
+      <span className="brand brand-auth">
+        <img
+          src={keryntixAuthLogo}
+          alt="KERYNTIX MARKET DESK"
+          className="brand-image"
+          loading="eager"
+          decoding="async"
+        />
+      </span>
+    );
+  }
+
   if (sidebar) {
     return (
       <span className="brand brand-sidebar">
