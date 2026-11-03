@@ -14,14 +14,15 @@ import {
 import { useApp } from "@/context/AppContext";
 import keryntixBrandLogo from "@/assets/keryntix-market-desk-wordmark.webp";
 import keryntixBrandIcon from "@/assets/keryntix-market-desk-sidebar-mark.webp";
+import keryntixSidebarEmblem from "@/assets/keryntix-market-desk-emblem.webp";
 
 export function Brand({ compact = false, sidebar = false }: { compact?: boolean; sidebar?: boolean }) {
   if (sidebar) {
     return (
       <span className="brand brand-sidebar">
         <img
-          src={keryntixBrandLogo}
-          alt="KERYNTIX MARKET DESK"
+          src={keryntixSidebarEmblem}
+          alt="Logotipo oficial KERYNTIX MARKET DESK"
           className="brand-sidebar-logo"
           loading="eager"
           decoding="async"
