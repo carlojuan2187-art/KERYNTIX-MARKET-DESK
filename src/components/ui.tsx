@@ -20,16 +20,12 @@ export function Brand({ compact = false, sidebar = false }: { compact?: boolean;
     return (
       <span className="brand brand-sidebar">
         <img
-          src={keryntixBrandIcon}
-          alt=""
-          className="brand-sidebar-mark"
+          src={keryntixBrandLogo}
+          alt="KERYNTIX MARKET DESK"
+          className="brand-sidebar-logo"
           loading="eager"
           decoding="async"
         />
-        <span className="brand-sidebar-copy">
-          <strong>KERYNTIX</strong>
-          <span>MARKET DESK</span>
-        </span>
       </span>
     );
   }
