@@ -35,6 +35,44 @@ const statusLabels = {
   expired: "Vencido",
   failed: "Fallido",
 };
+
+const premiumBenefitGroups = [
+  {
+    title: "Señales y seguimiento",
+    items: [
+      "Acceso continuo a las señales Premium LONG y SHORT",
+      "Niveles de entrada, Stop Loss, TP1 y TP2 en cada señal",
+      "Seguimiento de estados, objetivos, cancelaciones y cierres",
+    ],
+  },
+  {
+    title: "Inteligencia de mercado",
+    items: [
+      "Radar de oportunidades con score, estructura y contexto",
+      "Cotizaciones, gráficos, amplitud y movimientos del mercado en vivo",
+      "Régimen de BTC en 15M, 1H y 4H con ADX, ATR y tendencia",
+      "Flujo, CVD, delta y niveles visibles del libro de órdenes",
+      "Derivados: funding, interés abierto, base, ratios long/short y flujo taker",
+      "Monitor de liquidaciones y calendario macro y cripto",
+    ],
+  },
+  {
+    title: "Herramientas y rendimiento",
+    items: [
+      "Watchlist personal de hasta 10 pares con análisis multi-temporalidad",
+      "Resultados: R acumulado y medio, win rate, curva e historial de cierres",
+      "Calculadora de riesgo, tamaño de posición, exposición y margen estimado",
+      "Guía del trader y contenido educativo de la plataforma",
+    ],
+  },
+  {
+    title: "Avisos y control",
+    items: [
+      "Centro de notificaciones e historial personal",
+      "Avisos del navegador y Telegram según permisos y preferencias",
+    ],
+  },
+];
 export default function PlanesPage() {
   const { user, toast } = useApp();
   // WhatsApp contact variables are optional; never let a missing contact crash the whole page.
@@ -96,7 +134,7 @@ export default function PlanesPage() {
       <PageHeader
         eyebrow={t("UNA SOLA SEÑAL. TODO EL CONTEXTO.")}
         title={t("Invierte en una mejor perspectiva.")}
-        description={t("FREE para empezar. PREMIUM para mantener tu acceso completo al mercado.")}
+        description={t("FREE para probar la plataforma. PREMIUM para mantener el acceso completo a todos los módulos.")}
       >
         <Tag tone={user?.plan === "premium" ? "green" : "blue"} dot>
           {t("Tu plan: ")}{(user?.plan || "free").toUpperCase()}
@@ -110,23 +148,17 @@ export default function PlanesPage() {
             0<span>USDT</span>
           </div>
           <p>
-            {appConfig.trialDays} {t("días de prueba gratuita para cuentas nuevas.")}</p>
+            {appConfig.trialDays} {t("días de prueba con acceso completo a todas las funciones Premium para cuentas nuevas.")}
+          </p>
           <ul>
-            <li>
-              <Check size={14} />
-              {t("La misma señal Premium durante tu prueba")}</li>
-            <li>
-              <Check size={14} />
-              {t("Radar, mercado en vivo y avisos")}</li>
-            <li>
-              <Check size={14} />
-              {t("Watchlist de hasta 10 pares")}</li>
-            <li>
-              <Check size={14} />
-              {t("Calculadora y guía del trader")}</li>
+            <li><Check size={14} />{t("Las mismas señales y módulos que Premium durante la prueba")}</li>
+            <li><Check size={14} />{t("Radar, mercado, régimen y análisis de derivados")}</li>
+            <li><Check size={14} />{t("Watchlist, resultados, calculadora y guía")}</li>
+            <li><Check size={14} />{t("Notificaciones web y Telegram según configuración")}</li>
           </ul>
           <span className="slim-note">
-            {t("La prueba comienza al verificar tu teléfono.")}</span>
+            {t("La prueba comienza al verificar tu teléfono. Al vencer, los módulos analíticos requieren una suscripción Premium activa; tu cuenta y la sección de pagos siguen disponibles.")}
+          </span>
         </section>
         <section className="plan-option premium-plan">
           <div className="premium-heading">
@@ -139,21 +171,23 @@ export default function PlanesPage() {
             <span>{premiumPlan ? `USDT / ${premiumPlan.duration_days} días` : "USDT · plan no disponible"}</span>
           </div>
           <p>
-            {t("Todos los módulos. El mismo criterio. Más tiempo para operar con contexto.")}</p>
-          <ul>
-            <li>
-              <Check size={14} />
-              {t("Acceso continuo a la señal Premium")}</li>
-            <li>
-              <Check size={14} />
-              {t("Seguimiento de entrada, TP1, TP2 y SL")}</li>
-            <li>
-              <Check size={14} />
-              {t("Datos de flujo, derivados y liquidaciones")}</li>
-            <li>
-              <Check size={14} />
-              {t("Avisos web y Telegram según tus preferencias")}</li>
-          </ul>
+            {t("Acceso continuo a todas las áreas de KERYNTIX MARKET DESK durante el periodo contratado: señales, análisis, herramientas y seguimiento.")}
+          </p>
+          <div className="premium-benefits" aria-label={t("Beneficios incluidos en Premium")}>
+            {premiumBenefitGroups.map((group) => (
+              <section className="premium-benefit-group" key={group.title}>
+                <h3>{t(group.title)}</h3>
+                <ul>
+                  {group.items.map((item) => (
+                    <li key={item}><Check size={13} />{t(item)}</li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+          <p className="premium-availability-note">
+            {t("Las señales y métricas son informativas y dependen de la disponibilidad de las fuentes conectadas. La plataforma no ejecuta órdenes automáticamente ni incluye copy trading.")}
+          </p>
           <button
             className="btn btn-primary"
             disabled={busy || billing.loading || billing.error != null || billing.data?.payment_configured !== true || !premiumPlan || payment?.record.status === "verifying"}
