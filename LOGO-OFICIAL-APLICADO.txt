@@ -1,8 +1,10 @@
 KERYNTIX MARKET DESK — IDENTIDAD VISUAL
 
-- Logotipo principal: brand-assets/keryntix-market-desk-logo.webp (arte aprobado en alta resolución; fuente maestra no publicada como recurso web).
-- Wordmark horizontal de la interfaz: src/assets/keryntix-market-desk-wordmark.webp (optimizado).
-- Símbolo compacto: src/assets/keryntix-mark.webp (optimizado).
-- Favicon y app icons: public/keryntix-mark-32.png, keryntix-mark-192.png, keryntix-mark-512.png y apple-touch-icon.png.
+- Logotipo maestro aprobado: brand-assets/keryntix-market-desk-logo.webp.
+- Emblema oficial de la barra lateral: src/assets/keryntix-market-desk-emblem.webp (versión WebP 384x384 optimizada desde el maestro).
+- Wordmark horizontal: src/assets/keryntix-market-desk-wordmark.webp (pantalla de acceso y usos horizontales).
+- Símbolo compacto: src/assets/keryntix-market-desk-sidebar-mark.webp (cabecera móvil).
+- Favicon y app icons: public/keryntix-mark-32.png, public/keryntix-mark-192.png, public/keryntix-mark-512.png y public/apple-touch-icon.png.
 - Imagen social Open Graph/Twitter: public/keryntix-market-desk-social.jpg.
+- Recursos antiguos de imagen FTrade no referenciados retirados del repositorio.
 - Paleta: negro profundo y dorado metálico, coherente con el ecosistema KERYNTIX.
