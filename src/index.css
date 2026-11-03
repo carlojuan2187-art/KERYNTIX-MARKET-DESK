@@ -210,10 +210,13 @@ p {
   padding: 0 12px;
   min-width: 0;
 }
-/* A dedicated sidebar lockup keeps the emblem and wordmark readable at 224px and 183px. */
+/* Use the approved horizontal lockup as one image so its emblem and lettering
+   keep their intended proportions instead of shrinking independently. */
 .sidebar-brand > a {
   display: flex;
   flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -222,40 +225,18 @@ p {
 .sidebar-brand .brand-sidebar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow: hidden;
 }
-.sidebar-brand .brand-sidebar-mark {
+.sidebar-brand .brand-sidebar-logo {
   display: block;
-  width: 49px;
-  height: 49px;
-  flex: 0 0 49px;
+  width: 100%;
+  max-width: 202px;
+  height: 78px;
   object-fit: contain;
-  border-radius: 50%;
-}
-.sidebar-brand .brand-sidebar-copy {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 0;
-  gap: 4px;
-  line-height: 1;
-  white-space: nowrap;
-}
-.sidebar-brand .brand-sidebar-copy strong {
-  color: #e7bd69;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: .035em;
-}
-.sidebar-brand .brand-sidebar-copy > span {
-  color: var(--text);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .055em;
+  object-position: center;
 }
 
 .brand {
