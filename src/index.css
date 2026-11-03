@@ -6959,3 +6959,36 @@ html {
   .guide-apply-row { align-items: flex-start; flex-direction: column; }
   .guide-apply-row .btn { width: 100%; }
 }
+
+
+/* Auth header uses the approved complete circular KERYNTIX emblem. */
+.login-header {
+  min-height: 124px;
+  height: 124px;
+}
+.login-header .brand.brand-auth {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+.login-header .brand.brand-auth .brand-image {
+  display: block;
+  width: 108px;
+  height: 108px;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 0;
+}
+@media (max-width: 620px) {
+  .login-header {
+    min-height: 88px;
+    height: 88px;
+  }
+  .login-header .brand.brand-auth .brand-image {
+    width: 78px;
+    height: 78px;
+  }
+}
