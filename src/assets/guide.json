@@ -1,47 +1,597 @@
 [
   {
     "key": "introduccion",
-    "label": "Introducción",
-    "text": "KERYNTIX MARKET DESK es una plataforma de señales y análisis para futuros de Binance (USDT-M). No ofrece asesoría financiera ni garantía de resultados. Todo contenido es informativo. Usamos análisis técnico y datos de mercado en tiempo real para identificar oportunidades."
+    "minutes": 2,
+    "route": "/",
+    "es": {
+      "label": "Introducción a KERYNTIX",
+      "summary": "Qué hace la plataforma, qué mercados cubre y cómo interpretar sus herramientas sin confundir información con una orden de trading.",
+      "sections": [
+        {
+          "heading": "Una terminal de señales e inteligencia de mercado",
+          "body": "KERYNTIX MARKET DESK reúne señales para Binance USDⓈ-M Futures, seguimiento de niveles, análisis de mercado, datos de derivados, radar de oportunidades y herramientas de gestión de riesgo. Su objetivo es ofrecer contexto para que puedas evaluar una operación con más información."
+        },
+        {
+          "heading": "Qué hace y qué no hace",
+          "body": "La plataforma muestra oportunidades, niveles y métricas calculadas por sus motores. No es una garantía de resultados, no sustituye tu criterio y la calculadora no envía órdenes a Binance. La ejecución y la gestión final de una operación siguen bajo tu responsabilidad. Los datos dependen de la disponibilidad y actualización de las fuentes conectadas."
+        }
+      ],
+      "takeaway": "Primero entiende el contexto; después evalúa la señal y el riesgo. Ningún indicador ni puntuación garantiza que el precio vaya a alcanzar un objetivo."
+    },
+    "en": {
+      "label": "Introduction to KERYNTIX",
+      "summary": "What the platform does, which markets it covers, and how to use its tools without confusing information with a trade order.",
+      "sections": [
+        {
+          "heading": "A signals and market-intelligence terminal",
+          "body": "KERYNTIX MARKET DESK brings together signals for Binance USDⓈ-M Futures, level tracking, market analysis, derivatives data, an opportunity radar, and risk-management tools. Its purpose is to provide context so you can evaluate a trade with more information."
+        },
+        {
+          "heading": "What it does and does not do",
+          "body": "The platform displays opportunities, levels, and metrics calculated by its engines. It does not guarantee results, replace your judgment, or send Binance orders through the calculator. Trade execution and final trade management remain your responsibility. Data depends on the availability and freshness of connected sources."
+        }
+      ],
+      "takeaway": "Understand the context first; then evaluate the signal and its risk. No indicator or score guarantees that price will reach a target."
+    }
   },
   {
-    "key": "riesgo",
-    "label": "Gestión de riesgo",
-    "text": "Nunca arriesgues más del 1-3% de tu capital por operación. Usa siempre Stop Loss. La calculadora integrada te ayuda a calcular el tamaño exacto de posición según tu capital y tu riesgo aceptado."
+    "key": "recorrido",
+    "minutes": 3,
+    "route": "/",
+    "es": {
+      "label": "Cómo recorrer la plataforma",
+      "summary": "Un flujo de trabajo sencillo para pasar de la visión general a una señal evaluada y después revisar el resultado.",
+      "sections": [
+        {
+          "heading": "Empieza por el panorama",
+          "body": "En Vista general revisa las señales activas, el régimen de mercado, la amplitud y los eventos destacados. Después utiliza Régimen de mercado para entender si BTC está en tendencia, rango, transición o volatilidad elevada. El régimen es contexto general, no una entrada por sí mismo."
+        },
+        {
+          "heading": "Investiga, valida y mide",
+          "body": "Consulta Radar para encontrar oportunidades en formación; contrasta el activo en Mercado, Derivados o tu Watchlist; y espera una señal confirmada en Señales. Antes de considerar una operación, revisa entrada, Stop Loss, objetivos y tamaño de posición en la Calculadora. Cuando termine, consulta Resultados para estudiar el R registrado."
+        }
+      ],
+      "takeaway": "Panorama → Régimen → Radar y análisis → Señal → Riesgo → Seguimiento → Resultados. No es obligatorio recorrer todas las pantallas en cada operación; utiliza solo los datos relevantes."
+    },
+    "en": {
+      "label": "How to navigate the platform",
+      "summary": "A simple workflow for moving from the market overview to an evaluated signal and then reviewing its outcome.",
+      "sections": [
+        {
+          "heading": "Start with the overview",
+          "body": "In Overview, review active signals, the market regime, breadth, and notable events. Then open Market Regime to understand whether BTC is trending, ranging, transitioning, or experiencing elevated volatility. The regime is general context, not an entry by itself."
+        },
+        {
+          "heading": "Research, validate, and measure",
+          "body": "Use Radar to find developing opportunities; compare the asset in Market, Derivatives, or your Watchlist; and wait for a confirmed signal in Signals. Before considering a trade, review entry, stop loss, targets, and position size in the Calculator. After it closes, use Results to study the recorded R."
+        }
+      ],
+      "takeaway": "Overview → Regime → Radar and analysis → Signal → Risk → Tracking → Results. You do not need every screen for every trade; use only the relevant information."
+    }
+  },
+  {
+    "key": "senales",
+    "minutes": 3,
+    "route": "/senales",
+    "es": {
+      "label": "Cómo leer una señal",
+      "summary": "Identifica dirección, entrada, stop, objetivos, apalancamiento y puntuación antes de decidir si una señal encaja con tu plan.",
+      "sections": [
+        {
+          "heading": "Los niveles de la operación",
+          "body": "Cada señal muestra el par y la dirección LONG o SHORT, una zona o referencia de entrada, Stop Loss y objetivos TP1 y TP2 cuando están disponibles. También puede mostrar apalancamiento sugerido, temporalidades y score del setup. Comprueba siempre que los niveles correspondan al lado correcto: en LONG el stop queda por debajo de la entrada; en SHORT, por encima."
+        },
+        {
+          "heading": "El score no es una probabilidad",
+          "body": "La puntuación resume los criterios que el motor considera para ese setup. No significa que exista ese mismo porcentaje de probabilidad de ganar. El R:R compara la recompensa potencial con el riesgo definido entre entrada y stop; no representa una rentabilidad asegurada."
+        }
+      ],
+      "takeaway": "No persigas el precio si ya se alejó de la zona. Lee todos los niveles y calcula cuánto capital estás dispuesto a arriesgar antes de actuar."
+    },
+    "en": {
+      "label": "How to read a signal",
+      "summary": "Identify direction, entry, stop, targets, leverage, and score before deciding whether a signal fits your plan.",
+      "sections": [
+        {
+          "heading": "Trade levels",
+          "body": "Each signal shows the pair and LONG or SHORT direction, an entry zone or reference, a Stop Loss, and TP1 and TP2 targets when available. It may also show suggested leverage, timeframes, and a setup score. Always check that levels match the correct side: on a LONG, the stop is below entry; on a SHORT, it is above entry."
+        },
+        {
+          "heading": "The score is not a probability",
+          "body": "The score summarizes criteria considered by the engine for that setup. It does not mean the same percentage probability of winning. Risk/reward compares potential reward with the risk defined between entry and stop; it is not a guaranteed return."
+        }
+      ],
+      "takeaway": "Do not chase price after it has moved away from the zone. Read every level and calculate how much capital you are prepared to risk before acting."
+    }
   },
   {
     "key": "estados",
-    "label": "Estados de señal",
-    "text": "PENDING = la zona aún no se tocó; tienes 15 min desde la creación. TOUCHED = la entrada se tocó; la señal está activa 30 min. CANCELLED = la señal se canceló (no cuenta como pérdida)."
+    "minutes": 3,
+    "route": "/senales",
+    "es": {
+      "label": "Estados y seguimiento de señal",
+      "summary": "Aprende qué significa que una señal esté pendiente, haya tocado la entrada o haya sido cancelada, y cómo se reflejan los objetivos.",
+      "sections": [
+        {
+          "heading": "Pendiente, en seguimiento o cancelada",
+          "body": "PENDING indica que el precio todavía no ha tocado la zona de entrada y la señal espera activación dentro de su ventana válida. TOUCHED indica que la zona fue alcanzada y la operación pasa a seguimiento. CANCELLED significa que el setup se invalidó o dejó de cumplir sus condiciones; una señal cancelada no se cuenta como una pérdida."
+        },
+        {
+          "heading": "Objetivos y Stop Loss",
+          "body": "Después de tocar la entrada, la plataforma puede registrar avances como TP1, TP2 o el cierre por Stop Loss. Si TP1 se alcanza y luego el precio retrocede al stop, la interfaz conserva el resultado TP1 conforme a la regla mostrada por la plataforma. Revisa el detalle de cada operación y no confundas una señal pendiente con una operación ya activada."
+        }
+      ],
+      "takeaway": "PENDING no es una operación abierta; TOUCHED indica que la entrada fue alcanzada; CANCELLED no es una pérdida. Sigue los cambios desde el detalle de la señal."
+    },
+    "en": {
+      "label": "Signal states and tracking",
+      "summary": "Learn what it means when a signal is pending, has touched entry, or has been cancelled, and how targets are reflected.",
+      "sections": [
+        {
+          "heading": "Pending, tracking, or cancelled",
+          "body": "PENDING means price has not reached the entry zone yet and the signal is waiting for activation within its validity window. TOUCHED means the zone was reached and the trade moves into tracking. CANCELLED means the setup was invalidated or no longer meets its conditions; a cancelled signal is not counted as a loss."
+        },
+        {
+          "heading": "Targets and Stop Loss",
+          "body": "After entry is touched, the platform may record progress such as TP1, TP2, or a Stop Loss close. If TP1 is reached and price later pulls back to the stop, the interface preserves the TP1 outcome under the platform rule shown there. Review each trade's details and do not confuse a pending signal with an activated trade."
+        }
+      ],
+      "takeaway": "PENDING is not an open trade; TOUCHED means entry was reached; CANCELLED is not a loss. Follow changes from the signal detail view."
+    }
+  },
+  {
+    "key": "riesgo",
+    "minutes": 3,
+    "route": "/calculadora",
+    "es": {
+      "label": "Gestión de riesgo y tamaño de posición",
+      "summary": "Dimensiona una operación a partir de tu capital, el riesgo elegido y la distancia entre entrada y Stop Loss.",
+      "sections": [
+        {
+          "heading": "Riesgo, exposición y margen no son lo mismo",
+          "body": "El riesgo estimado depende de cuánto perderías si el precio alcanza el Stop Loss. El tamaño de posición determina cuántas unidades abres; la exposición expresa el valor nominal y el margen es el capital requerido según el apalancamiento. Aumentar el apalancamiento puede reducir el margen inicial, pero no elimina el riesgo del movimiento del precio."
+        },
+        {
+          "heading": "Usa la calculadora antes de operar",
+          "body": "Puedes introducir capital, porcentaje de riesgo, entrada, stop y objetivo, o partir de una señal. La herramienta estima tamaño, exposición, margen y resultado en el objetivo. No coloca órdenes y sus estimaciones no incluyen comisiones, funding, deslizamiento ni todos los tramos de mantenimiento de margen."
+        }
+      ],
+      "takeaway": "Define primero cuánto estás dispuesto a perder; después calcula el tamaño. No uses el apalancamiento como sustituto de un límite de riesgo."
+    },
+    "en": {
+      "label": "Risk management and position sizing",
+      "summary": "Size a trade using your capital, chosen risk, and the distance between entry and Stop Loss.",
+      "sections": [
+        {
+          "heading": "Risk, exposure, and margin are different",
+          "body": "Estimated risk depends on how much you would lose if price reaches the Stop Loss. Position size determines how many units you open; exposure is the notional value; and margin is the capital required based on leverage. Higher leverage may reduce initial margin, but it does not remove price-movement risk."
+        },
+        {
+          "heading": "Use the calculator before trading",
+          "body": "You can enter capital, risk percentage, entry, stop, and target, or start from a signal. The tool estimates size, exposure, margin, and outcome at the target. It does not place orders, and its estimates exclude fees, funding, slippage, and all maintenance-margin tiers."
+        }
+      ],
+      "takeaway": "Decide first how much you are willing to lose; then calculate position size. Do not use leverage as a substitute for a risk limit."
+    }
   },
   {
     "key": "r_r",
-    "label": "Relación R:R",
-    "text": "El R es la unidad de riesgo (distancia al Stop Loss). TP1, TP2 y TP3 muestran el multiplicador. Una señal con R:R = 2.5 significa que puedes ganar 2.5 veces lo que arriesgas."
+    "minutes": 3,
+    "route": "/resultados",
+    "es": {
+      "label": "Relación R:R y resultados en R",
+      "summary": "Comprende la unidad R, el riesgo inicial de una operación y las métricas que aparecen en Resultados.",
+      "sections": [
+        {
+          "heading": "Qué representa 1R",
+          "body": "R es una unidad de medida basada en el riesgo definido para una operación: la distancia entre la entrada y el Stop Loss inicial. Si el objetivo está a dos veces esa distancia, equivale a 2R potenciales. La relación R:R compara distancias previstas; el resultado final depende del precio de salida y de cómo se gestione la operación."
+        },
+        {
+          "heading": "Cómo leer Resultados",
+          "body": "La pantalla presenta operaciones cerradas que alcanzaron la entrada, win rate, R acumulado, R medio, mejor y peor operación, racha y curva por periodo. El registro de R es la metodología calculada por KERYNTIX para las señales; no equivale al extracto de una cuenta real de exchange ni incorpora automáticamente costes externos no incluidos en el modelo."
+        }
+      ],
+      "takeaway": "Compara R acumulado y R medio junto con el número de operaciones y el periodo seleccionado. Un win rate alto por sí solo no describe todo el rendimiento."
+    },
+    "en": {
+      "label": "Risk/reward and results in R",
+      "summary": "Understand the R unit, a trade's initial risk, and the metrics shown in Results.",
+      "sections": [
+        {
+          "heading": "What 1R represents",
+          "body": "R is a unit of measurement based on the risk defined for a trade: the distance between entry and the initial Stop Loss. If a target is twice that distance away, it represents 2R of potential reward. Risk/reward compares planned distances; the final result depends on the exit price and how the trade is managed."
+        },
+        {
+          "heading": "How to read Results",
+          "body": "The screen presents closed trades that reached entry, win rate, cumulative R, average R, best and worst trade, streak, and a curve by period. The R record is KERYNTIX's calculated methodology for signals; it is not an exchange-account statement and does not automatically include external costs that are outside the model."
+        }
+      ],
+      "takeaway": "Compare cumulative and average R with the number of trades and selected period. Win rate alone does not describe overall performance."
+    }
   },
   {
-    "key": "derivados",
-    "label": "Lectura de derivados",
-    "text": "Funding positivo = los largos pagan; indica mercado cargado al alza. Funding negativo = los cortos pagan. Un funding alto con cuentas cortas puede indicar un squeeze. El OI en alza indica acumulación; en baja, desinterés."
+    "key": "radar",
+    "minutes": 3,
+    "route": "/radar",
+    "es": {
+      "label": "Radar de oportunidades",
+      "summary": "Utiliza el radar para descubrir setups y movimientos en formación sin confundir una observación con una señal confirmada.",
+      "sections": [
+        {
+          "heading": "Qué muestra el radar",
+          "body": "El radar reúne oportunidades detectadas, setups con zona y gestión de riesgo, barridos recientes, zonas en observación y movimientos. En cada activo puede mostrar dirección, score, datos específicos y contexto de mercado. La exploración combina lecturas de varias temporalidades y puede mostrar un snapshot parcial si alguna fuente no responde."
+        },
+        {
+          "heading": "Cómo interpretar el score",
+          "body": "El score resume los componentes utilizados por el motor para clasificar ese tipo de oportunidad; no es una probabilidad de acierto. El R:B estimado compara entrada, stop y primer objetivo. Un barrido de liquidez, una anomalía de volumen o un movimiento rápido no confirman por sí solos una entrada."
+        }
+      ],
+      "takeaway": "Usa Radar para investigar. Antes de operar, abre el detalle, verifica si existe una señal confirmada y revisa sus niveles y riesgo."
+    },
+    "en": {
+      "label": "Opportunity Radar",
+      "summary": "Use Radar to discover developing setups and moves without confusing an observation with a confirmed signal.",
+      "sections": [
+        {
+          "heading": "What Radar displays",
+          "body": "Radar brings together detected opportunities, setups with an entry zone and risk management, recent sweeps, watched zones, and market moves. Each asset may show direction, score, specific data, and market context. The scan combines multiple timeframes and may show a partial snapshot if a source does not respond."
+        },
+        {
+          "heading": "How to interpret the score",
+          "body": "The score summarizes the components used by the engine to classify that type of opportunity; it is not a win probability. Estimated R:R compares entry, stop, and first target. A liquidity sweep, volume anomaly, or fast move does not confirm an entry by itself."
+        }
+      ],
+      "takeaway": "Use Radar for research. Before trading, open the detail, check whether a confirmed signal exists, and review its levels and risk."
+    }
   },
   {
-    "key": "liquidaciones",
-    "label": "Liquidaciones",
-    "text": "Las liquidaciones forzadas crean cascadas. Un barrido de longs (liquidaciones de compras) suele marcar un piso local. Un squeeze de shorts (liquidaciones de ventas) puede impulsar el precio al alza. Binance reporta solo el último evento por símbolo cada segundo: las cifras son mínimos."
+    "key": "regimen",
+    "minutes": 3,
+    "route": "/regimen",
+    "es": {
+      "label": "Régimen de mercado y temporalidades",
+      "summary": "Lee el contexto de BTC en 15M, 1H y 4H para distinguir tendencia, rango, transición y volatilidad elevada.",
+      "sections": [
+        {
+          "heading": "Qué significa cada régimen",
+          "body": "El panel clasifica el contexto de BTCUSDT como tendencia alcista, tendencia bajista, rango, transición o alta volatilidad. La lectura se apoya en estructura de medias, ADX, ATR, direccionales y volumen. La fuerza de tendencia y la volatilidad describen condiciones distintas: un ADX bajo no es lo mismo que un ATR alto."
+        },
+        {
+          "heading": "Combina temporalidades con criterio",
+          "body": "4H ofrece una perspectiva más amplia, 1H ayuda a leer la estructura intermedia y 15M aporta contexto más cercano a la operativa. Si las temporalidades discrepan, el mercado puede estar en transición. La amplitud y algunos datos de derivados aportan contexto global, pero no sustituyen el análisis del activo."
+        }
+      ],
+      "takeaway": "El régimen describe el entorno; no indica por sí solo cuándo entrar. Evita tratar una lectura de BTC como confirmación automática para todos los pares."
+    },
+    "en": {
+      "label": "Market regime and timeframes",
+      "summary": "Read BTC context on 15M, 1H, and 4H to distinguish trends, ranges, transitions, and elevated volatility.",
+      "sections": [
+        {
+          "heading": "What each regime means",
+          "body": "The panel classifies BTCUSDT context as bullish trend, bearish trend, range, transition, or high volatility. The reading uses moving-average structure, ADX, ATR, directional indicators, and volume. Trend strength and volatility describe different conditions: a low ADX is not the same as a high ATR."
+        },
+        {
+          "heading": "Combine timeframes thoughtfully",
+          "body": "4H provides a broader view, 1H helps read the intermediate structure, and 15M gives closer operational context. If timeframes disagree, the market may be transitioning. Breadth and some derivatives data add global context, but do not replace analysis of the individual asset."
+        }
+      ],
+      "takeaway": "The regime describes the environment; it does not determine entry timing by itself. Do not treat a BTC reading as automatic confirmation for every pair."
+    }
   },
   {
     "key": "mercado",
-    "label": "Sesión y régimen",
-    "text": "El régimen clasifica BTCUSDT: ALCISTA, BAJISTA, RANGO, TRANSICIÓN o ALTA VOLATILIDAD. Usa ADX, ATR, volumen y amplitud del mercado. Revisa la sesión actual para entender dónde está el volumen institucional."
+    "minutes": 3,
+    "route": "/mercado",
+    "es": {
+      "label": "Mercado en vivo y amplitud",
+      "summary": "Interpreta cotizaciones, gráficos, amplitud del mercado, mayores movimientos y cobertura de datos.",
+      "sections": [
+        {
+          "heading": "Precio y participación",
+          "body": "Mercado muestra cotizaciones de Binance USDⓈ-M, variaciones, gráficos y métricas agregadas. La amplitud resume cuántos pares medidos avanzan o retroceden; los movers ordenan los activos por movimiento y ventana disponible. Una subida de BTC con poca amplitud puede describir un mercado menos extendido que una subida acompañada por muchos pares."
+        },
+        {
+          "heading": "Comprueba la frescura de los datos",
+          "body": "Los paneles pueden utilizar WebSocket, snapshots REST o históricos almacenados en caché. La pantalla indica cuando una fuente está retrasada, parcial o temporalmente no disponible. No interpretes una última lectura como tiempo real si su estado indica datos antiguos o de respaldo."
+        }
+      ],
+      "takeaway": "Antes de sacar conclusiones, mira la hora de actualización, la cobertura y el estado de la fuente además del valor numérico."
+    },
+    "en": {
+      "label": "Live market and breadth",
+      "summary": "Interpret quotes, charts, market breadth, top movers, and data coverage.",
+      "sections": [
+        {
+          "heading": "Price and participation",
+          "body": "Market shows Binance USDⓈ-M quotes, changes, charts, and aggregate metrics. Breadth summarizes how many measured pairs are advancing or declining; movers rank assets by movement over the available window. A BTC rise with weak breadth may describe a less widespread market than a rise accompanied by many pairs."
+        },
+        {
+          "heading": "Check data freshness",
+          "body": "Panels may use WebSocket, REST snapshots, or cached history. The screen indicates when a source is delayed, partial, or temporarily unavailable. Do not interpret the latest reading as real-time if its status indicates stale or fallback data."
+        }
+      ],
+      "takeaway": "Before drawing conclusions, check update time, coverage, and source status as well as the numeric value."
+    }
+  },
+  {
+    "key": "flujo",
+    "minutes": 3,
+    "route": "/mercado",
+    "es": {
+      "label": "Flujo de órdenes, CVD y libro",
+      "summary": "Distingue volumen negociado, agresión compradora/vendedora, delta acumulado y liquidez visible en el libro de órdenes.",
+      "sections": [
+        {
+          "heading": "Delta y CVD",
+          "body": "El flujo utiliza velas recientes para estimar compras y ventas agresivas. El delta compara el volumen comprador con el vendedor en una ventana; el CVD acumula esos deltas para mostrar cómo evoluciona el desequilibrio. Una divergencia entre precio y CVD puede ser una pista para investigar, pero no confirma un giro."
+        },
+        {
+          "heading": "Libro de órdenes y límites",
+          "body": "El libro presenta niveles visibles de Bid y Ask y permite observar spread e imbalance de profundidad. La pantalla muestra los niveles consultados, no toda la liquidez del mercado. Las órdenes pueden cancelarse o cambiar antes de ejecutarse, por lo que el desequilibrio visible no garantiza que el precio vaya hacia esa zona."
+        }
+      ],
+      "takeaway": "El flujo describe actividad reciente y el libro muestra liquidez visible en ese instante. Contrástalos con estructura, volumen y precio; no los uses aisladamente."
+    },
+    "en": {
+      "label": "Order flow, CVD, and order book",
+      "summary": "Distinguish traded volume, aggressive buying/selling, cumulative delta, and visible order-book liquidity.",
+      "sections": [
+        {
+          "heading": "Delta and CVD",
+          "body": "Order flow uses recent candles to estimate aggressive buying and selling. Delta compares buyer and seller volume within a window; CVD accumulates those deltas to show how the imbalance evolves. A divergence between price and CVD may be a clue to investigate, but it does not confirm a reversal."
+        },
+        {
+          "heading": "Order book and limitations",
+          "body": "The order book shows visible Bid and Ask levels and allows you to observe spread and depth imbalance. The screen shows the queried levels, not all market liquidity. Orders can be cancelled or changed before execution, so visible imbalance does not guarantee that price will move toward that zone."
+        }
+      ],
+      "takeaway": "Order flow describes recent activity and the order book shows liquidity visible at that moment. Compare them with structure, volume, and price; do not use them in isolation."
+    }
+  },
+  {
+    "key": "derivados",
+    "minutes": 4,
+    "route": "/derivados",
+    "es": {
+      "label": "Lectura de derivados",
+      "summary": "Interpreta funding, interés abierto, base, posicionamiento long/short y presión taker como métricas diferentes.",
+      "sections": [
+        {
+          "heading": "Funding, interés abierto y base",
+          "body": "Funding positivo significa que los largos pagan a los cortos; funding negativo significa que los cortos pagan a los largos. El interés abierto (OI) representa contratos que permanecen abiertos: si sube, aumenta la posición agregada, pero el OI por sí solo no revela si el nuevo posicionamiento es comprador o vendedor. La base compara el precio del contrato con su índice de referencia."
+        },
+        {
+          "heading": "Ratios y flujo taker",
+          "body": "El ratio long/short refleja la distribución de cuentas reportada por la fuente, no el tamaño exacto de cada posición. El flujo taker compara volumen ejecutado de forma agresiva en compra y venta por ventana. Funding, OI, ratios y flujo miden fenómenos distintos: confirma sus marcas temporales y cobertura antes de combinarlos."
+        }
+      ],
+      "takeaway": "Ninguna métrica de derivados predice por sí sola el próximo movimiento. Busca confluencia, revisa la antigüedad del dato y conserva un escenario alternativo."
+    },
+    "en": {
+      "label": "Reading derivatives",
+      "summary": "Interpret funding, open interest, basis, long/short positioning, and taker pressure as different metrics.",
+      "sections": [
+        {
+          "heading": "Funding, open interest, and basis",
+          "body": "Positive funding means longs pay shorts; negative funding means shorts pay longs. Open interest (OI) represents contracts that remain open: when it rises, aggregate open positions increase, but OI alone does not reveal whether new positioning is buyer- or seller-led. Basis compares the contract price with its reference index."
+        },
+        {
+          "heading": "Ratios and taker flow",
+          "body": "The long/short ratio reflects the account distribution reported by the source, not the exact size of each position. Taker flow compares aggressively executed buy and sell volume by window. Funding, OI, ratios, and flow measure different things: check their timestamps and coverage before combining them."
+        }
+      ],
+      "takeaway": "No derivatives metric predicts the next move on its own. Look for confluence, check data age, and keep an alternative scenario."
+    }
+  },
+  {
+    "key": "liquidaciones",
+    "minutes": 2,
+    "route": "/mercado/liquidaciones",
+    "es": {
+      "label": "Liquidaciones y barridos",
+      "summary": "Comprende qué representa una liquidación forzada y por qué sus cifras deben interpretarse con cautela.",
+      "sections": [
+        {
+          "heading": "Qué estás observando",
+          "body": "Las liquidaciones ocurren cuando una posición apalancada no mantiene el margen requerido y el exchange la cierra forzosamente. La plataforma agrupa eventos por lado y ventana temporal para mostrar dónde se concentró la actividad reportada. Un volumen elevado puede señalar estrés o un movimiento rápido, no un soporte o resistencia garantizados."
+        },
+        {
+          "heading": "Cobertura de la fuente",
+          "body": "Binance puede reportar solo el último evento de liquidación por símbolo en cada segundo. Por ello, los totales visibles pueden ser mínimos y no representar todas las liquidaciones reales del mercado. Revisa la ventana, los pares incluidos y el estado de la fuente."
+        }
+      ],
+      "takeaway": "Usa las liquidaciones como contexto de estrés y posibles cascadas. No asumas que un pico implica automáticamente un suelo o un techo."
+    },
+    "en": {
+      "label": "Liquidations and sweeps",
+      "summary": "Understand what a forced liquidation represents and why its figures should be interpreted cautiously.",
+      "sections": [
+        {
+          "heading": "What you are observing",
+          "body": "Liquidations occur when a leveraged position fails to maintain required margin and the exchange forcibly closes it. The platform groups events by side and time window to show where reported activity was concentrated. Elevated volume may signal stress or a rapid move, not guaranteed support or resistance."
+        },
+        {
+          "heading": "Source coverage",
+          "body": "Binance may report only the latest liquidation event per symbol each second. Visible totals may therefore be minimum estimates and may not represent all actual market liquidations. Check the window, included pairs, and source status."
+        }
+      ],
+      "takeaway": "Use liquidations as context for stress and potential cascades. Do not assume a spike automatically marks a bottom or top."
+    }
+  },
+  {
+    "key": "watchlist",
+    "minutes": 3,
+    "route": "/watchlist",
+    "es": {
+      "label": "Mi watchlist",
+      "summary": "Organiza hasta diez pares y compara su tendencia, niveles técnicos y métricas de derivados en varias temporalidades.",
+      "sections": [
+        {
+          "heading": "Seguimiento de hasta 10 pares",
+          "body": "La watchlist permite guardar hasta 10 pares de Binance USDⓈ-M. Puedes revisar cotización, variación, tendencia en 15M, 1H y 4H, volumen relativo y datos disponibles de derivados. El objetivo es concentrar activos que realmente sigues, no añadir todos los pares del mercado."
+        },
+        {
+          "heading": "Detalle técnico por activo",
+          "body": "La ficha puede mostrar RSI 14, MACD, soportes y resistencias calculados a partir de velas cerradas de 4H o de rangos recientes cuando no existe un pivote válido. También presenta contexto de funding, interés abierto, ratio long/short y flujo cuando las fuentes lo devuelven. Los niveles son referencias calculadas, no órdenes colocadas en el exchange."
+        }
+      ],
+      "takeaway": "Mantén una lista enfocada y compara las temporalidades. Un indicador técnico aislado no confirma una entrada."
+    },
+    "en": {
+      "label": "My Watchlist",
+      "summary": "Organize up to ten pairs and compare their trend, technical levels, and derivatives metrics across timeframes.",
+      "sections": [
+        {
+          "heading": "Track up to 10 pairs",
+          "body": "The Watchlist lets you save up to 10 Binance USDⓈ-M pairs. You can review quotes, changes, 15M, 1H, and 4H trends, relative volume, and available derivatives data. The goal is to focus on assets you actually follow, not add every market pair."
+        },
+        {
+          "heading": "Technical detail by asset",
+          "body": "The asset detail may show RSI 14, MACD, support, and resistance calculated from closed 4H candles or recent ranges when no valid pivot exists. It also presents funding, open interest, long/short ratio, and flow context when sources return them. These levels are calculated references, not orders placed on the exchange."
+        }
+      ],
+      "takeaway": "Keep a focused list and compare timeframes. A single technical indicator does not confirm an entry."
+    }
   },
   {
     "key": "calendario",
-    "label": "Eventos macro",
-    "text": "FOMC, CPI, NFP y vencimientos de opciones (viernes 08:00 UTC) son eventos de alto impacto. Planifica tus operaciones: evita abrir justo antes o cierra posiciones si el riesgo no compensa."
+    "minutes": 3,
+    "route": "/calendario",
+    "es": {
+      "label": "Calendario macro y eventos cripto",
+      "summary": "Consulta eventos económicos, vencimientos y funding en ventanas de siete o treinta días.",
+      "sections": [
+        {
+          "heading": "Ventana e impacto",
+          "body": "El calendario permite consultar los próximos 7 o 30 días y filtrar eventos por impacto. Puede incluir publicaciones como CPI y NFP, reuniones FOMC, vencimientos de opciones y eventos periódicos de funding, según las fuentes activas en el backend. La fecha se presenta en la zona horaria configurada para tu cuenta."
+        },
+        {
+          "heading": "Cómo prepararte",
+          "body": "Antes de una publicación relevante, considera que la volatilidad y los spreads pueden cambiar y que un movimiento rápido puede afectar la ejecución de stops. La vista de 30 días omite vencimientos semanales y conserva mensuales y trimestrales, de acuerdo con la configuración actual. Una lista vacía puede indicar que no hay eventos disponibles, no que el riesgo macro sea cero."
+        }
+      ],
+      "takeaway": "Utiliza el calendario para planificar cuándo revisar el riesgo. No anticipes la dirección del precio únicamente por el nombre de un evento."
+    },
+    "en": {
+      "label": "Macro calendar and crypto events",
+      "summary": "Check economic events, expirations, and funding over seven- or thirty-day windows.",
+      "sections": [
+        {
+          "heading": "Window and impact",
+          "body": "The calendar lets you view the next 7 or 30 days and filter events by impact. Depending on active backend sources, it may include releases such as CPI and NFP, FOMC meetings, options expirations, and recurring funding events. Dates are displayed in the timezone configured for your account."
+        },
+        {
+          "heading": "How to prepare",
+          "body": "Ahead of a relevant release, consider that volatility and spreads may change and a fast move can affect stop execution. The 30-day view omits weekly expirations and keeps monthly and quarterly ones under the current configuration. An empty list may mean no events are available; it does not mean macro risk is zero."
+        }
+      ],
+      "takeaway": "Use the calendar to plan when to review risk. Do not predict price direction based only on an event's name."
+    }
+  },
+  {
+    "key": "notificaciones",
+    "minutes": 2,
+    "route": "/ajustes/avisos",
+    "es": {
+      "label": "Notificaciones y preferencias",
+      "summary": "Configura qué avisos quieres recibir y en qué canales, teniendo en cuenta los permisos y la vinculación de cada servicio.",
+      "sections": [
+        {
+          "heading": "Centro de notificaciones y avisos web",
+          "body": "El centro de la plataforma conserva avisos para que puedas revisarlos después, marcarlos como leídos o borrar tu historial. Las notificaciones del navegador mientras la web está abierta requieren permiso del navegador. La entrega con la web cerrada depende de que Web Push esté configurado y de que el dispositivo mantenga una suscripción válida."
+        },
+        {
+          "heading": "Telegram y preferencias",
+          "body": "Telegram requiere que la cuenta esté vinculada al bot y que las preferencias permitan el tipo de aviso. Desde Ajustes de avisos puedes controlar categorías y canales disponibles. Si un canal está desactivado, no tiene permisos o no está configurado, la notificación puede no entregarse por ese medio."
+        }
+      ],
+      "takeaway": "Revisa preferencias, permisos del navegador y vinculación de Telegram. La ausencia de un aviso no debe ser el único método para vigilar una operación."
+    },
+    "en": {
+      "label": "Notifications and preferences",
+      "summary": "Choose which alerts you want and through which channels, considering each service's permissions and linking requirements.",
+      "sections": [
+        {
+          "heading": "Notification center and web alerts",
+          "body": "The platform's notification center keeps alerts so you can review them later, mark them as read, or clear your history. Browser notifications while the site is open require browser permission. Delivery while the site is closed depends on Web Push being configured and the device keeping a valid subscription."
+        },
+        {
+          "heading": "Telegram and preferences",
+          "body": "Telegram requires the account to be linked to the bot and preferences to allow the alert type. In Notification Settings you can control available categories and channels. If a channel is disabled, lacks permissions, or is not configured, the notification may not be delivered through it."
+        }
+      ],
+      "takeaway": "Check preferences, browser permissions, and Telegram linking. The absence of an alert should not be your only way to monitor a trade."
+    }
+  },
+  {
+    "key": "resultados",
+    "minutes": 3,
+    "route": "/resultados",
+    "es": {
+      "label": "Cómo leer el panel de resultados",
+      "summary": "Interpreta número de operaciones, win rate, R acumulado, R medio, curva y detalle histórico sin sacar conclusiones apresuradas.",
+      "sections": [
+        {
+          "heading": "Qué operaciones se incluyen",
+          "body": "El panel contabiliza operaciones cerradas que llegaron a tocar la entrada. Las señales pendientes y canceladas no se presentan como operaciones perdedoras. Puedes cambiar el periodo entre hoy, últimos 7 días, últimos 30 días y el histórico disponible."
+        },
+        {
+          "heading": "Qué dicen las métricas",
+          "body": "Win rate muestra la proporción de cierres clasificados como ganadores por la metodología de resultados. R acumulado suma las unidades R registradas; R medio muestra el promedio por operación. La curva ordena esos resultados por fecha de cierre. Comprueba siempre la cantidad de operaciones y el periodo: una muestra pequeña puede cambiar mucho con pocos cierres."
+        }
+      ],
+      "takeaway": "Evalúa conjunto, periodo y tamaño de muestra. Los resultados históricos de la plataforma no aseguran que las próximas señales tengan el mismo comportamiento."
+    },
+    "en": {
+      "label": "How to read the Results panel",
+      "summary": "Interpret trade count, win rate, cumulative R, average R, the curve, and trade history without jumping to conclusions.",
+      "sections": [
+        {
+          "heading": "Which trades are included",
+          "body": "The panel counts closed trades that reached entry. Pending and cancelled signals are not presented as losing trades. You can switch the period between today, the last 7 days, the last 30 days, and the available full history."
+        },
+        {
+          "heading": "What the metrics tell you",
+          "body": "Win rate shows the proportion of closes classified as winners by the results methodology. Cumulative R adds the recorded R units; average R shows the per-trade average. The curve orders these results by closing date. Always check trade count and period: a small sample can change significantly with a few closes."
+        }
+      ],
+      "takeaway": "Evaluate the full set, period, and sample size. Historical platform results do not guarantee that future signals will behave the same way."
+    }
   },
   {
     "key": "referidos",
-    "label": "Programa de referidos",
-    "text": "Comparte tu enlace personal. Cada referido que activa PREMIUM cuenta. 5 referidos = PREMIUM gratis (si eres FREE) o +30 días (si ya eres PREMIUM)."
+    "minutes": 2,
+    "route": "/referidos",
+    "es": {
+      "label": "Programa de referidos",
+      "summary": "Conoce cómo funciona tu enlace personal y qué activaciones cuentan para obtener días Premium.",
+      "sections": [
+        {
+          "heading": "Invitación y atribución",
+          "body": "Desde Mis referidos puedes copiar tu enlace personal. El sistema conserva la atribución de la invitación antes del registro para asociarla a la cuenta que corresponda. Las activaciones Premium válidas son las que cuentan para el progreso; un registro gratuito por sí solo no suma."
+        },
+        {
+          "heading": "Recompensa",
+          "body": "Al alcanzar cinco referidos que activen Premium, la recompensa configurada es un periodo Premium gratuito si tu cuenta está en Free, o 30 días adicionales si ya tienes Premium. Revisa el progreso y el historial de recompensas en la misma sección."
+        }
+      ],
+      "takeaway": "Comparte tu propio enlace y verifica que cada referido aparezca atribuido correctamente. Solo las activaciones Premium válidas cuentan para la recompensa."
+    },
+    "en": {
+      "label": "Referral program",
+      "summary": "Learn how your personal link works and which activations count toward Premium days.",
+      "sections": [
+        {
+          "heading": "Invitation and attribution",
+          "body": "In My Referrals, you can copy your personal link. The system preserves referral attribution before registration so it can be associated with the correct account. Valid Premium activations count toward progress; a free registration alone does not."
+        },
+        {
+          "heading": "Reward",
+          "body": "When five referred users activate Premium, the configured reward is a free Premium period if your account is on Free, or 30 additional days if you already have Premium. Review progress and reward history in the same section."
+        }
+      ],
+      "takeaway": "Share your own link and verify that each referral is attributed correctly. Only valid Premium activations count toward the reward."
+    }
   }
 ]
