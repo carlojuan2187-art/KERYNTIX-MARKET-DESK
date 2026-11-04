@@ -237,7 +237,7 @@ function SignalDetail({
         <div className="tp-reading">
           <CheckCircle2 size={16} />
           <p>
-            {t("TP1 alcanzado: asegura beneficios o mueve el SL a breakeven. Si el precio retrocede al stop, el cierre seguirá contando como TP1.")}</p>
+            {t("TP1 alcanzado: protección en el precio de entrada. Si el precio vuelve a la entrada, se registra únicamente el R de TP1; si continúa hasta TP2, se registra únicamente el R de TP2.")}</p>
         </div>
       )}
       <div className="signal-key-metrics">

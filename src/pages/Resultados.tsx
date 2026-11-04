@@ -232,7 +232,7 @@ export default function ResultadosPage() {
       )}
       <p className="slim-note">
         <ShieldCheck size={12} />
-        {t("Al alcanzar TP1, el stop simulado se mueve a TP1. Si el precio regresa a ese nivel, la operación se cierra en TP1. Antes de TP1, el SL equivale a -1R.")}</p>
+        {t("Al alcanzar TP1, la protección simulada se mueve al precio de entrada. Si el precio vuelve a la entrada, la operación se cierra como TP1 y conserva el R de TP1; si alcanza TP2, se registra únicamente el R de TP2. Antes de TP1, se mantiene el SL dinámico de la señal.")}</p>
       <p className="slim-note" style={{ paddingTop: 0 }}>
         <Info size={12} />
         {t("Es una simulación de una posición completa, sin cierres parciales, comisiones ni deslizamiento; no representa una ejecución real en un exchange.")}
