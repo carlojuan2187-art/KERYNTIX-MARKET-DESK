@@ -353,13 +353,16 @@ export type RadarSnapshotRows = RadarOpportunity[] & {
   snapshot_status?: string;
   snapshot_refreshing?: boolean;
   snapshot_updated_at?: string | null;
+  setups_refreshing?: boolean;
+  setups_updated_at?: string | null;
+  timeframe_trends_refreshing?: boolean;
 };
 
-export async function getRadarSnapshot(): Promise<RadarSnapshotRows> {
-  const [raw, quotes] = await Promise.all([
-    apiRequest<Record<string, any>>("/radar", { method: "GET" }, 20000),
-    getQuotes().catch((): AssetQuote[] => []),
-  ]);
+export async function getRadarSnapshot(quoteRows: AssetQuote[] = []): Promise<RadarSnapshotRows> {
+  // Quote ticks already live in AppContext. A second /market/quotes request
+  // must never delay Radar rendering behind the complete futures catalogue.
+  const raw = await apiRequest<Record<string, any>>("/radar", { method: "GET" }, 7000);
+  const quotes = quoteRows;
   const items: RadarOpportunity[] = [];
   const quoteBySymbol = new Map(quotes.map((quote) => [quote.symbol, quote]));
   const cachedPrices = record(raw.prices);
@@ -465,6 +468,9 @@ export async function getRadarSnapshot(): Promise<RadarSnapshotRows> {
   rows.snapshot_status = str(raw.status) || "unknown";
   rows.snapshot_refreshing = Boolean(raw.refreshing);
   rows.snapshot_updated_at = str(raw.updated_at) || null;
+  rows.setups_refreshing = Boolean(raw.setups_refreshing);
+  rows.setups_updated_at = str(raw.setups_updated_at) || null;
+  rows.timeframe_trends_refreshing = Boolean(raw.timeframe_trends_refreshing);
   return rows;
 }
 
