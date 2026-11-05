@@ -1,5 +1,5 @@
 import { t } from "@/i18n/translation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
@@ -238,6 +238,14 @@ export default function RadarPage() {
   const { data, loading, error, refresh } = useApi(getRadarSnapshot);
   const [filter, setFilter] = useState<string>("all");
   const [query, setQuery] = useState("");
+  const radarRows = data;
+  const snapshotStatus = radarRows?.snapshot_status ?? "unknown";
+  const snapshotRefreshing = Boolean(radarRows?.snapshot_refreshing);
+  useEffect(() => {
+    if (!snapshotRefreshing && snapshotStatus !== "warming") return;
+    const timer = window.setInterval(() => { void refresh(); }, 10000);
+    return () => window.clearInterval(timer);
+  }, [refresh, snapshotRefreshing, snapshotStatus]);
   const allRows = data ?? [];
   const snapshotMeta = allRows.find((row) => row.snapshot_updated_at);
   const matchingRows = allRows.filter((item) => {
@@ -310,7 +318,7 @@ export default function RadarPage() {
         </label>
         <span className="status-row radar-scan-status">
           <ScanLine size={12} />
-          {t("Scanner · 15M / 5M")}{snapshotMeta?.snapshot_updated_at ? ` · Actualizado ${ago(snapshotMeta.snapshot_updated_at)}` : ""}{snapshotMeta?.scanned_symbols != null ? ` · ${snapshotMeta.scanned_symbols} activos analizados` : ""}{snapshotMeta?.snapshot_status === "partial" ? " · Lectura parcial" : ""}
+          {t("Scanner · 15M / 5M")}{(radarRows?.snapshot_updated_at ?? snapshotMeta?.snapshot_updated_at) ? ` · Actualizado ${ago((radarRows?.snapshot_updated_at ?? snapshotMeta?.snapshot_updated_at)!)}` : ""}{snapshotMeta?.scanned_symbols != null ? ` · ${snapshotMeta.scanned_symbols} activos analizados` : ""}{snapshotStatus === "partial" ? " · Lectura parcial" : ""}{snapshotRefreshing ? " · Actualizando en segundo plano" : ""}
         </span>
       </div>
 
@@ -319,7 +327,11 @@ export default function RadarPage() {
         error={error}
         retry={refresh}
         empty={!loading && !error && !matchingRows.length}
-        emptyText={query ? "No hay oportunidades que coincidan con esa búsqueda." : "No hay oportunidades en esta categoría. Prueba otra vista del radar."}
+        emptyText={query
+          ? "No hay oportunidades que coincidan con esa búsqueda."
+          : snapshotStatus === "warming" || snapshotRefreshing
+            ? "El radar está preparando la lectura del mercado. Esta pantalla se actualizará automáticamente."
+            : "No hay oportunidades en esta categoría. Prueba otra vista del radar."}
       />
 
       {!loading && !error && matchingRows.length > 0 && (
