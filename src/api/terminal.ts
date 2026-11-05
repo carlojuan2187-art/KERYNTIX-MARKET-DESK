@@ -223,21 +223,6 @@ export async function getCandles(symbol = "BTCUSDT", timeframe = "1h", timezone?
   return apiRequest<Candle[]>(`/market/candles?${params.toString()}`, { method: "GET" });
 }
 
-function mapClosedResult(row: Record<string, any>): ClosedOperation | null {
-  const result = String(row.result ?? row.operation_result ?? "").toUpperCase();
-  if (!(result === "TP1" || result === "TP2" || result === "SL")) return null;
-  const entry = numberOrNull(row.entry_fill ?? row.entry_price ?? row.entry_zone?.low);
-  const exit = numberOrNull(row.exit_price ?? (result === "TP1" ? row.take_profits?.[0] : result === "TP2" ? row.take_profits?.[1] : row.stop_loss));
-  const closed = str(row.closed_at ?? row.touched_at ?? row.created_at);
-  const rResult = numberOrNull(row.r_real ?? row.r_result);
-  if (entry == null || rResult == null || !closed) return null;
-  return {
-    id: str(row.id ?? row.signal_id ?? `${row.symbol ?? "signal"}-${closed}`),
-    symbol: str(row.symbol), direction: direction(row.direction), entry_price: entry, exit_price: exit,
-    result, r_result: rResult,
-    touched_at: str(row.touched_at ?? row.created_at), closed_at: closed,
-  };
-}
 export async function getPerformance(period = "month"): Promise<Performance> {
   const params = new URLSearchParams({ period });
   return apiRequest<Performance>(`/results?${params.toString()}`, { method: "GET" });
