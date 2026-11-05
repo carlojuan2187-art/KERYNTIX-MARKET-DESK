@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import keryntixBrandLogo from "@/assets/keryntix-market-desk-wordmark.webp";
-import keryntixBrandIcon from "@/assets/keryntix-market-desk-sidebar-mark.webp";
+import keryntixMobileK from "@/assets/keryntix-mobile-k.svg";
 import keryntixSidebarEmblem from "@/assets/keryntix-market-desk-emblem.webp";
 import keryntixAuthLogo from "@/assets/keryntix-market-desk-auth-logo.webp";
 
@@ -49,8 +49,8 @@ export function Brand({ compact = false, sidebar = false, auth = false }: { comp
   return (
     <span className={`brand${compact ? " brand-compact" : ""}`}>
       <img
-        src={compact ? keryntixBrandIcon : keryntixBrandLogo}
-        alt={compact ? t("Símbolo de KERYNTIX MARKET DESK") : t("KERYNTIX MARKET DESK — Inteligencia de mercado")}
+        src={compact ? keryntixMobileK : keryntixBrandLogo}
+        alt={compact ? t("K de KERYNTIX") : t("KERYNTIX MARKET DESK — Inteligencia de mercado")}
         className="brand-image"
         loading="eager"
         decoding="async"
