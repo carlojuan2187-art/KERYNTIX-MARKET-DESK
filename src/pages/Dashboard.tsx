@@ -512,7 +512,7 @@ function PanoramaView({ data }: { data: OverviewData }) {
             {data.performance.operations ? `${data.performance.total_r > 0 ? "+" : ""}${number(data.performance.total_r)}` : "—"}
             {data.performance.operations ? <span>R</span> : null}
           </div>
-          <p className="small muted">{t("Rendimiento acumulado · 30 días")}</p>
+          <p className="small muted">{t("Tu rendimiento personal · 30 días")}</p>
           <HistoryChart data={data.performance.curve} height={145} hideAxis />
           <div className="detail-row">
             <span>{t("Operaciones cerradas")}</span>
