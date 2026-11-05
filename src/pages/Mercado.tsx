@@ -117,8 +117,8 @@ export default function MercadoPage() {
     }
     let disposed = false;
     let socket: WebSocket | null = null;
-    let reconnectTimer: number | undefined;
-    let watchdogTimer: number | undefined;
+    let reconnectTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
+    let watchdogTimer: ReturnType<typeof globalThis.setInterval> | undefined;
     let attempts = 0;
     let lastMessageAt = 0;
     let socketOpenedAt = 0;
@@ -213,7 +213,7 @@ export default function MercadoPage() {
     };
   }, [tab, simbolo]);
   const liq = useApi(() => getLiquidationSummary(window), [window]);
-  const movers = useApi(() => getMoversSnapshot(window), [window]);
+  const movers = useApi(() => getMoversSnapshot(window, quotes), [window]);
   useEffect(
     () =>
       subscribeWs((event) => {
