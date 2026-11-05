@@ -112,7 +112,7 @@ export default function SignalsPage() {
         error={error}
         retry={refresh}
         empty={!loading && !error && !filtered.length}
-        emptyText={t("No hay señales registradas en este estado. Cuando el backend publique señales, aparecerán aquí.")}
+        emptyText={t("No hay señales disponibles en la última lectura. El feed se sincroniza automáticamente.")}
       />
       {!loading && !error && signal && filtered.length > 0 && (
         <div className="signals-layout">
