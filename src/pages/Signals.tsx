@@ -73,7 +73,7 @@ export default function SignalsPage() {
   return (
     <div>
       <PageHeader
-        eyebrow={t("SEÑALES DEL BACKEND · ACTUALIZACIÓN CADA 15 S")}
+        eyebrow={t("SEÑALES DEL BACKEND · ACTUALIZACIÓN EN VIVO")}
         title={t("Señales con un plan.")}
         description={t("Una entrada, un riesgo definido y objetivos claros. Tú mantienes el control.")}
       >
