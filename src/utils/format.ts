@@ -27,6 +27,23 @@ export function price(value: NullableNumber) {
     value >= 100 ? 2 : value >= 1 ? 3 : value >= 0.1 ? 4 : 6,
   );
 }
+
+/** Format a live market quote with enough precision to make individual ticks visible.
+ * Static tables keep using `price()`; this formatter is reserved for live quote
+ * displays that update more frequently than the usual 2–3 decimal presentation.
+ */
+export function marketPrice(value: NullableNumber) {
+  if (!isFiniteNumber(value)) return "—";
+  const absolute = Math.abs(value);
+  const digits = absolute >= 1000 ? 2
+    : absolute >= 100 ? 3
+    : absolute >= 1 ? 6
+    : absolute >= 0.1 ? 7
+    : absolute >= 0.01 ? 8
+    : 10;
+  return numberTrimmed(value, digits);
+}
+
 export function compact(value: NullableNumber) {
   if (!isFiniteNumber(value)) return "—";
   if (Math.abs(value) >= 1e9) return `${number(value / 1e9, 2)} ${getIntlLocale() === "en-US" ? "B" : "mil M"}`;
