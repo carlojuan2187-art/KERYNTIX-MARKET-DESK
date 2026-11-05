@@ -296,7 +296,7 @@ export async function getLiquidationSummary(window: 5 | 15 | 60 = 15): Promise<L
   };
 }
 export async function getOrderFlow(symbol = "BTCUSDT"): Promise<FlowData> {
-  const raw = await apiRequest<Record<string, any>>(`/market/flow?symbol=${encodeURIComponent(normalizeSymbol(symbol))}`, { method: "GET" });
+  const raw = await apiRequest<Record<string, any>>(`/market/flow?symbol=${encodeURIComponent(normalizeSymbol(symbol))}`, { method: "GET" }, 7500);
   const validLabels = new Set(["15m", "1h", "4h"]);
   const windows = (Array.isArray(raw.windows) ? raw.windows : []).filter((row: any) => validLabels.has(String(row.label))).map((row: any) => ({
     label: row.label as "15m" | "1h" | "4h", buy_pct: numberOrNull(row.buy_pct),
@@ -327,7 +327,7 @@ export async function getOrderFlow(symbol = "BTCUSDT"): Promise<FlowData> {
 }
 
 export async function getOrderBook(symbol = "BTCUSDT", limit = 20): Promise<OrderBookData> {
-  const raw = await apiRequest<Record<string, any>>(`/market/orderbook?symbol=${encodeURIComponent(normalizeSymbol(symbol))}&limit=${limit}`, { method: "GET" });
+  const raw = await apiRequest<Record<string, any>>(`/market/orderbook?symbol=${encodeURIComponent(normalizeSymbol(symbol))}&limit=${limit}`, { method: "GET" }, 6500);
   const parseLevels = (value: unknown): OrderBookLevel[] => (Array.isArray(value) ? value : []).flatMap((item: any) => {
     const row = record(item);
     const price = numberOrNull(row.price), quantity = numberOrNull(row.quantity), notional = numberOrNull(row.notional_usdt);
@@ -469,11 +469,11 @@ export async function getRadarSnapshot(): Promise<RadarSnapshotRows> {
 }
 
 export interface MoversSnapshot { window: 5 | 15 | 60; gainers: AssetQuote[]; losers: AssetQuote[]; volume_flat: AssetQuote[]; btc_change_pct: number | null; breadth_pct: number | null; breadth: { up: number | null; down: number | null; total: number | null }; reading: string; updated_at: string; status?: string; message?: string | null; collected_minutes?: number | null; required_minutes?: number | null; eligible_count?: number | null; source?: string | null }
-export async function getMoversSnapshot(window: 5 | 15 | 60 = 15): Promise<MoversSnapshot> {
-  const [raw, quotes] = await Promise.all([
-    apiRequest<Record<string, any>>(`/market/movers?window=${window}`, { method: "GET" }), getQuotes(),
-  ]);
-  const bySymbol = new Map(quotes.map((q) => [q.symbol, q]));
+export async function getMoversSnapshot(window: 5 | 15 | 60 = 15, quoteRows: AssetQuote[] = []): Promise<MoversSnapshot> {
+  // The app-wide quote store already receives the market feed. Do not refetch
+  // the entire futures catalogue as a prerequisite for rendering movers.
+  const raw = await apiRequest<Record<string, any>>(`/market/movers?window=${window}`, { method: "GET" }, 7500);
+  const bySymbol = new Map(quoteRows.map((q) => [q.symbol, q]));
   const toQuote = (entry: any): AssetQuote | null => {
     const base = bySymbol.get(str(entry.symbol));
     const price = numberOrNull(entry.price) ?? base?.price;
