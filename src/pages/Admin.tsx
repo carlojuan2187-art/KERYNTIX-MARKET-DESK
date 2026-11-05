@@ -54,7 +54,7 @@ export default function AdminPage() {
     [query, filter, page],
   );
   const baseline = useApi(getStatsBaseline);
-  const [resetReason, setResetReason] = useState("");
+  const resetReason = "Reinicio por optimización de estrategia";
   const [resetConfirmed, setResetConfirmed] = useState(false);
   const [resetBusy, setResetBusy] = useState(false);
   const [resetError, setResetError] = useState("");
@@ -63,17 +63,14 @@ export default function AdminPage() {
     setResetError("");
     try {
       if (action === "reset") {
-        if (resetReason.trim().length < 5)
-          throw new Error("Indica el motivo del reinicio (mínimo 5 caracteres).");
         if (!resetConfirmed)
           throw new Error("Confirma que quieres reiniciar las estadísticas.");
-        await resetStats(resetReason.trim());
+        await resetStats(resetReason);
         toast("Estadísticas reiniciadas: se medirán desde cero");
       } else {
         await restoreStats();
         toast("Histórico completo restaurado");
       }
-      setResetReason("");
       setResetConfirmed(false);
       void baseline.refresh();
     } catch (err) {
@@ -223,16 +220,10 @@ export default function AdminPage() {
                 <span>{baseline.data.reason}</span>
               </div>
             )}
-            <label className="input-field">
-              <span>{t("Motivo (por ejemplo, el cambio de estrategia)")}</span>
-              <textarea
-                value={resetReason}
-                onChange={(e) => setResetReason(e.target.value)}
-                rows={2}
-                maxLength={500}
-                placeholder={t("Ej.: Ajuste de filtros de liquidez")}
-              />
-            </label>
+            <div className="detail-row">
+              <span>{t("Motivo del reinicio")}</span>
+              <strong>{t(resetReason)}</strong>
+            </div>
             <label className="terms-check">
               <input
                 type="checkbox"
@@ -250,7 +241,7 @@ export default function AdminPage() {
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <button
                 className="btn btn-danger"
-                disabled={resetBusy || !resetReason.trim() || !resetConfirmed}
+                disabled={resetBusy || !resetConfirmed}
                 onClick={() => void runStatsReset("reset")}
               >
                 <RotateCcw size={13} />
@@ -265,7 +256,7 @@ export default function AdminPage() {
               )}
             </div>
             <p className="slim-note" style={{ padding: 0 }}>
-              {t("Solo cuentan las operaciones cerradas después del reinicio. Las anteriores se conservan y se pueden recuperar con “Restaurar histórico completo”.")}</p>
+              {t("Cada usuario cuenta solo las señales que recibió desde el reinicio y los cierres ocurridos durante sus periodos de acceso. Los registros anteriores se conservan y se recuperan con “Restaurar histórico completo”.")}</p>
           </div>
         )}
       </section>
