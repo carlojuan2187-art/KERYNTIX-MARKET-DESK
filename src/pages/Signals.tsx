@@ -63,7 +63,7 @@ export default function SignalsPage() {
     // Do not poll while the tab is hidden; WebSocket signal events still refresh it.
     const timer = window.setInterval(() => {
       if (document.visibilityState !== "hidden") void refresh();
-    }, 15000);
+    }, 30000);
     return () => window.clearInterval(timer);
   }, [refresh]);
   const filtered =
