@@ -349,9 +349,15 @@ function scoreBreakdown(values: unknown): Record<string, number> {
   if (Array.isArray(values)) return Object.fromEntries(values.flatMap((row: any) => typeof row?.name === "string" && typeof row?.points === "number" ? [[row.name, row.points]] : []));
   return {};
 }
-export async function getRadarSnapshot(): Promise<RadarOpportunity[]> {
+export type RadarSnapshotRows = RadarOpportunity[] & {
+  snapshot_status?: string;
+  snapshot_refreshing?: boolean;
+  snapshot_updated_at?: string | null;
+};
+
+export async function getRadarSnapshot(): Promise<RadarSnapshotRows> {
   const [raw, quotes] = await Promise.all([
-    apiRequest<Record<string, any>>("/radar", { method: "GET" }),
+    apiRequest<Record<string, any>>("/radar", { method: "GET" }, 20000),
     getQuotes().catch((): AssetQuote[] => []),
   ]);
   const items: RadarOpportunity[] = [];
@@ -452,10 +458,14 @@ export async function getRadarSnapshot(): Promise<RadarOpportunity[]> {
       atr_pct: numberOrNull(scannerItem.atr_pct), rel_volume: numberOrNull(scannerItem.rel_volume), trend_1h: str(scannerItem.trend_1h) || null,
     });
   }
-  return items.filter((x) => x.symbol).sort((a, b) => (b.score ?? -1) - (a.score ?? -1)).map((item) => ({
+  const rows = items.filter((x) => x.symbol).sort((a, b) => (b.score ?? -1) - (a.score ?? -1)).map((item) => ({
     ...item, snapshot_updated_at: str(raw.updated_at) || null,
     scanned_symbols: numberOrNull(raw.scanned), snapshot_status: str(raw.status) || null,
-  }));
+  })) as RadarSnapshotRows;
+  rows.snapshot_status = str(raw.status) || "unknown";
+  rows.snapshot_refreshing = Boolean(raw.refreshing);
+  rows.snapshot_updated_at = str(raw.updated_at) || null;
+  return rows;
 }
 
 export interface MoversSnapshot { window: 5 | 15 | 60; gainers: AssetQuote[]; losers: AssetQuote[]; volume_flat: AssetQuote[]; btc_change_pct: number | null; breadth_pct: number | null; breadth: { up: number | null; down: number | null; total: number | null }; reading: string; updated_at: string; status?: string; message?: string | null; collected_minutes?: number | null; required_minutes?: number | null; eligible_count?: number | null; source?: string | null }
@@ -657,7 +667,7 @@ function mapWatchlistRow(value: Record<string, any>): WatchlistMarketItem | null
   };
 }
 export async function getWatchlist(): Promise<WatchlistMarketItem[]> {
-  const result = await apiRequest<{ items: Record<string, any>[] }>("/watchlist", { method: "GET" });
+  const result = await apiRequest<{ items: Record<string, any>[] }>("/watchlist", { method: "GET" }, 20000);
   return (result.items || []).map(mapWatchlistRow).filter((x): x is WatchlistMarketItem => x !== null);
 }
 export async function addWatchlistSymbol(symbol: string): Promise<WatchlistMarketItem[]> {

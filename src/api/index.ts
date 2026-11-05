@@ -42,7 +42,7 @@ export async function updateProfile(patch: Partial<User>): Promise<User> {
   if (unsupported.length) throw new Error(`Estos campos no se pueden cambiar desde el perfil: ${unsupported.join(", ")}.`);
   return apiRequest<User>("/auth/me", { method: "PATCH", body: JSON.stringify(patch) });
 }
-export async function getSignals(): Promise<SignalState[]> { return apiRequest<SignalState[]>("/signals?limit=10", { method: "GET" }); }
+export async function getSignals(): Promise<SignalState[]> { return apiRequest<SignalState[]>("/signals?limit=10", { method: "GET" }, 20000); }
 export async function getSignal(id: string): Promise<SignalState> {
   return apiRequest<SignalState>(`/signals/${encodeURIComponent(normalizeSymbol(id))}`, { method: "GET" });
 }

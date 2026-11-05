@@ -202,12 +202,13 @@ const NO_REFRESH_RETRY = [
 export async function apiRequest<T>(
   path: string,
   init: RequestInit = {},
+  timeoutMs = 9000,
 ): Promise<T> {
   const shouldTryRefresh =
     !NO_REFRESH_RETRY.some((item) => path === item || path.startsWith(`${item}?`));
   const firstToken = accessToken;
   try {
-    return await rawRequest<T>(path, init, firstToken);
+    return await rawRequest<T>(path, init, firstToken, timeoutMs);
   } catch (error) {
     if (!(error instanceof ApiError) || error.status !== 401 || !shouldTryRefresh) {
       throw error;
@@ -219,7 +220,7 @@ export async function apiRequest<T>(
       throw error;
     }
     if (!refreshed) throw error;
-    return rawRequest<T>(path, init, refreshed);
+    return rawRequest<T>(path, init, refreshed, timeoutMs);
   }
 }
 
