@@ -1,5 +1,5 @@
 import { t } from "@/i18n/translation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
@@ -233,9 +233,11 @@ function scoreComponentLabel(value: string): string {
 }
 
 export default function RadarPage() {
-  const { language } = useApp();
+  const { language, quotes } = useApp();
   void language; // Subscribe to language changes so imported translations refresh.
-  const { data, loading, error, refresh } = useApi(getRadarSnapshot);
+  const quoteRows = useRef(quotes);
+  quoteRows.current = quotes;
+  const { data, loading, error, refresh } = useApi(() => getRadarSnapshot(quoteRows.current));
   const [filter, setFilter] = useState<string>("all");
   const [query, setQuery] = useState("");
   const radarRows = data;
