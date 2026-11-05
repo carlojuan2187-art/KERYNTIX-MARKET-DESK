@@ -1,4 +1,3 @@
-import { t } from "@/i18n/translation";
 import { useCallback, useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import {
