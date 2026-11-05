@@ -32,9 +32,9 @@ export default function ResultadosPage() {
   return (
     <div>
       <PageHeader
-        eyebrow={t("RESULTADOS, SIN FILTROS")}
+        eyebrow={t("TU RENDIMIENTO PERSONAL")}
         title={t("La disciplina en números.")}
-        description={t("Solo operaciones cerradas que tocaron entrada. Cada R cuenta una historia.")}
+        description={t("Solo cuentan las operaciones de señales que recibiste durante tus periodos de acceso.")}
       >
         <select
           aria-label={t("Periodo de resultados")}
