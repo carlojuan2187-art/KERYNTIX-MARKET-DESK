@@ -685,8 +685,8 @@ export async function getUserAlertPreferences(): Promise<Record<string, boolean>
   const result = await apiRequest<{ preferences: Record<string, boolean> }>("/account/alert-preferences", { method: "GET" });
   return result.preferences;
 }
-export async function patchUserAlertPreferences(prefs: Partial<Record<string, boolean>>): Promise<Record<string, boolean>> {
-  const result = await apiRequest<{ preferences: Record<string, boolean> }>("/account/alert-preferences", { method: "PATCH", body: JSON.stringify(prefs) });
+export async function patchUserAlertPreferences(prefs: Partial<Record<string, boolean>>): Promise<User["alert_prefs"]> {
+  const result = await apiRequest<{ preferences: User["alert_prefs"] }>("/account/alert-preferences", { method: "PATCH", body: JSON.stringify(prefs) });
   return result.preferences;
 }
 export async function getPriceAlerts(): Promise<Record<string, any>[]> { return apiRequest<Record<string, any>[]>("/alerts/price", { method: "GET" }); }
