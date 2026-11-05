@@ -239,37 +239,8 @@ function mapClosedResult(row: Record<string, any>): ClosedOperation | null {
   };
 }
 export async function getPerformance(period = "month"): Promise<Performance> {
-  const rows = await apiRequest<Record<string, any>[]>("/signals/results?limit=100", { method: "GET" });
-  const now = Date.now();
-  const span = period === "day" ? 86400000 : period === "week" ? 7 * 86400000 : period === "all" ? Infinity : 30 * 86400000;
-  const trades = rows.map(mapClosedResult).filter((x): x is ClosedOperation => Boolean(x)).filter((x) => {
-    if (!Number.isFinite(span)) return true;
-    const time = Date.parse(x.closed_at);
-    return Number.isFinite(time) && now - time <= span;
-  }).sort((a, b) => Date.parse(a.closed_at) - Date.parse(b.closed_at));
-  const wins = trades.filter((x) => x.result === "TP1" || x.result === "TP2").length;
-  const losses = trades.length - wins;
-  const rs = trades.map((x) => x.r_result);
-  let running = 0;
-  const byDate = new Map<string, number>();
-  for (const trade of trades) {
-    running += trade.r_result;
-    const date = trade.closed_at.slice(0, 10);
-    byDate.set(date, running);
-  }
-  let streak = 0;
-  for (let i = trades.length - 1; i >= 0; i--) {
-    const isWin = trades[i].r_result > 0;
-    if (i === trades.length - 1) streak = isWin ? 1 : -1;
-    else if ((streak > 0 && isWin) || (streak < 0 && !isWin)) streak += isWin ? 1 : -1;
-    else break;
-  }
-  return {
-    operations: trades.length, wins, losses, win_rate: trades.length ? wins / trades.length * 100 : 0,
-    total_r: rs.reduce((a, b) => a + b, 0), average_r: rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : 0,
-    best_r: rs.length ? Math.max(...rs) : 0, worst_r: rs.length ? Math.min(...rs) : 0, streak,
-    curve: [...byDate.entries()].map(([date, r]) => ({ date, r })), trades: [...trades].reverse(),
-  };
+  const params = new URLSearchParams({ period });
+  return apiRequest<Performance>(`/results?${params.toString()}`, { method: "GET" });
 }
 
 export async function getLiquidationSummary(window: 5 | 15 | 60 = 15): Promise<LiquidationSummary> {
