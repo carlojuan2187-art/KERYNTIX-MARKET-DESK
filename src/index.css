@@ -257,10 +257,12 @@ p {
   border-radius: 4px;
 }
 .brand.brand-compact .brand-image {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   object-fit: contain;
-  border-radius: 7px;
+  object-position: center;
+  border-radius: 0;
+  background: transparent;
 }
 .brand svg {
   width: 31px;
@@ -5280,8 +5282,8 @@ option {
     flex-shrink: 0;
   }
   .mobile-brand .brand .brand-image {
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
   }
 }
 @media (max-width: 620px) {
