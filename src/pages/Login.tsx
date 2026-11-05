@@ -1,4 +1,4 @@
-import { getIntlLocale, t } from "@/i18n/translation";
+import { getIntlLocale } from "@/i18n/translation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {

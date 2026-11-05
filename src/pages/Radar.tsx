@@ -229,7 +229,7 @@ function scoreComponentLabel(value: string): string {
     ema_reclaim: "Recuperación de EMA",
     barrier_room_rr: "Espacio para objetivo",
   };
-  return labels[value] ?? value.replaceAll("_", " ").replace(/^./, (first) => first.toUpperCase());
+  return labels[value] ?? value.replace(/_/g, " ").replace(/^./, (first: string) => first.toUpperCase());
 }
 
 export default function RadarPage() {

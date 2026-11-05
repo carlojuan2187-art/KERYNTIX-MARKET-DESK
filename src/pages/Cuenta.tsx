@@ -22,7 +22,6 @@ import {
   verifyTelegramLink,
   type TelegramLinkRequest,
 } from "@/api/account";
-import { appConfig } from "@/api/config";
 import { getSessions, revokeSession } from "@/api/terminal";
 import { useApp } from "@/context/AppContext";
 import { useApi } from "@/hooks/useApi";

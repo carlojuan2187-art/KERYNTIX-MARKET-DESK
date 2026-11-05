@@ -11,7 +11,6 @@ import {
   ChartNoAxesCombined,
   ChevronRight,
   CircleHelp,
-  Flame,
   Gauge,
   Info,
   ShieldCheck,
@@ -143,7 +142,7 @@ export function RegimePanel({
               style={{
                 display: "inline",
                 fontSize: 8,
-                color: regime.adx >= 25 ? "var(--green)" : "var(--amber)",
+                color: regime.adx != null && regime.adx >= 25 ? "var(--green)" : "var(--amber)",
               }}
             >
               {t(context.strength)}

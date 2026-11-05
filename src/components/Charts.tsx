@@ -567,7 +567,7 @@ export function MarketChart({
   const [view, setView] = useState<"candles" | "line">(panorama ? "line" : "candles");
   const [indicators, setIndicators] = useState<IndicatorOptions>({
     ema9: true, ema21: true, ema50: false, ema200: false,
-    vwap: false, bollinger: false, volume: true, rsi: false, macd: false,
+    vwap: false, bollinger: false, volume: true, rsi: false, macd: false, atr: false,
   });
   const [plannerOpen, setPlannerOpen] = useState(false);
   const [tradeDirection, setTradeDirection] = useState<"LONG" | "SHORT">("LONG");

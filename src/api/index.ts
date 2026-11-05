@@ -2,8 +2,7 @@ import type { User, MarketRegime, DerivativesData, WatchlistItem, CalendarEventI
 import type { WatchlistMarketItem } from "./terminal";
 import { apiRequest } from "./client";
 import {
-  getQuotes, normalizeSymbol, getRadarSnapshot, getPerformance,
-  getLiquidationSummary, getMoversSnapshot, getOrderFlow, getOverview,
+  getQuotes, normalizeSymbol, getLiquidationSummary, getMoversSnapshot,
   getAlerts as getTerminalAlerts, getWatchlist as getTerminalWatchlist,
   addWatchlistSymbol, deleteWatchlistSymbol, getMarketRegime, getDerivativesData, getCalendar,
   patchUserAlertPreferences,
@@ -78,8 +77,8 @@ export async function getMarketSummary() {
   };
 }
 export async function getAlerts() { return getTerminalAlerts(); }
-export async function updateAlertPrefs(prefs: Partial<User["alert_prefs"]>) {
-  return patchUserAlertPreferences(prefs as Partial<Record<string, boolean>>) as Promise<User["alert_prefs"]>;
+export async function updateAlertPrefs(prefs: Partial<User["alert_prefs"]>): Promise<User["alert_prefs"]> {
+  return patchUserAlertPreferences(prefs as Partial<Record<string, boolean>>);
 }
 
 export interface CalcInput { capital: number; risk_pct: number; entry: number; stop: number; tp1: number; tp2?: number; tp3?: number; direction?: "LONG" | "SHORT" }
