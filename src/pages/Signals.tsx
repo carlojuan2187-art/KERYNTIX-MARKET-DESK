@@ -60,12 +60,14 @@ export default function SignalsPage() {
     [refresh],
   );
   useEffect(() => {
-    // Do not poll while the tab is hidden; WebSocket signal events still refresh it.
+    // Retry a cold/empty/error feed quickly. Once data is available, WebSocket
+    // events keep the page current and the periodic fallback stays inexpensive.
+    const retrying = Boolean(error || !data?.length);
     const timer = window.setInterval(() => {
-      if (document.visibilityState !== "hidden") void refresh();
-    }, 30000);
+      if (!loading && document.visibilityState !== "hidden") void refresh();
+    }, retrying ? 3000 : 30000);
     return () => window.clearInterval(timer);
-  }, [refresh]);
+  }, [refresh, error, data?.length, loading]);
   const filtered =
     data?.filter((s) => filter === "all" || s.status === filter) || [];
   const signal =
