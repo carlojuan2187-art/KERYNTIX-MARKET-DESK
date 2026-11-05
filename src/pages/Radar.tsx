@@ -233,17 +233,23 @@ function scoreComponentLabel(value: string): string {
 }
 
 export default function RadarPage() {
-  const { language } = useApp();
+  const { language, quotes } = useApp();
   void language; // Subscribe to language changes so imported translations refresh.
-  const { data, loading, error, refresh } = useApi(getRadarSnapshot);
+  const { data, loading, error, refresh } = useApi(() => getRadarSnapshot(quotes));
   const [filter, setFilter] = useState<string>("all");
   const [query, setQuery] = useState("");
   const radarRows = data;
   const snapshotStatus = radarRows?.snapshot_status ?? "unknown";
-  const snapshotRefreshing = Boolean(radarRows?.snapshot_refreshing);
+  const snapshotRefreshing = Boolean(
+    radarRows?.snapshot_refreshing ||
+    radarRows?.setups_refreshing ||
+    radarRows?.timeframe_trends_refreshing
+  );
   useEffect(() => {
     if (!snapshotRefreshing && snapshotStatus !== "warming") return;
-    const timer = window.setInterval(() => { void refresh(); }, 10000);
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== "hidden") void refresh();
+    }, 6000);
     return () => window.clearInterval(timer);
   }, [refresh, snapshotRefreshing, snapshotStatus]);
   const allRows = data ?? [];
