@@ -118,6 +118,7 @@ export default function SignalsPage() {
         <div className="signals-layout">
           <div className="signal-selection">
             {filtered.map((s) => {
+              const metrics = signalMetrics(s);
               const status = signalLabel(s);
               return (
                 <button
@@ -156,7 +157,7 @@ export default function SignalsPage() {
                   {s.status === "PENDING" && (
                     <div className="signal-countdown">
                       <Clock3 size={11} />
-                      {t("Ventana de entrada")}<Countdown until={s.expires_at} />
+                      {t("Ventana de entrada")}<Countdown until={s.expires_at ?? undefined} />
                     </div>
                   )}
                 </button>
@@ -168,7 +169,7 @@ export default function SignalsPage() {
           </div>
           <SignalDetail
             signal={signal}
-            tz={user?.tz}
+            tz={user?.tz ?? undefined}
             showChart={showChart}
             onChart={() => setShowChart((show) => !show)}
           />
