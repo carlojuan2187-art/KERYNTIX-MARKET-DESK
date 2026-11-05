@@ -177,7 +177,7 @@ function OpportunityMetrics({ row }: { row: RadarOpportunity }) {
   );
 }
 
-function MarketContext({ row }: { row: RadarOpportunity }) {
+function MarketContext({ row, refreshing }: { row: RadarOpportunity; refreshing: boolean }) {
   const trend = row.trend;
   return (
     <>
@@ -200,17 +200,20 @@ function MarketContext({ row }: { row: RadarOpportunity }) {
         {hasMetricValue(row.quote_volume_ratio) && <Metric label={t("Ratio de volumen")} value={`${number(row.quote_volume_ratio, 2)}x`} />}
         {hasMetricValue(row.buy_pct) && <Metric label={t("Flujo comprador")} value={`${number(row.buy_pct, 1)}%`} />}
       </div>
-      {trend && (
-        <div className="radar-timeframe-trends" aria-label={t("Tendencia por temporalidad")}>
-          <span className="radar-subsection-label">{t("Tendencia por temporalidad")}</span>
-          {(["15M", "1H", "4H"] as const).map((timeframe) => (
+      <div className="radar-timeframe-trends" aria-label={t("Tendencia por temporalidad")}>
+        <span className="radar-subsection-label">{t("Tendencia por temporalidad")}</span>
+        {(["15M", "1H", "4H"] as const).map((timeframe) => {
+          const value = trend?.[timeframe] ?? null;
+          return (
             <span className="radar-trend-pill" key={timeframe}>
               <small>{timeframe}</small>
-              <strong className={trendTone(trend[timeframe])}>{t(trendText(trend[timeframe]))}</strong>
+              <strong className={trendTone(value)}>
+                {value == null && refreshing ? t("Calculando…") : t(trendText(value))}
+              </strong>
             </span>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
     </>
   );
 }
@@ -233,17 +236,23 @@ function scoreComponentLabel(value: string): string {
 }
 
 export default function RadarPage() {
-  const { language } = useApp();
+  const { language, quotes } = useApp();
   void language; // Subscribe to language changes so imported translations refresh.
-  const { data, loading, error, refresh } = useApi(getRadarSnapshot);
+  const { data, loading, error, refresh } = useApi(() => getRadarSnapshot(quotes));
   const [filter, setFilter] = useState<string>("all");
   const [query, setQuery] = useState("");
   const radarRows = data;
   const snapshotStatus = radarRows?.snapshot_status ?? "unknown";
-  const snapshotRefreshing = Boolean(radarRows?.snapshot_refreshing);
+  const snapshotRefreshing = Boolean(
+    radarRows?.snapshot_refreshing ||
+    radarRows?.setups_refreshing ||
+    radarRows?.timeframe_trends_refreshing
+  );
   useEffect(() => {
     if (!snapshotRefreshing && snapshotStatus !== "warming") return;
-    const timer = window.setInterval(() => { void refresh(); }, 10000);
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== "hidden") void refresh();
+    }, 6000);
     return () => window.clearInterval(timer);
   }, [refresh, snapshotRefreshing, snapshotStatus]);
   const allRows = data ?? [];
@@ -330,7 +339,7 @@ export default function RadarPage() {
         emptyText={query
           ? "No hay oportunidades que coincidan con esa búsqueda."
           : snapshotStatus === "warming" || snapshotRefreshing
-            ? "El radar está preparando la lectura del mercado. Esta pantalla se actualizará automáticamente."
+            ? "El radar está preparando la lectura del mercado y sus temporalidades. Esta pantalla se actualizará automáticamente."
             : "No hay oportunidades en esta categoría. Prueba otra vista del radar."}
       />
 
@@ -365,7 +374,7 @@ export default function RadarPage() {
 
                 <div className="radar-data-section radar-context-section">
                   <div className="radar-data-heading"><Waves size={13} /> {t("Contexto de mercado")}</div>
-                  <MarketContext row={row} />
+                  <MarketContext row={row} refreshing={snapshotRefreshing} />
                 </div>
 
                 {Object.keys(row.score_breakdown).length > 0 && (
