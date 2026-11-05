@@ -185,7 +185,6 @@ function numberOrNull(value: unknown): number | null {
   return value;
 }
 function str(value: unknown): string { return typeof value === "string" ? value : ""; }
-function direction(value: unknown): "LONG" | "SHORT" { return String(value).toUpperCase() === "SHORT" ? "SHORT" : "LONG"; }
 function directionOrNull(value: unknown): "LONG" | "SHORT" | null { const d = String(value ?? "").toUpperCase(); return d === "LONG" || d === "SHORT" ? d : null; }
 function record(value: unknown): Record<string, any> { return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, any> : {}; }
 function normalizeRadarTrend(value: unknown): RadarTrendState {
