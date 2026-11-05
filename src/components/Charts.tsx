@@ -21,7 +21,7 @@ import {
 import { getCandles, type Candle } from "@/api/terminal";
 import { useApi } from "@/hooks/useApi";
 import { useApp } from "@/context/AppContext";
-import { compact, number, percent, price } from "@/utils/format";
+import { compact, marketPrice, number, percent, price } from "@/utils/format";
 import { AssetIcon, ResourceState } from "./ui";
 
 type IndicatorKey = "ema9" | "ema21" | "ema50" | "ema200" | "vwap" | "bollinger" | "volume" | "rsi" | "macd" | "atr";
@@ -403,7 +403,7 @@ function Candles({ data, livePrice, timeframe, view, indicators, tradeLevels }: 
       <span>O <b>{price(selected.open)}</b></span><span>H <b>{price(selected.high)}</b></span><span>L <b>{price(selected.low)}</b></span>
       <span>C <b className={selected.close >= selected.open ? "positive" : "negative"}>{price(selected.close)}</b></span>
       {indicators.volume && <span className="chart-volume">Vol <b>{compact(selected.volume)}</b></span>}
-      {liveValue != null && <span className="chart-live-reading"><span className="live-dot" /> LIVE <b>{price(liveValue)}</b></span>}
+      {liveValue != null && <span className="chart-live-reading"><span className="live-dot" /> LIVE <b>{marketPrice(liveValue)}</b></span>}
     </div>
     <div className="chart-interaction-hint">{t("Arrastra para desplazarte · rueda/pellizco para zoom · arrastra la escala de precios a la derecha · usa la agarradera inferior para cambiar la altura")}</div>
     <svg className="candle-chart" style={{ height }} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" role="img" aria-label={`${t(view === "candles" ? "Velas" : "Línea de precio")}; ${t("gráfico interactivo con zoom y desplazamiento")}`} tabIndex={0}
@@ -439,7 +439,7 @@ function Candles({ data, livePrice, timeframe, view, indicators, tradeLevels }: 
         <line x1="0" x2={chartWidth} y1={y(tradeLevels.target)} y2={y(tradeLevels.target)} stroke="var(--green)" strokeWidth="1" strokeDasharray="5 3" opacity=".8" />
         <text x="5" y={Math.max(10, y(tradeLevels.target) - 4)} fill="var(--green)" fontSize="8">{t("OBJETIVO ")}{price(tradeLevels.target)}</text>
       </>}
-      {showLiveLine && liveValue != null && <><line x1="0" x2={chartWidth} y1={y(liveValue)} y2={y(liveValue)} stroke="var(--accent)" strokeWidth="1" strokeDasharray="3 3" opacity=".95" /><rect x={chartWidth + 4} y={clamp(y(liveValue) - 10, 3, height - 27)} width="88" height="20" rx="3" fill="var(--accent)" /><text x={chartWidth + 48} y={clamp(y(liveValue) - 10, 3, height - 27) + 8} textAnchor="middle" fill="var(--accent-ink)" fontSize="9" fontFamily="var(--font-mono)" fontWeight="600">{price(liveValue)}</text></>}
+      {showLiveLine && liveValue != null && <><line x1="0" x2={chartWidth} y1={y(liveValue)} y2={y(liveValue)} stroke="var(--accent)" strokeWidth="1" strokeDasharray="3 3" opacity=".95" /><rect x={chartWidth + 4} y={clamp(y(liveValue) - 10, 3, height - 27)} width="88" height="20" rx="3" fill="var(--accent)" /><text x={chartWidth + 48} y={clamp(y(liveValue) - 10, 3, height - 27) + 8} textAnchor="middle" fill="var(--accent-ink)" fontSize="9" fontFamily="var(--font-mono)" fontWeight="600">{marketPrice(liveValue)}</text></>}
       {hover !== null && <><line x1={xFor(hoverIndex)} x2={xFor(hoverIndex)} y1="8" y2={height - 22} stroke="var(--text-secondary)" strokeDasharray="3 3" opacity=".65" /><circle cx={xFor(hoverIndex)} cy={y(selected.close)} r="3" fill="var(--accent)" /></>}
     </svg>
     <div className="chart-resize-handle" role="separator" aria-orientation="horizontal" aria-label={t("Cambiar altura del gráfico")} tabIndex={0}
@@ -594,6 +594,10 @@ export function MarketChart({
     return () => window.clearInterval(timer);
   }, [refresh, symbol, timeframe, user?.tz]);
   const quote = quotes.find((item) => item.symbol === symbol);
+  // One source of truth for both the prominent quote and the chart live-price marker.
+  const liveQuotePrice = typeof quote?.price === "number" && Number.isFinite(quote.price) && quote.price > 0
+    ? quote.price
+    : undefined;
   const quoteAgeMs = quote?.price_tick_at == null ? null : Math.max(0, clockNow - quote.price_tick_at);
   const quoteIsLive = quoteAgeMs != null && quoteAgeMs <= 8_000;
   const quoteIsRecent = quoteAgeMs != null && quoteAgeMs <= 20_000;
@@ -652,7 +656,7 @@ export function MarketChart({
         </Link>
       </div>
       <div className="chart-price-row">
-        <div className={`chart-price ${quote?.price_direction === "up" ? "price-up" : quote?.price_direction === "down" ? "price-down" : ""}`}>{quote ? price(quote.price) : "—"}<span>USDT</span></div>
+        <div className={`chart-price ${quote?.price_direction === "up" ? "price-up" : quote?.price_direction === "down" ? "price-down" : ""}`}>{liveQuotePrice != null ? marketPrice(liveQuotePrice) : "—"}<span>USDT</span></div>
         {quote && <span className={`chart-change ${quote.change_pct == null ? "muted" : quote.change_pct >= 0 ? "positive" : "negative"}`}>
           <ArrowUpRight size={13} />{percent(quote.change_pct)}<span>24h</span>
         </span>}
@@ -710,7 +714,7 @@ export function MarketChart({
           return <span key={control.key}><i style={{ background: control.color }} />{t(control.label)}{typeof value === "number" ? ` ${price(value)}` : ""}</span>;
         })}
       </div>
-      {loading || error || !data ? <div className="chart-loading"><ResourceState loading={loading} error={error} retry={refresh} /></div> : chartData.length ? <Candles key={`${symbol}-${timeframe}`} data={chartData} livePrice={quote?.price} timeframe={timeframe} view={view} indicators={indicators} tradeLevels={tradeLevels} /> : <div className="chart-loading slim-note">{t("No hay velas disponibles para este par.")}</div>}
+      {loading || error || !data ? <div className="chart-loading"><ResourceState loading={loading} error={error} retry={refresh} /></div> : chartData.length ? <Candles key={`${symbol}-${timeframe}`} data={chartData} livePrice={liveQuotePrice} timeframe={timeframe} view={view} indicators={indicators} tradeLevels={tradeLevels} /> : <div className="chart-loading slim-note">{t("No hay velas disponibles para este par.")}</div>}
       <div className="chart-footer">
         <span><span className="live-dot" />{t(view === "candles" ? "Velas OHLC" : "Precio de cierre")}{indicators.volume ? ` ${t("y volumen")}` : ""}</span>
         <span>Binance Futures <span className="separator-dot">·</span> {timeframe} <span className="separator-dot">·</span> {t("EMA/RSI/MACD locales")}</span>
