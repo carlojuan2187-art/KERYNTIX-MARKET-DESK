@@ -352,14 +352,15 @@ function scoreBreakdown(values: unknown): Record<string, number> {
 export type RadarSnapshotRows = RadarOpportunity[] & {
   snapshot_status?: string;
   snapshot_refreshing?: boolean;
+  snapshot_trends_refreshing?: boolean;
   snapshot_updated_at?: string | null;
 };
 
-export async function getRadarSnapshot(): Promise<RadarSnapshotRows> {
-  const [raw, quotes] = await Promise.all([
-    apiRequest<Record<string, any>>("/radar", { method: "GET" }, 20000),
-    getQuotes().catch((): AssetQuote[] => []),
-  ]);
+export async function getRadarSnapshot(quoteRows: AssetQuote[] = []): Promise<RadarSnapshotRows> {
+  // Prices already arrive through the app-wide WebSocket quote store. Reuse them
+  // instead of downloading the full Futures catalogue again when opening Radar.
+  const raw = await apiRequest<Record<string, any>>("/radar", { method: "GET" }, 7000);
+  const quotes = quoteRows;
   const items: RadarOpportunity[] = [];
   const quoteBySymbol = new Map(quotes.map((quote) => [quote.symbol, quote]));
   const cachedPrices = record(raw.prices);
@@ -463,7 +464,8 @@ export async function getRadarSnapshot(): Promise<RadarSnapshotRows> {
     scanned_symbols: numberOrNull(raw.scanned), snapshot_status: str(raw.status) || null,
   })) as RadarSnapshotRows;
   rows.snapshot_status = str(raw.status) || "unknown";
-  rows.snapshot_refreshing = Boolean(raw.refreshing);
+  rows.snapshot_trends_refreshing = Boolean(raw.timeframe_trends_refreshing);
+  rows.snapshot_refreshing = Boolean(raw.refreshing || raw.timeframe_trends_refreshing);
   rows.snapshot_updated_at = str(raw.updated_at) || null;
   return rows;
 }
@@ -667,7 +669,7 @@ function mapWatchlistRow(value: Record<string, any>): WatchlistMarketItem | null
   };
 }
 export async function getWatchlist(): Promise<WatchlistMarketItem[]> {
-  const result = await apiRequest<{ items: Record<string, any>[] }>("/watchlist", { method: "GET" }, 20000);
+  const result = await apiRequest<{ items: Record<string, any>[] }>("/watchlist", { method: "GET" }, 8000);
   return (result.items || []).map(mapWatchlistRow).filter((x): x is WatchlistMarketItem => x !== null);
 }
 export async function addWatchlistSymbol(symbol: string): Promise<WatchlistMarketItem[]> {
