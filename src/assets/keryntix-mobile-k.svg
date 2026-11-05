@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="gold" x1="10" y1="6" x2="57" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF4C2"/>
+      <stop offset="0.22" stop-color="#F7D77D"/>
+      <stop offset="0.48" stop-color="#C58A25"/>
+      <stop offset="0.72" stop-color="#FFE7A0"/>
+      <stop offset="1" stop-color="#A86612"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="12" y1="8" x2="30" y2="54" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFBE5" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#F4C45C" stop-opacity=".08"/>
+    </linearGradient>
+    <filter id="shadow" x="3" y="3" width="62" height="62" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="1.6"/>
+    </filter>
+  </defs>
+  <path d="M11 8.5H25V25.7L43.1 8.5H59L36.1 31.9L59 55.5H42.9L25 37.4V55.5H11V8.5Z" fill="#8B570F" opacity=".55" filter="url(#shadow)"/>
+  <path d="M11 7.5H24.5V25.2L43 7.5H58L35.2 31.7L58 56.5H42L24.5 37.6V56.5H11V7.5Z" fill="url(#gold)" stroke="#6F450D" stroke-width="1.6" stroke-linejoin="bevel"/>
+  <path d="M13.1 9.5H22.3V31.1L45 9.8H52.8L31.9 31.8L53.1 54.4H43.1L22.3 32.8V54.4H13.1V9.5Z" stroke="url(#shine)" stroke-width="1.05" stroke-linejoin="bevel" opacity=".78"/>
+  <path d="M18 12V51.5" stroke="#FFF1BD" stroke-opacity=".48" stroke-width="1.1"/>
+</svg>
